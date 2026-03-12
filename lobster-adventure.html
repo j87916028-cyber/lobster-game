@@ -423,7 +423,7 @@
                     handleCollision(item, index);
                 }
                 
-                if (item.y > 520) { item.element.remove(); items.splice(index, 1); }
+                if (item.y > 430) { if (item.element.parentNode) item.element.remove(); items.splice(index, 1); }
             });
             
             currentLevel = Math.floor(score / 500) + 1;
