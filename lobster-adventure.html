@@ -153,7 +153,7 @@
             transform: scale(1.1) rotate(-2deg);
             box-shadow: 0 10px 40px rgba(255,215,0,0.6);
         }
-        .menu-btn.secondary, .menu-btn.purple, .menu-btn.lang { {
+        .menu-btn.secondary, .menu-btn.purple, .menu-btn.lang, .menu-btn.daily {
             background: linear-gradient(45deg, #00d4ff, #0099cc);
             box-shadow: 0 5px 20px rgba(0,212,255,0.4);
         }
@@ -267,8 +267,9 @@
             <div class="menu-title">🦞 龍蝦大冒險</div>
             <button class="menu-btn" onclick="startGame()">🎮 開始遊戲</button>
             <button class="menu-btn shop" onclick="openShop()">🏪 商店</button>
-            <button class=.menu-btn.secondary, .menu-btn.purple, .menu-btn.lang {" onclick="openLeaderboard()">📊 排行榜</button>
+            <button class="menu-btn secondary" onclick="openLeaderboard()">📊 排行榜</button>
             <button class="menu-btn purple" onclick="showAchievements()">🏅 成就</button>
+            <button class="menu-btn daily" onclick="showDailyChallenge()">📅 每日</button>
             <button class="menu-btn lang" onclick="toggleLanguage()">🌐 語言</button>
         </div>
         <div id="shop">
@@ -1003,3 +1004,180 @@ function updateLanguageUI() {
     const gameOverText = document.querySelector('#gameOverText');
     if (gameOverText) gameOverText.textContent = t('gameOver');
 }
+
+// ========== 更多優化功能 ==========
+
+// 螢幕震動效果
+function screenShake(intensity = 10, duration = 300) {
+    const container = document.getElementById('gameContainer');
+    container.style.transition = 'transform 0.05s';
+    let startTime = Date.now();
+    
+    function shake() {
+        const elapsed = Date.now() - startTime;
+        if (elapsed > duration) {
+            container.style.transform = '';
+            return;
+        }
+        const decay = 1 - (elapsed / duration);
+        const x = (Math.random() - 0.5) * intensity * decay;
+        const y = (Math.random() - 0.5) * intensity * decay;
+        container.style.transform = `translate(${x}px, ${y}px)`;
+        requestAnimationFrame(shake);
+    }
+    shake();
+}
+
+// 速度線效果
+function showSpeedLines() {
+    const container = document.getElementById('gameContainer');
+    for (let i = 0; i < 5; i++) {
+        const line = document.createElement('div');
+        line.style.cssText = `
+            position: absolute;
+            width: 3px;
+            height: 30px;
+            background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.8));
+            left: ${Math.random() * 800}px;
+            top: ${Math.random() * 400}px;
+            animation: speedLine 0.3s linear forwards;
+            z-index: 50;
+        `;
+        container.appendChild(line);
+        setTimeout(() => line.remove(), 300);
+    }
+}
+
+// 更好的收集動畫
+function showCollectAnimation(x, y, type) {
+    const container = document.getElementById('gameContainer');
+    const el = document.createElement('div');
+    el.style.cssText = `
+        position: absolute;
+        left: ${x}px;
+        top: ${y}px;
+        font-size: 2rem;
+        animation: collectAnim 0.5s ease forwards;
+        z-index: 100;
+        pointer-events: none;
+    `;
+    
+    const colors = { coin: '#ffd700', gem: '#00ffff', bomb: '#ff4444', gift: '#ff69b4' };
+    el.textContent = type === 'coin' ? '+10' : type === 'gem' ? '+50' : type === 'gift' ? '+50' : '';
+    el.style.color = colors[type] || '#fff';
+    el.style.textShadow = `0 0 10px ${colors[type]}`;
+    
+    container.appendChild(el);
+    setTimeout(() => el.remove(), 500);
+}
+
+// 每日挑戰系統
+const dailyChallenges = [
+    { id: 'collect_100', desc: { zh: '收集 100 金幣', en: 'Collect 100 coins', ja: '100コイン収集', ko: '100동전 수집', 'zh-CN': '收集100金币' }, target: 100, type: 'coins' },
+    { id: 'score_500', desc: { zh: '獲得 500 分', en: 'Score 500 points', ja: '500点獲得', ko: '500점 획득', 'zh-CN': '获得500分' }, target: 500, type: 'score' },
+    { id: 'combo_10', desc: { zh: '達成 10 連擊', en: 'Get 10 combo', ja: '10コンボ達成', ko: '10콤보 달성', 'zh-CN': '达成10连击' }, target: 10, type: 'combo' },
+    { id: 'survive_60', desc: { zh: '生存 60 秒', en: 'Survive 60 seconds', ja: '60秒生存', ko: '60초 생존', 'zh-CN': '生存60秒' }, target: 60, type: 'time' }
+];
+
+function getTodayKey() {
+    return 'daily_' + new Date().toISOString().split('T')[0];
+}
+
+function getDailyProgress() {
+    return JSON.parse(localStorage.getItem(getTodayKey()) || '{"coins":0,"score":0,"combo":0,"time":0}');
+}
+
+function updateDailyProgress(type, value) {
+    const key = getTodayKey();
+    const progress = getDailyProgress();
+    progress[type] = Math.max(progress[type] || 0, value);
+    localStorage.setItem(key, JSON.stringify(progress));
+    checkDailyChallenge();
+}
+
+function checkDailyChallenge() {
+    const progress = getDailyChallenge();
+    const today = new Date().toISOString().split('T')[0];
+    const completed = JSON.parse(localStorage.getItem('dailyCompleted_' + today) || '[]');
+    
+    dailyChallenges.forEach((challenge, idx) => {
+        if (!completed.includes(idx)) {
+            const value = progress[challenge.type] || 0;
+            if (value >= challenge.target) {
+                completed.push(idx);
+                localStorage.setItem('dailyCompleted_' + today, JSON.stringify(completed));
+                // 獎勵
+                const bonus = 50 + challenge.target;
+                gameState.coins += bonus;
+                localStorage.setItem('lobsterCoins', gameState.coins);
+                showEventText(`🎁 每日挑戰完成！+${bonus}💰`);
+            }
+        }
+    });
+}
+
+function getDailyChallenge() {
+    return getDailyProgress();
+}
+
+function showDailyChallenge() {
+    const progress = getDailyProgress();
+    const today = new Date().toISOString().split('T')[0];
+    const completed = JSON.parse(localStorage.getItem('dailyCompleted_' + today) || '[]');
+    
+    const container = document.getElementById('leaderboardList');
+    container.innerHTML = '<h2 style="color:#ffd700;margin-bottom:20px;">📅 每日挑戰</h2>';
+    
+    dailyChallenges.forEach((challenge, idx) => {
+        const isDone = completed.includes(idx);
+        const value = progress[challenge.type] || 0;
+        const percent = Math.min(100, (value / challenge.target) * 100);
+        
+        container.innerHTML += `
+            <div style="padding:15px;margin:10px 0;background:rgba(255,255,255,0.1);border-radius:15px;opacity:${isDone ? 0.6 : 1}">
+                <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+                    <span>${challenge.desc.zh}</span>
+                    <span>${isDone ? '✅' : `${value}/${challenge.target}`}</span>
+                </div>
+                <div style="height:10px;background:rgba(255,255,255,0.2);border-radius:5px;overflow:hidden">
+                    <div style="height:100%;width:${percent}%;background:linear-gradient(90deg,#ffd700,#ff8c00);transition:width 0.3s"></div>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML += '<button onclick="closeMenu()" style="margin-top:20px;padding:12px 30px;background:linear-gradient(135deg,#ffd700,#ff8c00);border:none;border-radius:25px;cursor:pointer;">返回</button>';
+    document.getElementById('leaderboard').style.display = 'flex';
+}
+
+// 添加更多CSS動畫
+const extraStyle = document.createElement('style');
+extraStyle.textContent = `
+    @keyframes speedLine {
+        0% { transform: translateY(0); opacity: 1; }
+        100% { transform: translateY(100px); opacity: 0; }
+    }
+    @keyframes collectAnim {
+        0% { transform: scale(0.5) translateY(0); opacity: 1; }
+        100% { transform: scale(1.2) translateY(-30px); opacity: 0; }
+    }
+    .powerup-glow {
+        animation: powerupPulse 0.5s ease infinite;
+    }
+    @keyframes powerupPulse {
+        0%, 100% { filter: brightness(1); }
+        50% { filter: brightness(1.5); }
+    }
+`;
+document.head.appendChild(extraStyle);
+
+// 在碰撞時添加效果
+const originalHandleCollision = handleCollision;
+handleCollision = function(item, index) {
+    if (item.type === 'bomb') {
+        screenShake(15, 300);
+    } else {
+        showCollectAnimation(playerX + 30, 350, item.type);
+    }
+    originalHandleCollision(item, index);
+};
