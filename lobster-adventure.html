@@ -59,6 +59,7 @@
             box-shadow: 0 0 80px rgba(255, 215, 0, 0.4), inset 0 0 100px rgba(0,0,0,0.3);
         }
         #player {
+            transition: transform 0.3s ease, filter 0.3s ease;
             position: absolute;
             width: 80px;
             height: 80px;
@@ -152,7 +153,7 @@
             transform: scale(1.1) rotate(-2deg);
             box-shadow: 0 10px 40px rgba(255,215,0,0.6);
         }
-        .menu-btn.secondary {
+        .menu-btn.secondary, .menu-btn.purple { {
             background: linear-gradient(45deg, #00d4ff, #0099cc);
             box-shadow: 0 5px 20px rgba(0,212,255,0.4);
         }
@@ -266,7 +267,8 @@
             <div class="menu-title">🦞 龍蝦大冒險</div>
             <button class="menu-btn" onclick="startGame()">🎮 開始遊戲</button>
             <button class="menu-btn shop" onclick="openShop()">🏪 商店</button>
-            <button class="menu-btn secondary" onclick="openLeaderboard()">📊 排行榜</button>
+            <button class=.menu-btn.secondary, .menu-btn.purple {" onclick="openLeaderboard()">📊 排行榜</button>
+            <button class="menu-btn purple" onclick="showAchievements()">🏅 成就</button>
         </div>
         <div id="shop">
             <span class="closeBtn" onclick="closeShop()">✕</span>
@@ -318,6 +320,7 @@
         const gameContainer = document.getElementById('gameContainer');
         
         document.getElementById('coins').textContent = gameState.coins;
+        initSpecialFeatures();
         document.getElementById('highScore').textContent = gameState.highScore;
         
         let keys = {};
@@ -462,6 +465,7 @@ function startGame() {
                 if (shield > 0) {
                     gameState.inventory.shield = shield - 1;
                     localStorage.setItem('lobsterInventory', JSON.stringify(gameState.inventory));
+                checkAchievements();
                 } else {
                     lives--; combo = 0; updateLives(); updateCombo();
                     if (lives <= 0) endGame();
@@ -474,6 +478,7 @@ function startGame() {
                 else if (item.element.textContent === '🛡️') gameState.inventory.shield = Math.min(5, (gameState.inventory.shield || 0) + 1);
                 else if (item.element.textContent === '🧲') gameState.inventory.magnet = Math.min(5, (gameState.inventory.magnet || 0) + 1);
                 localStorage.setItem('lobsterInventory', JSON.stringify(gameState.inventory));
+                checkAchievements();
                 showComboText('升級!'); playSound('powerup');
             }
             
@@ -544,6 +549,7 @@ function startGame() {
             document.getElementById('menu').style.display = 'flex';
             document.getElementById('highScore').textContent = gameState.highScore;
             document.getElementById('coins').textContent = gameState.coins;
+        initSpecialFeatures();
         }
         
         function openShop() {
@@ -575,7 +581,9 @@ function startGame() {
             gameState.coins -= price;
             gameState.inventory[item.id] = owned + 1;
             localStorage.setItem('lobsterInventory', JSON.stringify(gameState.inventory));
+                checkAchievements();
             document.getElementById('coins').textContent = gameState.coins;
+        initSpecialFeatures();
             document.getElementById('shopCoins').textContent = gameState.coins;
             renderShop();
             alert('購買成功！');
@@ -651,3 +659,229 @@ function startGame() {
     </script>
 </body>
 </html>
+
+// ========== 獨特功能系統 ==========
+
+// 龍蝦進化系統
+const lobsterEvos = [
+    { min: 0, emoji: '🦞', name: '小龍蝦', glow: '#ff6b6b' },
+    { min: 500, emoji: '🦞🔥', name: '火焰龍', glow: '#ff4500' },
+    { min: 2000, emoji: '🦞⚡', name: '雷電龍', glow: '#00ffff' },
+    { min: 5000, emoji: '🦞💎', name: '鑽石龍', glow: '#ffd700' },
+    { min: 10000, emoji: '🦞👑', name: '龍蝦王', glow: '#9400d3' }
+];
+
+function updateLobsterEvolution() {
+    const totalCoins = gameState.coins;
+    let currentEvo = lobsterEvos[0];
+    for (let evo of lobsterEvos) {
+        if (totalCoins >= evo.min) currentEvo = evo;
+    }
+    document.getElementById('player').textContent = currentEvo.emoji;
+    document.getElementById('player').style.filter = `drop-shadow(0 8px 8px rgba(0,0,0,0.4)) drop-shadow(0 0 20px ${currentEvo.glow})`;
+    
+    // 儲存當前進化
+    gameState.evolution = currentEvo.name;
+    localStorage.setItem('lobsterCoins', gameState.coins);
+}
+
+// 幸運雨事件
+let luckyRainActive = false;
+let luckyRainTimer = null;
+
+function startLuckyRain() {
+    if (luckyRainActive || !gameRunning) return;
+    luckyRainActive = true;
+    
+    // 顯示幸運雨提示
+    showEventText('🌈 幸運雨 🌈');
+    
+    // 快速生成多個獎勵道具
+    let rainCount = 0;
+    const rainInterval = setInterval(() => {
+        if (!gameRunning || rainCount >= 15) {
+            clearInterval(rainInterval);
+            luckyRainActive = false;
+            return;
+        }
+        
+        const item = document.createElement('div');
+        item.className = 'item';
+        item.style.left = Math.random() * 750 + 'px';
+        item.style.top = '-50px';
+        item.style.animationDuration = '1.5s';
+        
+        // 70% 金幣/寶石, 30% 禮物
+        const rand = Math.random();
+        if (rand < 0.5) { item.textContent = '💰'; item.dataset.type = 'coin'; }
+        else if (rand < 0.7) { item.textContent = '💎'; item.dataset.type = 'gem'; }
+        else { item.textContent = '🎁'; item.dataset.type = 'gift'; }
+        
+        gameContainer.appendChild(item);
+        items.push({ element: item, y: -50, speed: 6, type: item.dataset.type });
+        
+        rainCount++;
+    }, 200);
+    
+    // 30秒後再次觸發
+    luckyRainTimer = setTimeout(startLuckyRain, 30000);
+}
+
+// 事件文字顯示
+function showEventText(text) {
+    const el = document.createElement('div');
+    el.style.cssText = `
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 3rem;
+        font-weight: bold;
+        color: #ffd700;
+        text-shadow: 0 0 20px #ff6b6b, 0 0 40px #ff8c00;
+        animation: eventPop 2s ease forwards;
+        z-index: 200;
+    `;
+    el.textContent = text;
+    gameContainer.appendChild(el);
+    setTimeout(() => el.remove(), 2000);
+}
+
+// 成就系統
+const achievements = [
+    { id: 'first_coin', name: '🎯 初次獲利', desc: '收集第一枚金幣', icon: '💰', req: 1 },
+    { id: 'coin_100', name: '💎 小有积蓄', desc: '擁有 100 金幣', icon: '💎', req: 100 },
+    { id: 'coin_500', name: '🤑 小富翁', desc: '擁有 500 金幣', icon: '🤑', req: 500 },
+    { id: 'score_1000', name: '⭐ 初試身手', desc: '單次遊戲獲得 1000 分', icon: '⭐', req: 1000 },
+    { id: 'score_5000', name: '🏆 高分達人', desc: '單次遊戲獲得 5000 分', icon: '🏆', req: 5000 },
+    { id: 'combo_10', name: '🔥 連擊達人', desc: '達成 10 連擊', icon: '🔥', req: 10 },
+    { id: 'combo_20', name: '💥 連擊大師', desc: '達成 20 連擊', icon: '💥', req: 20 },
+    { id: 'level_5', name: '🌟 升級達人', desc: '達到等級 5', icon: '🌟', req: 5 },
+    { id: 'streak_3', name: '📅 連續登入', desc: '連續登入 3 天', icon: '📅', req: 3 },
+    { id: 'total_10000', name: '👑 龍蝦王', desc: '總金幣達到 10000', icon: '👑', req: 10000 }
+];
+
+function checkAchievements() {
+    const unlocked = JSON.parse(localStorage.getItem('lobsterAchievements') || '[]');
+    let newUnlock = null;
+    
+    // 檢查各項成就
+    if (gameState.coins >= 100 && !unlocked.includes('coin_100')) {
+        unlocked.push('coin_100'); newUnlock = achievements.find(a => a.id === 'coin_100');
+    }
+    if (gameState.coins >= 500 && !unlocked.includes('coin_500')) {
+        unlocked.push('coin_500'); newUnlock = achievements.find(a => a.id === 'coin_500');
+    }
+    if (score >= 1000 && !unlocked.includes('score_1000')) {
+        unlocked.push('score_1000'); newUnlock = achievements.find(a => a.id === 'score_1000');
+    }
+    if (score >= 5000 && !unlocked.includes('score_5000')) {
+        unlocked.push('score_5000'); newUnlock = achievements.find(a => a.id === 'score_5000');
+    }
+    if (combo >= 10 && !unlocked.includes('combo_10')) {
+        unlocked.push('combo_10'); newUnlock = achievements.find(a => a.id === 'combo_10');
+    }
+    if (combo >= 20 && !unlocked.includes('combo_20')) {
+        unlocked.push('combo_20'); newUnlock = achievements.find(a => a.id === 'combo_20');
+    }
+    if (currentLevel >= 5 && !unlocked.includes('level_5')) {
+        unlocked.push('level_5'); newUnlock = achievements.find(a => a.id === 'level_5');
+    }
+    
+    if (newUnlock) {
+        localStorage.setItem('lobsterAchievements', JSON.stringify(unlocked));
+        showAchievementPopup(newUnlock);
+    }
+}
+
+function showAchievementPopup(achievement) {
+    const el = document.createElement('div');
+    el.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #ffd700, #ff8c00);
+        color: #000;
+        padding: 15px 25px;
+        border-radius: 15px;
+        font-weight: bold;
+        z-index: 1000;
+        animation: slideIn 0.5s ease, fadeOut 0.5s ease 3s forwards;
+        box-shadow: 0 0 30px rgba(255,215,0,0.8);
+    `;
+    el.innerHTML = `🏆 成就解鎖!<br>${achievement.icon} ${achievement.name}`;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 3500);
+}
+
+// 顯示成就按鈕
+function showAchievements() {
+    const unlocked = JSON.parse(localStorage.getItem('lobsterAchievements') || '[]');
+    const container = document.getElementById('leaderboardList');
+    container.innerHTML = '<h2 style="color:#ffd700;margin-bottom:20px;">🏆 成就列表</h2>';
+    
+    achievements.forEach(a => {
+        const isUnlocked = unlocked.includes(a.id);
+        container.innerHTML += `
+            <div style="display:flex;align-items:center;gap:15px;padding:15px;margin:10px 0;background:${isUnlocked ? 'rgba(255,215,0,0.2)' : 'rgba(255,255,255,0.1)'};border-radius:15px;opacity:${isUnlocked ? 1 : 0.5};border:2px solid ${isUnlocked ? '#ffd700' : 'transparent'}">
+                <span style="font-size:2rem">${a.icon}</span>
+                <div>
+                    <div style="font-weight:bold;font-size:1.1rem">${a.name}</div>
+                    <div style="font-size:0.9rem;opacity:0.8">${a.desc}</div>
+                </div>
+                ${isUnlocked ? '<span style="margin-left:auto">✅</span>' : ''}
+            </div>
+        `;
+    });
+    
+    container.innerHTML += '<button onclick="closeMenu()" style="margin-top:20px;padding:12px 30px;font-size:1.1rem;background:linear-gradient(135deg,#ffd700,#ff8c00);border:none;border-radius:25px;cursor:pointer;">返回</button>';
+    document.getElementById('leaderboard').style.display = 'flex';
+}
+
+// 晝夜主題系統
+function updateDayNightTheme() {
+    const hour = new Date().getHours();
+    const gameContainer = document.getElementById('gameContainer');
+    
+    if (hour >= 6 && hour < 12) {
+        // 早晨
+        gameContainer.style.background = 'linear-gradient(to bottom, #87ceeb 0%, #fffacd 30%, #90ee90 50%, #228b22 80%, #006400 100%)';
+    } else if (hour >= 12 && hour < 17) {
+        // 白天
+        gameContainer.style.background = 'linear-gradient(to bottom, #1e90ff 0%, #00bfff 30%, #90ee90 50%, #228b22 80%, #006400 100%)';
+    } else if (hour >= 17 && hour < 20) {
+        // 黃昏
+        gameContainer.style.background = 'linear-gradient(to bottom, #ff6b6b 0%, #ffa500 30%, #9370db 50%, #4b0082 80%, #000080 100%)';
+    } else {
+        // 夜晚
+        gameContainer.style.background = 'linear-gradient(to bottom, #191970 0%, #483d8b 30%, #2f4f4f 50%, #000000 80%, #000000 100%)';
+    }
+}
+
+// 初始化獨特功能
+function initSpecialFeatures() {
+    updateLobsterEvolution();
+    updateDayNightTheme();
+    
+    // 啟動幸運雨定時器
+    luckyRainTimer = setTimeout(startLuckyRain, 30000);
+}
+
+// 事件動畫
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes eventPop {
+        0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+        20% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+        80% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        100% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+    }
+    @keyframes slideIn {
+        from { transform: translateX(100%); }
+        to { transform: translateX(0); }
+    }
+    @keyframes fadeOut {
+        to { opacity: 0; transform: translateX(100%); }
+    }
+`;
+document.head.appendChild(style);

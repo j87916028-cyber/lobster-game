@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🦞 龍蝦大戰</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            overflow: hidden;
+        }
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px #00d4ff;
+        }
+        #gameContainer {
+            position: relative;
+            width: 800px;
+            height: 500px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
+            border: 3px solid #00d4ff;
+            overflow: hidden;
+        }
+        #player {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            font-size: 50px;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            transition: left 0.1s;
+        }
+        .bubble {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            font-size: 30px;
+            animation: fall 3s linear;
+        }
+        @keyframes fall {
+            0% { top: -40px; opacity: 1; }
+            100% { top: 520px; opacity: 0; }
+        }
+        #score {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 1.5rem;
+            background: rgba(0,0,0,0.5);
+            padding: 10px 20px;
+            border-radius: 10px;
+        }
+        #startBtn {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 20px 40px;
+            font-size: 1.5rem;
+            background: #00d4ff;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            color: #1a1a2e;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+        #startBtn:hover {
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+        #gameOver {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        #gameOver h2 {
+            font-size: 3rem;
+            color: #ff6b6b;
+        }
+        #finalScore {
+            font-size: 2rem;
+            margin: 20px 0;
+        }
+        #restartBtn {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            background: #00d4ff;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            color: #1a1a2e;
+            font-weight: bold;
+        }
+        .instructions {
+            margin-top: 20px;
+            font-size: 1.2rem;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <h1>🦞 龍蝦大戰</h1>
+    <div id="gameContainer">
+        <div id="score">分數: 0</div>
+        <div id="player">🦞</div>
+        <button id="startBtn">開始遊戲</button>
+        <div id="gameOver">
+            <h2>遊戲結束!</h2>
+            <div id="finalScore">分數: 0</div>
+            <button id="restartBtn">再玩一次</button>
+        </div>
+    </div>
+    <p class="instructions">← → 方向鍵移動龍蝦，接住掉落的金幣！💰</p>
+
+    <script>
+        const player = document.getElementById('player');
+        const gameContainer = document.getElementById('gameContainer');
+        const scoreDisplay = document.getElementById('score');
+        const startBtn = document.getElementById('startBtn');
+        const gameOver = document.getElementById('gameOver');
+        const finalScore = document.getElementById('finalScore');
+        const restartBtn = document.getElementById('restartBtn');
+
+        let playerX = 370;
+        let score = 0;
+        let gameRunning = false;
+        let bubbles = [];
+        let gameLoop;
+        let spawnLoop;
+
+        const emojis = ['💰', '💎', '⭐', '🎵', '🎮'];
+        const badEmojis = ['💣', '🔥', '👾'];
+
+        document.addEventListener('keydown', (e) => {
+            if (!gameRunning) return;
+            if (e.key === 'ArrowLeft' || e.key === 'a') {
+                playerX = Math.max(0, playerX - 30);
+            } else if (e.key === 'ArrowRight' || e.key === 'd') {
+                playerX = Math.min(740, playerX + 30);
+            }
+            player.style.left = playerX + 'px';
+        });
+
+        function startGame() {
+            gameRunning = true;
+            score = 0;
+            bubbles = [];
+            playerX = 370;
+            player.style.left = playerX + 'px';
+            scoreDisplay.textContent = '分數: 0';
+            startBtn.style.display = 'none';
+            gameOver.style.display = 'none';
+            
+            // 清除舊的氣泡
+            document.querySelectorAll('.bubble').forEach(b => b.remove());
+
+            gameLoop = setInterval(updateGame, 30);
+            spawnLoop = setInterval(spawnBubble, 800);
+        }
+
+        function spawnBubble() {
+            if (!gameRunning) return;
+            
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+            bubble.style.left = Math.random() * 760 + 'px';
+            bubble.style.top = '-40px';
+            
+            // 80% 好東西，20% 壞東西
+            const isBad = Math.random() < 0.2;
+            bubble.textContent = isBad 
+                ? badEmojis[Math.floor(Math.random() * badEmojis.length)]
+                : emojis[Math.floor(Math.random() * emojis.length)];
+            bubble.dataset.isBad = isBad;
+            
+            gameContainer.appendChild(bubble);
+            bubbles.push({ element: bubble, y: -40, speed: 3 + Math.random() * 3 });
+        }
+
+        function updateGame() {
+            bubbles.forEach((bubble, index) => {
+                bubble.y += bubble.speed;
+                bubble.element.style.top = bubble.y + 'px';
+
+                // 碰撞檢測
+                const playerRect = player.getBoundingClientRect();
+                const bubbleRect = bubble.element.getBoundingClientRect();
+
+                if (bubbleRect.bottom > playerRect.top &&
+                    bubbleRect.top < playerRect.bottom &&
+                    bubbleRect.right > playerRect.left &&
+                    bubbleRect.left < playerRect.right) {
+                    
+                    if (bubble.element.dataset.isBad === 'true') {
+                        endGame();
+                    } else {
+                        score += 10;
+                        scoreDisplay.textContent = '分數: ' + score;
+                        bubble.element.remove();
+                        bubbles.splice(index, 1);
+                    }
+                }
+
+                // 超出範圍
+                if (bubble.y > 520) {
+                    bubble.element.remove();
+                    bubbles.splice(index, 1);
+                }
+            });
+        }
+
+        function endGame() {
+            gameRunning = false;
+            clearInterval(gameLoop);
+            clearInterval(spawnLoop);
+            finalScore.textContent = '分數: ' + score;
+            gameOver.style.display = 'flex';
+        }
+
+        startBtn.addEventListener('click', startGame);
+        restartBtn.addEventListener('click', startGame);
+    </script>
+</body>
+</html>
