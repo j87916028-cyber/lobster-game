@@ -891,82 +891,91 @@ document.head.appendChild(style);
 const translations = {
     zh: {
         title: '🦞 龍蝦大冒險 - 收集金幣買裝備！',
-        start: '開始遊戲',
-        shop: '商店',
-        leaderboard: '排行榜',
-        achievements: '成就',
-        coins: '金幣',
-        highScore: '最高分',
-        level: '等級',
-        combo: '連擊',
-        instructions: '電腦：← → 鍵 / 手機：觸控螢幕左右移動\n接金幣💰避開炸彈💣！',
-        gameOver: '遊戲結束！',
-        finalScore: '最終得分',
-        newHighScore: '新紀錄！',
-        playAgain: '再玩一次',
-        backToMenu: '返回選單',
-        buy: '購買',
-        max: '已滿',
-        continue: '繼續',
-        pause: '暫停',
-        resume: '繼續遊戲',
-        quit: '離開',
-        unlocked: '成就解鎖！',
-        luckyRain: '幸運雨 🌈',
-        evolution: {
-            0: '小龍蝦',
-            500: '火焰龍',
-            2000: '雷電龍',
-            5000: '鑽石龍',
-            10000: '龍蝦王'
-        }
+        start: '開始遊戲', shop: '商店', leaderboard: '排行榜', achievements: '成就',
+        coins: '金幣', highScore: '最高分', level: '等級', combo: '連擊',
+        instructions: '電腦：← → 鍵 / 手機：觸控螢幕左右移動<br>接金幣💰避開炸彈💣！',
+        gameOver: '遊戲結束！', finalScore: '最終得分', newHighScore: '新紀錄！',
+        playAgain: '再玩一次', backToMenu: '返回選單', buy: '購買', max: '已滿',
+        continue: '繼續', pause: '暫停', resume: '繼續遊戲', quit: '離開',
+        unlocked: '成就解鎖！', luckyRain: '幸運雨 🌈',
+        evolution: { 0: '小龍蝦', 500: '火焰龍', 2000: '雷電龍', 5000: '鑽石龍', 10000: '龍蝦王' }
     },
     en: {
         title: '🦞 Lobster Adventure - Collect Coins & Buy Gear!',
-        start: 'Start Game',
-        shop: 'Shop',
-        leaderboard: 'Leaderboard',
-        achievements: 'Achievements',
-        coins: 'Coins',
-        highScore: 'High Score',
-        level: 'Level',
-        combo: 'Combo',
-        instructions: 'PC: ← → keys / Mobile: touch left/right\nCollect coins💰 Avoid bombs💣!',
-        gameOver: 'Game Over!',
-        finalScore: 'Final Score',
-        newHighScore: 'New Record!',
-        playAgain: 'Play Again',
-        backToMenu: 'Back to Menu',
-        buy: 'Buy',
-        max: 'MAX',
-        continue: 'Continue',
-        pause: 'Pause',
-        resume: 'Resume',
-        quit: 'Quit',
-        unlocked: 'Achievement Unlocked!',
-        luckyRain: 'Lucky Rain 🌈',
-        evolution: {
-            0: 'Baby Lobster',
-            500: 'Fire Lobster',
-            2000: 'Thunder Lobster',
-            5000: 'Diamond Lobster',
-            10000: 'Lobster King'
-        }
+        start: 'Start Game', shop: 'Shop', leaderboard: 'Leaderboard', achievements: 'Achievements',
+        coins: 'Coins', highScore: 'High Score', level: 'Level', combo: 'Combo',
+        instructions: 'PC: ← → keys / Mobile: touch left/right<br>Collect coins💰 Avoid bombs💣!',
+        gameOver: 'Game Over!', finalScore: 'Final Score', newHighScore: 'New Record!',
+        playAgain: 'Play Again', backToMenu: 'Back to Menu', buy: 'Buy', max: 'MAX',
+        continue: 'Continue', pause: 'Pause', resume: 'Resume', quit: 'Quit',
+        unlocked: 'Achievement Unlocked!', luckyRain: 'Lucky Rain 🌈',
+        evolution: { 0: 'Baby Lobster', 500: 'Fire Lobster', 2000: 'Thunder Lobster', 5000: 'Diamond Lobster', 10000: 'Lobster King' }
+    },
+    ja: {
+        title: '🦞 ロブスターアドベンチャー - コインを収集！',
+        start: 'ゲームスタート', shop: 'ショップ', leaderboard: 'ランキング', achievements: '実績',
+        coins: 'コイン', highScore: 'ハイスコア', level: 'レベル', combo: 'コンボ',
+        instructions: 'PC: ← → キー / スマホ: 左右スワイプ<br>コイン💰を集め爆弾💣を避けよう！',
+        gameOver: 'ゲームオーバー！', finalScore: '最終スコア', newHighScore: '新記録！',
+        playAgain: 'もう一度', backToMenu: 'メニューに戻る', buy: '購入', max: '最大',
+        continue: '続ける', pause: '一時停止', resume: '再開', quit: '終了',
+        unlocked: '実績解除！', luckyRain: 'ラッキー雨 🌈',
+        evolution: { 0: '子ロブスター', 500: '炎ロブスター', 2000: '雷ロブスター', 5000: 'ダイヤロブスター', 10000: 'ロブスター王' }
+    },
+    ko: {
+        title: '🦞龙虾 대모험 - 동전 수집하기!',
+        start: '게임 시작', shop: '상점', leaderboard: '순위표', achievements: '업적',
+        coins: '동전', highScore: '최고 점수', level: '레벨', combo: '콤보',
+        instructions: 'PC: ← → 키 / 모바일: 좌우 터치<br>동전💰을 모으고 폭탄💣을 피하세요!',
+        gameOver: '게임 오버!', finalScore: '최종 점수', newHighScore: '신기록!',
+        playAgain: '다시 하기', backToMenu: '메뉴로', buy: '구매', max: '최대',
+        continue: '계속', pause: '일시정지', resume: '재개', quit: '나가기',
+        unlocked: '업적 달성!', luckyRain: '행운의 비 🌈',
+        evolution: { 0: '아기龙虾', 500: '불龙虾', 2000: '번개龙虾', 5000: '다이아龙虾', 10000: '龙虾 왕' }
+    },
+    'zh-TW': {
+        title: '🦞 龍蝦大冒險 - 收集金幣買裝備！',
+        start: '開始遊戲', shop: '商店', leaderboard: '排行榜', achievements: '成就',
+        coins: '金幣', highScore: '最高分', level: '等級', combo: '連擊',
+        instructions: '電腦：← → 鍵 / 手機：觸控螢幕左右移動<br>接金幣💰避開炸彈💣！',
+        gameOver: '遊戲結束！', finalScore: '最終得分', newHighScore: '新紀錄！',
+        playAgain: '再玩一次', backToMenu: '返回選單', buy: '購買', max: '已滿',
+        continue: '繼續', pause: '暫停', resume: '繼續遊戲', quit: '離開',
+        unlocked: '成就解鎖！', luckyRain: '幸運雨 🌈',
+        evolution: { 0: '小龍蝦', 500: '火焰龍', 2000: '雷電龍', 5000: '鑽石龍', 10000: '龍蝦王' }
+    },
+    'zh-CN': {
+        title: '🦞 龙虾大冒险 - 收集金币买装备！',
+        start: '开始游戏', shop: '商店', leaderboard: '排行榜', achievements: '成就',
+        coins: '金币', highScore: '最高分', level: '等级', combo: '连击',
+        instructions: '电脑：← → 键 / 手机：触控屏幕左右移动<br>接金币💰避开炸弹💣！',
+        gameOver: '游戏结束！', finalScore: '最终得分', newHighScore: '新纪录！',
+        playAgain: '再玩一次', backToMenu: '返回选单', buy: '购买', max: '已满',
+        continue: '继续', pause: '暂停', resume: '继续游戏', quit: '离开',
+        unlocked: '成就解锁！', luckyRain: '幸运雨 🌈',
+        evolution: { 0: '小龙虾', 500: '火焰龙', 2000: '雷电龙', 5000: '钻石龙', 10000: '龙虾王' }
     }
 };
 
+const langNames = { zh: '繁體中文', en: 'English', ja: '日本語', ko: '한국어', 'zh-TW': '繁中', 'zh-CN': '簡体中文' };
+const langOrder = ['zh', 'en', 'ja', 'ko', 'zh-TW', 'zh-CN'];
 let currentLang = localStorage.getItem('lobsterLang') || 'zh';
 
 function t(key) {
-    return translations[currentLang][key] || key;
+    return translations[currentLang]?.[key] || translations.zh[key] || key;
 }
 
 function toggleLanguage() {
-    currentLang = currentLang === 'zh' ? 'en' : 'zh';
+    let idx = langOrder.indexOf(currentLang);
+    currentLang = langOrder[(idx + 1) % langOrder.length];
     localStorage.setItem('lobsterLang', currentLang);
+    document.querySelector('.menu-btn.lang').textContent = '🌐 ' + langNames[currentLang];
     updateLanguageUI();
     initSpecialFeatures();
 }
+
+// 初始化語言按鈕
+document.querySelector('.menu-btn.lang').textContent = '🌐 ' + langNames[currentLang];
 
 function updateLanguageUI() {
     // 更新所有可翻譯的文字
