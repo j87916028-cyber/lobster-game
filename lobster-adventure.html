@@ -153,7 +153,7 @@
             transform: scale(1.1) rotate(-2deg);
             box-shadow: 0 10px 40px rgba(255,215,0,0.6);
         }
-        .menu-btn.secondary, .menu-btn.purple { {
+        .menu-btn.secondary, .menu-btn.purple, .menu-btn.lang { {
             background: linear-gradient(45deg, #00d4ff, #0099cc);
             box-shadow: 0 5px 20px rgba(0,212,255,0.4);
         }
@@ -267,8 +267,9 @@
             <div class="menu-title">🦞 龍蝦大冒險</div>
             <button class="menu-btn" onclick="startGame()">🎮 開始遊戲</button>
             <button class="menu-btn shop" onclick="openShop()">🏪 商店</button>
-            <button class=.menu-btn.secondary, .menu-btn.purple {" onclick="openLeaderboard()">📊 排行榜</button>
+            <button class=.menu-btn.secondary, .menu-btn.purple, .menu-btn.lang {" onclick="openLeaderboard()">📊 排行榜</button>
             <button class="menu-btn purple" onclick="showAchievements()">🏅 成就</button>
+            <button class="menu-btn lang" onclick="toggleLanguage()">🌐 語言</button>
         </div>
         <div id="shop">
             <span class="closeBtn" onclick="closeShop()">✕</span>
@@ -885,3 +886,111 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+// ========== 多語言系統 ==========
+const translations = {
+    zh: {
+        title: '🦞 龍蝦大冒險 - 收集金幣買裝備！',
+        start: '開始遊戲',
+        shop: '商店',
+        leaderboard: '排行榜',
+        achievements: '成就',
+        coins: '金幣',
+        highScore: '最高分',
+        level: '等級',
+        combo: '連擊',
+        instructions: '電腦：← → 鍵 / 手機：觸控螢幕左右移動\n接金幣💰避開炸彈💣！',
+        gameOver: '遊戲結束！',
+        finalScore: '最終得分',
+        newHighScore: '新紀錄！',
+        playAgain: '再玩一次',
+        backToMenu: '返回選單',
+        buy: '購買',
+        max: '已滿',
+        continue: '繼續',
+        pause: '暫停',
+        resume: '繼續遊戲',
+        quit: '離開',
+        unlocked: '成就解鎖！',
+        luckyRain: '幸運雨 🌈',
+        evolution: {
+            0: '小龍蝦',
+            500: '火焰龍',
+            2000: '雷電龍',
+            5000: '鑽石龍',
+            10000: '龍蝦王'
+        }
+    },
+    en: {
+        title: '🦞 Lobster Adventure - Collect Coins & Buy Gear!',
+        start: 'Start Game',
+        shop: 'Shop',
+        leaderboard: 'Leaderboard',
+        achievements: 'Achievements',
+        coins: 'Coins',
+        highScore: 'High Score',
+        level: 'Level',
+        combo: 'Combo',
+        instructions: 'PC: ← → keys / Mobile: touch left/right\nCollect coins💰 Avoid bombs💣!',
+        gameOver: 'Game Over!',
+        finalScore: 'Final Score',
+        newHighScore: 'New Record!',
+        playAgain: 'Play Again',
+        backToMenu: 'Back to Menu',
+        buy: 'Buy',
+        max: 'MAX',
+        continue: 'Continue',
+        pause: 'Pause',
+        resume: 'Resume',
+        quit: 'Quit',
+        unlocked: 'Achievement Unlocked!',
+        luckyRain: 'Lucky Rain 🌈',
+        evolution: {
+            0: 'Baby Lobster',
+            500: 'Fire Lobster',
+            2000: 'Thunder Lobster',
+            5000: 'Diamond Lobster',
+            10000: 'Lobster King'
+        }
+    }
+};
+
+let currentLang = localStorage.getItem('lobsterLang') || 'zh';
+
+function t(key) {
+    return translations[currentLang][key] || key;
+}
+
+function toggleLanguage() {
+    currentLang = currentLang === 'zh' ? 'en' : 'zh';
+    localStorage.setItem('lobsterLang', currentLang);
+    updateLanguageUI();
+    initSpecialFeatures();
+}
+
+function updateLanguageUI() {
+    // 更新所有可翻譯的文字
+    document.title = t('title');
+    document.querySelector('h1').textContent = t('title');
+    
+    // 選單按鈕
+    const menuButtons = document.querySelectorAll('.menu-btn, .menu-title + button, #menu button');
+    if (menuButtons[0]) menuButtons[0].textContent = t('start');
+    if (menuButtons[1]) menuButtons[1].textContent = t('shop');
+    
+    // 統計數據
+    document.querySelectorAll('.stat').forEach(stat => {
+        const icon = stat.querySelector('.stat-icon');
+        if (icon) {
+            if (icon.textContent === '💰') stat.querySelector('.stat-value').textContent = t('coins') + ': ' + gameState.coins;
+            if (icon.textContent === '🏆') stat.querySelector('.stat-value').textContent = t('highScore') + ': ' + gameState.highScore;
+        }
+    });
+    
+    // 說明文字
+    document.querySelector('.instructions').innerHTML = t('instructions').replace('\n', '<br>');
+    
+    // 遊戲結束畫面
+    const gameOverText = document.querySelector('#gameOverText');
+    if (gameOverText) gameOverText.textContent = t('gameOver');
+}
