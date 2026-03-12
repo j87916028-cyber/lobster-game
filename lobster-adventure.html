@@ -1190,7 +1190,10 @@ function addHelpButton() {
     btn.style.cssText = 'position:fixed;bottom:20px;left:20px;width:50px;height:50px;background:linear-gradient(135deg,#e94560,#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.5rem;cursor:pointer;z-index:1000;box-shadow:0 4px 15px rgba(0,0,0,0.3);';
     btn.textContent = '❓';
     btn.onclick = function() {
-        alert('🦞 龍蝦大冒險\n\n操作：\n• ← → 鍵或滑鼠移動\n• 手機左右滑動\n目標：接金幣🪙 避開炸彈💣');
+        const m = document.createElement('div');
+        m.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;';
+        m.innerHTML = '<div style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:30px;border-radius:20px;max-width:350px;text-align:center;"><h2 style="color:#ff6b6b;margin-bottom:15px;">🦞 龍蝦大冒險</h2><p style="color:#ccc;margin:8px 0;">← → 鍵或滑鼠移動</p><p style="color:#ccc;margin:8px 0;">手機左右滑動</p><p style="color:#ffd700;margin:8px 0;">目標：接金幣🪙 避開炸彈💣</p><button onclick="this.parentElement.parentElement.remove()" style="margin-top:20px;padding:10px 30px;background:#e94560;border:none;border-radius:10px;color:white;cursor:pointer;">關閉</button></div>';
+        document.body.appendChild(m);
     };
     document.body.appendChild(btn);
 }
