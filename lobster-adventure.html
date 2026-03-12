@@ -365,7 +365,7 @@ function togglePause() {
     if (paused) {
         clearInterval(gameLoop);
         clearInterval(spawnLoop);
-        alert("遊戲暫停！按下確定繼續");
+        showPauseMenu();
     } else {
         gameLoop = setInterval(updateGame, 25);
         spawnLoop = setInterval(spawnItem, 800);
