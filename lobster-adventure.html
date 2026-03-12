@@ -1224,3 +1224,15 @@ window.onload = function() {
     console.log('🦞 龍蝦大冒險 loaded!');
 };
 </script>
+
+<script>
+// 遊戲狀態監控
+document.addEventListener('visibilitychange', function() {
+    if(document.hidden && gameRunning) {
+        console.log('🔔 遊戲暫停（分頁隱藏）');
+    }
+    if(!document.hidden && gameRunning) {
+        console.log('🔔 遊戲繼續');
+    }
+});
+</script>
