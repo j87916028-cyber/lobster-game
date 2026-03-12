@@ -85,7 +85,7 @@
         .item {
             position: absolute;
             font-size: 40px;
-            animation: fall linear forwards;
+            animation: fall linear forwards;cursor: default;
             z-index: 5;
         }
         @keyframes fall {
@@ -357,7 +357,23 @@
             btn.addEventListener('touchend', stopMove);
         });
         
-        function startGame() {
+        let paused = false;
+
+function togglePause() {
+    if (!gameRunning) return;
+    paused = !paused;
+    if (paused) {
+        clearInterval(gameLoop);
+        clearInterval(spawnLoop);
+        alert("遊戲暫停！按下確定繼續");
+    } else {
+        gameLoop = setInterval(updateGame, 25);
+        spawnLoop = setInterval(spawnItem, 800);
+        updatePlayerPosition();
+    }
+}
+
+function startGame() {
             document.getElementById('menu').style.display = 'none';
             gameRunning = true;
             score = 0;
@@ -371,6 +387,7 @@
             updateCombo();
             document.querySelectorAll('.item, .combo-text').forEach(e => e.remove());
             gameLoop = setInterval(updateGame, 25);
+            document.addEventListener("keydown", (e) => { if(e.key === "p" || e.key === "P") togglePause(); });
             spawnLoop = setInterval(spawnItem, 800);
             updatePlayerPosition();
         }
