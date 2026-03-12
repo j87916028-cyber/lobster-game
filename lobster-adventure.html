@@ -299,7 +299,7 @@
         <button class="mobile-btn" ontouchstart="moveRight()">➡️</button>
     </div>
 
-    <script>
+    <script defer>
         // ===== 遊戲狀態 =====
         let gameState = {
             coins: parseInt(localStorage.getItem('lobsterCoins') || '0'),
@@ -1209,7 +1209,7 @@ handleCollision = function(item, index) {
     originalHandleCollision(item, index);
 };
 
-<script>
+<script defer>
 // ========== 浮動幫助按鈕 ==========
 function addHelpButton() {
     const btn = document.createElement('div');
@@ -1227,7 +1227,7 @@ function addHelpButton() {
 setTimeout(addHelpButton, 3000);
 </script>
 
-<script>
+<script defer>
 // 遊戲載入完成提示
 window.onload = function() {
     console.log('🦞 龍蝦大冒險 loaded!');
