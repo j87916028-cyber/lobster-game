@@ -3,7 +3,7 @@
 - **Name:** 曉芸
 - **What to call them:** 曉芸
 - **Pronouns:** 
-- **Timezone:** 
+- **Timezone:** 台灣 (UTC+8)
 - **Notes:** 系統維運工程師，擅長電腦維修、網路、資料庫
 
 ## Context

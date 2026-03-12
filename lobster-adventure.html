@@ -429,7 +429,7 @@ function startGame() {
                 item.y += item.speed;
                 item.element.style.top = item.y + 'px';
                 
-                if (gameState.inventory if ((gameState.inventory.magnet || 0) >= 1 && gameState.inventory.magnet !== undefined && item.type !== 'bomb')if ((gameState.inventory.magnet || 0) >= 1 && gameState.inventory.magnet !== undefined && item.type !== 'bomb') gameState.inventory.magnet if ((gameState.inventory.magnet || 0) >= 1 && gameState.inventory.magnet !== undefined && item.type !== 'bomb')if ((gameState.inventory.magnet || 0) >= 1 && gameState.inventory.magnet !== undefined && item.type !== 'bomb') gameState.inventory.magnet > 0 && item.type !== 'bomb') {
+                if ((gameState.inventory.magnet || 0) > 0 && item.type !== 'bomb') {
                     const itemX = parseFloat(item.element.style.left);
                     const dist = itemX - playerX;
                     if (Math.abs(dist) < 200) {
