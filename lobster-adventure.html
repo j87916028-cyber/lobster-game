@@ -289,6 +289,7 @@
     <script>
         // ===== 遊戲狀態 =====
         let gameState = {
+            lastPlayed: null,
             coins: parseInt(localStorage.getItem('lobsterCoins') || '0'),
             highScore: parseInt(localStorage.getItem('lobsterHighScore') || '0'),
             inventory: JSON.parse(localStorage.getItem('lobsterInventory') || '{}')
@@ -383,6 +384,18 @@ function startGame() {
             playerX = 360;
             player.style.left = playerX + 'px';
             player.classList.add('bouncing');
+            const today = new Date().toDateString();
+            if(gameState.lastPlayed !== today) {
+                const yesterday = new Date(Date.now() - 86400000).toDateString();
+                if(gameState.lastPlayed === yesterday) {
+                    gameState.streak = (gameState.streak || 0) + 1;
+                    showComboText('🔥 連續 ' + gameState.streak + ' 天！');
+                } else {
+                    gameState.streak = 1;
+                }
+                gameState.lastPlayed = today;
+                localStorage.setItem('lobsterGameState', JSON.stringify(gameState));
+            }
             updateLives();
             updateCombo();
             if(combo >= 10) player.style.filter = 'drop-shadow(0 0 20px #ff6b6b) hue-rotate(30deg)';
@@ -448,6 +461,10 @@ function startGame() {
             
             currentLevel = Math.floor(score / 500) + 1;
             document.getElementById('level').textContent = currentLevel;
+                if(currentLevel > 1) {
+                    showComboText('關卡 ' + currentLevel + '! 💪');
+                    createParticles(playerX + 40, 380, '#00ff00');
+                }
         }
         
         function handleCollision(item, index) {
