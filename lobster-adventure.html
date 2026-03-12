@@ -576,9 +576,15 @@ function startGame() {
         
         function buyItem(item) {
             const owned = gameState.inventory[item.id] || 0;
-            if (owned >= item.maxLevel) { alert('已滿等！'); return; }
+            if (owned >= item.maxLevel) { const m = document.createElement('div');
+        m.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;';
+        m.innerHTML = '<div style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:30px;border-radius:20px;text-align:center;"><p style="color:#ff6b6b;font-size:1.2rem;">已滿等！</p><button onclick="this.parentElement.parentElement.remove()" style="margin-top:15px;padding:8px 20px;background:#e94560;border:none;border-radius:8px;color:white;cursor:pointer;">關閉</button></div>';
+        document.body.appendChild(m); return; }
             const price = item.price * (owned + 1);
-            if (gameState.coins < price) { alert('金幣不足！需要 ' + price + ' 💰'); return; }
+            if (gameState.coins < price) { const m = document.createElement('div');
+        m.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;';
+        m.innerHTML = '<div style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:30px;border-radius:20px;text-align:center;"><p style="color:#ff6b6b;font-size:1.2rem;">金幣不足！需要 ' + price + ' 💰</p><button onclick="this.parentElement.parentElement.remove()" style="margin-top:15px;padding:8px 20px;background:#e94560;border:none;border-radius:8px;color:white;cursor:pointer;">關閉</button></div>';
+        document.body.appendChild(m); return; }
             
             gameState.coins -= price;
             gameState.inventory[item.id] = owned + 1;
@@ -588,7 +594,10 @@ function startGame() {
         initSpecialFeatures();
             document.getElementById('shopCoins').textContent = gameState.coins;
             renderShop();
-            alert('購買成功！');
+            const m = document.createElement('div');
+        m.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;';
+        m.innerHTML = '<div style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:30px;border-radius:20px;text-align:center;"><p style="color:#4caf50;font-size:1.2rem;">購買成功！🎉</p><button onclick="this.parentElement.parentElement.remove()" style="margin-top:15px;padding:8px 20px;background:#4caf50;border:none;border-radius:8px;color:white;cursor:pointer;">關閉</button></div>';
+        document.body.appendChild(m);
         }
         
         function openLeaderboard() {
