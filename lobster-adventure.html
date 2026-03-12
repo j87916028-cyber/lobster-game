@@ -1235,6 +1235,10 @@ document.addEventListener('visibilitychange', function() {
             console.log('⏸️ 遊戲已暫停');
         } else if(!document.hidden) {
             console.log('🔔 遊戲繼續');
+            // 恢復 AudioContext
+            if(audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
         }
     });
 </script>
