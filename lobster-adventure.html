@@ -9,6 +9,8 @@
         body {
             font-family: 'Comic Sans MS', cursive, sans-serif;
             background: linear-gradient(135deg, #0c0c1e 0%, #1a1a3e 50%, #16213e 100%);
+            background-size: 400% 400%;
+            animation: bgShift 15s ease infinite;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
@@ -26,6 +28,15 @@
             animation: glow 2s ease-in-out infinite alternate;
         }
         @keyframes glow {
+        @keyframes bgShift {
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
             from { text-shadow: 0 0 30px #ffd700, 0 0 60px #ff8c00; }
             to { text-shadow: 0 0 50px #ffd700, 0 0 100px #ff8c00, 0 0 150px #ff4500; }
         }
@@ -108,6 +119,10 @@
             z-index: 100;
         }
         @keyframes comboAnim {
+        @keyframes floatUp {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-50px); opacity: 0; }
+        }
             0% { transform: scale(0.5); opacity: 1; }
             50% { transform: scale(1.5); }
             100% { transform: scale(1) translateY(-50px); opacity: 0; }
@@ -149,6 +164,11 @@
             box-shadow: 0 5px 20px rgba(255,215,0,0.4);
         }
         .menu-btn:hover {
+            transform: scale(1.1) rotate(-2deg);
+            box-shadow: 0 10px 40px rgba(255,215,0,0.6);
+        }
+        .menu-btn::before { content: ""; position: absolute; top: -2px; left: -2px; right: -2px; bottom: -2px; background: linear-gradient(45deg, #ffd700, #ff8c00, #ffd700); border-radius: 50px; z-index: -1; animation: btnGlow 2s linear infinite; }
+        @keyframes btnGlow { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
             transform: scale(1.1) rotate(-2deg);
             box-shadow: 0 10px 40px rgba(255,215,0,0.6);
         }
@@ -308,6 +328,8 @@
         let playerX = 360;
         let score = 0;
         let gameRunning = false;
+            player.style.transition = "transform 0.5s";
+            player.style.transform = "rotate(360deg) scale(0)";
         let items = [];
         let gameLoop, spawnLoop;
         let currentLevel = 1;
@@ -321,7 +343,12 @@
         const player = document.getElementById('player');
         const gameContainer = document.getElementById('gameContainer');
         
-        document.getElementById('coins').textContent = gameState.coins;
+        const scorePopup = document.createElement("div");
+                scorePopup.textContent = "+" + coins;
+                scorePopup.style.cssText = "position:absolute;left:" + (playerX + 20) + "px;top:350px;color:#ffd700;font-weight:bold;font-size:1.2rem;z-index:100;animation:floatUp 0.8s ease forwards;pointer-events:none;";
+                document.getElementById("gameContainer").appendChild(scorePopup);
+                setTimeout(() => scorePopup.remove(), 800);
+                document.getElementById("coins").textContent = gameState.coins;
         document.getElementById('highScore').textContent = gameState.highScore;
         
         let keys = {};
@@ -494,7 +521,9 @@ function startGame() {
             } else if (item.type === 'bomb' || (bossActive && item.type === 'boss')) { playSound('bomb');
                 const shield = gameState.inventory.shield || 0;
                 if (shield > 0) {
+                    player.style.filter = "drop-shadow(0 0 15px #00ffff)";
                     gameState.inventory.shield = shield - 1;
+                    player.style.filter = "drop-shadow(0 5px 5px rgba(0,0,0,0.3))";
                     localStorage.setItem('lobsterInventory', JSON.stringify(gameState.inventory));
                 } else {
                     lives--; combo = 0; updateLives(); updateCombo();
@@ -564,6 +593,8 @@ function startGame() {
         
         function endGame() {
             gameRunning = false;
+            player.style.transition = "transform 0.5s";
+            player.style.transform = "rotate(360deg) scale(0)";
             clearInterval(gameLoop);
             clearInterval(spawnLoop);
             player.classList.remove('bouncing');
@@ -587,7 +618,12 @@ function startGame() {
             alert('遊戲結束！\n得分: ' + score + '\n獲得金幣: +' + earnedCoins);
             document.getElementById('menu').style.display = 'flex';
             document.getElementById('highScore').textContent = gameState.highScore;
-            document.getElementById('coins').textContent = gameState.coins;
+            const scorePopup = document.createElement("div");
+                scorePopup.textContent = "+" + coins;
+                scorePopup.style.cssText = "position:absolute;left:" + (playerX + 20) + "px;top:350px;color:#ffd700;font-weight:bold;font-size:1.2rem;z-index:100;animation:floatUp 0.8s ease forwards;pointer-events:none;";
+                document.getElementById("gameContainer").appendChild(scorePopup);
+                setTimeout(() => scorePopup.remove(), 800);
+                document.getElementById("coins").textContent = gameState.coins;
         }
         
         function openShop() {
@@ -619,7 +655,12 @@ function startGame() {
             gameState.coins -= price;
             gameState.inventory[item.id] = owned + 1;
             localStorage.setItem('lobsterInventory', JSON.stringify(gameState.inventory));
-            document.getElementById('coins').textContent = gameState.coins;
+            const scorePopup = document.createElement("div");
+                scorePopup.textContent = "+" + coins;
+                scorePopup.style.cssText = "position:absolute;left:" + (playerX + 20) + "px;top:350px;color:#ffd700;font-weight:bold;font-size:1.2rem;z-index:100;animation:floatUp 0.8s ease forwards;pointer-events:none;";
+                document.getElementById("gameContainer").appendChild(scorePopup);
+                setTimeout(() => scorePopup.remove(), 800);
+                document.getElementById("coins").textContent = gameState.coins;
             document.getElementById('shopCoins').textContent = gameState.coins;
             renderShop();
             alert('購買成功！');
