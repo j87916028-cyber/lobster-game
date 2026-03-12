@@ -566,7 +566,14 @@
             document.getElementById('leaderboard').style.display = 'flex';
             renderLeaderboard();
         }
-        function closeLeaderboard() { document.getElementById('leaderboard').style.display = 'none'; }
+        function closeLeaderboard() { 
+            document.getElementById('leaderboard').style.display = 'none';
+            // 關閉排行榜後繼續遊戲
+            if (!gameRunning) {
+                gameRunning = true;
+                updatePlayerPosition();
+            }
+        }
         
         function addToLeaderboard(name, score) {
             let board = JSON.parse(localStorage.getItem('lobsterLeaderboard') || '[]');
