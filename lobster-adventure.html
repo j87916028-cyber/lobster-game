@@ -461,7 +461,17 @@
             }
             
             item.element.classList.add('collected');
-            setTimeout(() => { item.element.remove(); items.splice(items.indexOf(item), 1); }, 300);
+            
+            // 確保道具被正確移除
+            setTimeout(() => {
+                try {
+                    if (item.element && item.element.parentNode) {
+                        item.element.remove();
+                    }
+                    const idx = items.indexOf(item);
+                    if (idx > -1) items.splice(idx, 1);
+                } catch(e) {}
+            }, 300);
         }
         
         function addCombo() {
