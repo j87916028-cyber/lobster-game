@@ -544,10 +544,19 @@ function startGame() {
             gameState.coins += earnedCoins;
             localStorage.setItem('lobsterCoins', gameState.coins);
             
-            const name = prompt('🎮 遊戲結束！\n得分: ' + score + '\n獲得金幣: ' + earnedCoins + '\n\n輸入你的名字:') || '匿名';
-            addToLeaderboard(name, score);
-            
-            alert('遊戲結束！\n得分: ' + score + '\n獲得金幣: +' + earnedCoins);
+            const m = document.createElement('div');
+            m.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);z-index:9999;display:flex;align-items:center;justify-content:center;';
+            m.innerHTML = '<div style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:40px;border-radius:25px;text-align:center;max-width:350px;"><h2 style="color:#ff6b6b;margin-bottom:20px;">🎮 遊戲結束！</h2><p style="color:#fff;font-size:1.5rem;margin:10px 0;">得分: ' + score + '</p><p style="color:#ffd700;font-size:1.2rem;margin:10px 0;">獲得金幣: +' + earnedCoins + '</p><input id="playerNameInput" type="text" placeholder="輸入名字" style="margin:20px 0;padding:12px;border-radius:10px;border:none;width:80%;text-align:center;" value="匿名"><br><button onclick="saveScore()" style="padding:12px 30px;background:#4caf50;border:none;border-radius:10px;color:white;font-size:1.1rem;cursor:pointer;">儲存</button></div>';
+            document.body.appendChild(m);
+            window.saveScore = function() {
+                const name = document.getElementById('playerNameInput').value || '匿名';
+                addToLeaderboard(name, score);
+                m.remove();
+                document.getElementById('menu').style.display = 'flex';
+                document.getElementById('highScore').textContent = gameState.highScore;
+                document.getElementById('coins').textContent = gameState.coins;
+                initSpecialFeatures();
+            };
             document.getElementById('menu').style.display = 'flex';
             document.getElementById('highScore').textContent = gameState.highScore;
             document.getElementById('coins').textContent = gameState.coins;
