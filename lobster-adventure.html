@@ -9,8 +9,6 @@
         body {
             font-family: 'Comic Sans MS', cursive, sans-serif;
             background: linear-gradient(135deg, #0c0c1e 0%, #1a1a3e 50%, #16213e 100%);
-            background-size: 400% 400%;
-            animation: bgShift 15s ease infinite;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
@@ -28,15 +26,6 @@
             animation: glow 2s ease-in-out infinite alternate;
         }
         @keyframes glow {
-        @keyframes bgShift {
-        @keyframes twinkle {
-            0%, 100% { opacity: 0.3; }
-            50% { opacity: 1; }
-        }
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
             from { text-shadow: 0 0 30px #ffd700, 0 0 60px #ff8c00; }
             to { text-shadow: 0 0 50px #ffd700, 0 0 100px #ff8c00, 0 0 150px #ff4500; }
         }
@@ -119,10 +108,6 @@
             z-index: 100;
         }
         @keyframes comboAnim {
-        @keyframes floatUp {
-            0% { transform: translateY(0); opacity: 1; }
-            100% { transform: translateY(-50px); opacity: 0; }
-        }
             0% { transform: scale(0.5); opacity: 1; }
             50% { transform: scale(1.5); }
             100% { transform: scale(1) translateY(-50px); opacity: 0; }
@@ -164,11 +149,6 @@
             box-shadow: 0 5px 20px rgba(255,215,0,0.4);
         }
         .menu-btn:hover {
-            transform: scale(1.1) rotate(-2deg);
-            box-shadow: 0 10px 40px rgba(255,215,0,0.6);
-        }
-        .menu-btn::before { content: ""; position: absolute; top: -2px; left: -2px; right: -2px; bottom: -2px; background: linear-gradient(45deg, #ffd700, #ff8c00, #ffd700); border-radius: 50px; z-index: -1; animation: btnGlow 2s linear infinite; }
-        @keyframes btnGlow { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
             transform: scale(1.1) rotate(-2deg);
             box-shadow: 0 10px 40px rgba(255,215,0,0.6);
         }
@@ -309,8 +289,6 @@
     <script>
         // ===== 遊戲狀態 =====
         let gameState = {
-            dailyBonus: true,
-            lastPlayed: null,
             coins: parseInt(localStorage.getItem('lobsterCoins') || '0'),
             highScore: parseInt(localStorage.getItem('lobsterHighScore') || '0'),
             inventory: JSON.parse(localStorage.getItem('lobsterInventory') || '{}')
@@ -328,27 +306,18 @@
         let playerX = 360;
         let score = 0;
         let gameRunning = false;
-            player.style.transition = "transform 0.5s";
-            player.style.transform = "rotate(360deg) scale(0)";
         let items = [];
         let gameLoop, spawnLoop;
         let currentLevel = 1;
-        let bossActive = false;
-        let bossHP = 10;
         let lives = 3;
-        let combo = 0; player.style.filter = 'drop-shadow(0 5px 5px rgba(0,0,0,0.3))';
+        let combo = 0;
         let comboTimer = null;
         let lastCollectTime = 0;
         
         const player = document.getElementById('player');
         const gameContainer = document.getElementById('gameContainer');
         
-        const scorePopup = document.createElement("div");
-                scorePopup.textContent = "+" + coins;
-                scorePopup.style.cssText = "position:absolute;left:" + (playerX + 20) + "px;top:350px;color:#ffd700;font-weight:bold;font-size:1.2rem;z-index:100;animation:floatUp 0.8s ease forwards;pointer-events:none;";
-                document.getElementById("gameContainer").appendChild(scorePopup);
-                setTimeout(() => scorePopup.remove(), 800);
-                document.getElementById("coins").textContent = gameState.coins;
+        document.getElementById('coins').textContent = gameState.coins;
         document.getElementById('highScore').textContent = gameState.highScore;
         
         let keys = {};
@@ -410,34 +379,12 @@ function startGame() {
             score = 0;
             items = [];
             lives = 3 + (gameState.inventory.life || 0);
-            combo = 0; player.style.filter = 'drop-shadow(0 5px 5px rgba(0,0,0,0.3))';
+            combo = 0;
             playerX = 360;
             player.style.left = playerX + 'px';
             player.classList.add('bouncing');
-            const today = new Date().toDateString();
-            if(gameState.lastPlayed !== today) {
-                const yesterday = new Date(Date.now() - 86400000).toDateString();
-                if(gameState.lastPlayed === yesterday) {
-                    gameState.streak = (gameState.streak || 0) + 1;
-                    showComboText('🔥 連續 ' + gameState.streak + ' 天！');
-                } else {
-                    gameState.streak = 1;
-                }
-                gameState.lastPlayed = today;
-            if(gameState.dailyBonus) {
-                gameState.coins += 50;
-                gameState.dailyBonus = false;
-                showComboText('🎁 登入獎勵 +50 金幣！');
-                localStorage.setItem('lobsterCoins', gameState.coins);
-            localStorage.setItem('lobsterGameState', JSON.stringify(gameState));
-            }
-                localStorage.setItem('lobsterGameState', JSON.stringify(gameState));
-            }
             updateLives();
             updateCombo();
-            if(combo >= 10) player.style.filter = 'drop-shadow(0 0 20px #ff6b6b) hue-rotate(30deg)';
-            else if(combo >= 5) player.style.filter = 'drop-shadow(0 0 10px #ffd700)';
-            else player.style.filter = 'drop-shadow(0 5px 5px rgba(0,0,0,0.3))';
             document.querySelectorAll('.item, .combo-text').forEach(e => e.remove());
             gameLoop = setInterval(updateGame, 25);
             document.addEventListener("keydown", (e) => { if(e.key === "p" || e.key === "P") togglePause(); });
@@ -497,15 +444,7 @@ function startGame() {
             });
             
             currentLevel = Math.floor(score / 500) + 1;
-            if(currentLevel % 5 === 0 && !bossActive) {
-                bossActive = true;
-                showComboText('👑 BOSS來了！');
-            }
             document.getElementById('level').textContent = currentLevel;
-                if(currentLevel > 1) {
-                    showComboText('關卡 ' + currentLevel + '! 💪');
-                    createParticles(playerX + 40, 380, '#00ff00');
-                }
         }
         
         function handleCollision(item, index) {
@@ -518,18 +457,13 @@ function startGame() {
             } else if (item.type === 'gem') { playSound('gem');
                 score += 50 * multiplier * scoreMultiplier;
                 addCombo();
-            } else if (item.type === 'bomb' || (bossActive && item.type === 'boss')) { playSound('bomb');
+            } else if (item.type === 'bomb') { playSound('bomb');
                 const shield = gameState.inventory.shield || 0;
                 if (shield > 0) {
-                    player.style.filter = "drop-shadow(0 0 15px #00ffff)";
                     gameState.inventory.shield = shield - 1;
-                    player.style.filter = "drop-shadow(0 5px 5px rgba(0,0,0,0.3))";
                     localStorage.setItem('lobsterInventory', JSON.stringify(gameState.inventory));
                 } else {
                     lives--; combo = 0; updateLives(); updateCombo();
-            if(combo >= 10) player.style.filter = 'drop-shadow(0 0 20px #ff6b6b) hue-rotate(30deg)';
-            else if(combo >= 5) player.style.filter = 'drop-shadow(0 0 10px #ffd700)';
-            else player.style.filter = 'drop-shadow(0 5px 5px rgba(0,0,0,0.3))';
                     if (lives <= 0) endGame();
                 }
             } else if (item.type === 'gift') {
@@ -564,9 +498,6 @@ function startGame() {
             combo = (now - lastCollectTime < 500) ? combo + 1 : 1;
             lastCollectTime = now;
             updateCombo();
-            if(combo >= 10) player.style.filter = 'drop-shadow(0 0 20px #ff6b6b) hue-rotate(30deg)';
-            else if(combo >= 5) player.style.filter = 'drop-shadow(0 0 10px #ffd700)';
-            else player.style.filter = 'drop-shadow(0 5px 5px rgba(0,0,0,0.3))';
             clearTimeout(comboTimer);
             comboTimer = setTimeout(() => { combo = 0; updateCombo(); }, 1500);
         }
@@ -593,16 +524,11 @@ function startGame() {
         
         function endGame() {
             gameRunning = false;
-            player.style.transition = "transform 0.5s";
-            player.style.transform = "rotate(360deg) scale(0)";
             clearInterval(gameLoop);
             clearInterval(spawnLoop);
             player.classList.remove('bouncing');
             
             if (score > gameState.highScore) {
-                createParticles(400, 250, '#ffd700');
-                createParticles(400, 250, '#ff6b6b');
-                setTimeout(() => createParticles(400, 250, '#00ffff'), 200);
                 gameState.highScore = score;
                 localStorage.setItem('lobsterHighScore', score);
             }
@@ -610,7 +536,6 @@ function startGame() {
             const earnedCoins = Math.floor(score / 10);
             gameState.coins += earnedCoins;
             localStorage.setItem('lobsterCoins', gameState.coins);
-            localStorage.setItem('lobsterGameState', JSON.stringify(gameState));
             
             const name = prompt('🎮 遊戲結束！\n得分: ' + score + '\n獲得金幣: ' + earnedCoins + '\n\n輸入你的名字:') || '匿名';
             addToLeaderboard(name, score);
@@ -618,12 +543,7 @@ function startGame() {
             alert('遊戲結束！\n得分: ' + score + '\n獲得金幣: +' + earnedCoins);
             document.getElementById('menu').style.display = 'flex';
             document.getElementById('highScore').textContent = gameState.highScore;
-            const scorePopup = document.createElement("div");
-                scorePopup.textContent = "+" + coins;
-                scorePopup.style.cssText = "position:absolute;left:" + (playerX + 20) + "px;top:350px;color:#ffd700;font-weight:bold;font-size:1.2rem;z-index:100;animation:floatUp 0.8s ease forwards;pointer-events:none;";
-                document.getElementById("gameContainer").appendChild(scorePopup);
-                setTimeout(() => scorePopup.remove(), 800);
-                document.getElementById("coins").textContent = gameState.coins;
+            document.getElementById('coins').textContent = gameState.coins;
         }
         
         function openShop() {
@@ -655,12 +575,7 @@ function startGame() {
             gameState.coins -= price;
             gameState.inventory[item.id] = owned + 1;
             localStorage.setItem('lobsterInventory', JSON.stringify(gameState.inventory));
-            const scorePopup = document.createElement("div");
-                scorePopup.textContent = "+" + coins;
-                scorePopup.style.cssText = "position:absolute;left:" + (playerX + 20) + "px;top:350px;color:#ffd700;font-weight:bold;font-size:1.2rem;z-index:100;animation:floatUp 0.8s ease forwards;pointer-events:none;";
-                document.getElementById("gameContainer").appendChild(scorePopup);
-                setTimeout(() => scorePopup.remove(), 800);
-                document.getElementById("coins").textContent = gameState.coins;
+            document.getElementById('coins').textContent = gameState.coins;
             document.getElementById('shopCoins').textContent = gameState.coins;
             renderShop();
             alert('購買成功！');
@@ -692,81 +607,47 @@ function startGame() {
             const container = document.getElementById('leaderboardList');
             container.innerHTML = board.map((entry, i) => `<div style="display:flex;justify-content:space-between;padding:12px;margin:8px 0;background:rgba(255,255,255,0.1);border-radius:10px;"><span>${i+1}. ${entry.name}</span><span>${entry.score} 分</span></div>`).join('') || '<p>還沒有人上榜！</p>';
         }
-    </script>
-</body>
-</html>
 
-        // ========== 音效系統 ==========
+        // Sound Effect Functions
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         let audioCtx = null;
-        
-        function initAudio() {
-            if (!audioCtx) audioCtx = new AudioContext();
-        }
-        
         function playSound(type) {
             try {
-                initAudio();
+                if(!audioCtx) audioCtx = new AudioContext();
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
-                
-                if (type === 'coin') {
-                    osc.frequency.value = 800;
-                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-                    osc.start();
-                    osc.stop(audioCtx.currentTime + 0.1);
-                } else if (type === 'gem') {
-                    osc.frequency.value = 1200;
-                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
-                    osc.start();
-                    osc.stop(audioCtx.currentTime + 0.15);
-                } else if (type === 'bomb') {
-                    osc.type = 'sawtooth';
-                    osc.frequency.value = 150;
-                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-                    osc.start();
-                    osc.stop(audioCtx.currentTime + 0.3);
-                } else if (type === 'powerup') {
-                    osc.frequency.value = 600;
-                    osc.frequency.setValueAtTime(600, audioCtx.currentTime);
-                    osc.frequency.linearRampToValueAtTime(1200, audioCtx.currentTime + 0.2);
-                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
-                    osc.start();
-                    osc.stop(audioCtx.currentTime + 0.2);
-                }
+                if(type === 'coin') { osc.frequency.value = 800; gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1); osc.start(); osc.stop(audioCtx.currentTime + 0.1); }
+                else if(type === 'gem') { osc.frequency.value = 1200; gain.gain.setValueAtTime(0.15, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15); osc.start(); osc.stop(audioCtx.currentTime + 0.15); }
+                else if(type === 'bomb') { osc.type = 'sawtooth'; osc.frequency.value = 150; gain.gain.setValueAtTime(0.2, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3); osc.start(); osc.stop(audioCtx.currentTime + 0.3); }
+                else if(type === 'powerup') { osc.frequency.value = 600; osc.frequency.linearRampToValueAtTime(1200, audioCtx.currentTime + 0.2); gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2); osc.start(); osc.stop(audioCtx.currentTime + 0.2); }
             } catch(e) {}
         }
 
-        // ========== 粒子效果 ==========
+
+        // Particle Effects
         function createParticles(x, y, color) {
             for(let i = 0; i < 8; i++) {
                 const p = document.createElement('div');
-                p.style.cssText = `position:absolute;left:${x}px;top:${y}px;width:8px;height:8px;background:${color};border-radius:50%;pointer-events:none;z-index:100;`;
+                p.style.cssText = 'position:absolute;left:'+x+'px;top:'+y+'px;width:8px;height:8px;background:'+color+';border-radius:50%;pointer-events:none;z-index:100;';
                 document.getElementById('gameContainer').appendChild(p);
-                
                 const angle = (Math.PI * 2 * i) / 8;
                 const speed = 3 + Math.random() * 3;
                 let vx = Math.cos(angle) * speed;
                 let vy = Math.sin(angle) * speed;
                 let life = 1;
-                
                 const animate = () => {
                     life -= 0.03;
                     if(life <= 0) { p.remove(); return; }
-                    x += vx;
-                    y += vy;
-                    vy += 0.2;
-                    p.style.left = x + 'px';
-                    p.style.top = y + 'px';
-                    p.style.opacity = life;
+                    x += vx; y += vy; vy += 0.2;
+                    p.style.left = x + 'px'; p.style.top = y + 'px'; p.style.opacity = life;
                     requestAnimationFrame(animate);
                 };
                 animate();
             }
         }
+
+    </script>
+</body>
+</html>
