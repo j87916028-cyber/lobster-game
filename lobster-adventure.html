@@ -1228,6 +1228,13 @@ window.onload = function() {
 <script>
 // 遊戲狀態監控
 document.addEventListener('visibilitychange', function() {
+        if(document.hidden && gameRunning) {
+            // 自動暫停
+            gameRunning = false;
+            clearInterval(gameLoop);
+            clearInterval(spawnLoop);
+            console.log('⏸️ 遊戲已暫停');
+        }
     if(document.hidden && gameRunning) {
         console.log('🔔 遊戲暫停（分頁隱藏）');
     }
