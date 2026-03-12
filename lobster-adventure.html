@@ -326,7 +326,7 @@
         
         function updatePlayerPosition() {
             if (!gameRunning) return;
-            const speed = 12 + (gameState.inventory.speed || 1) * 3;
+            const speed = 8 + (gameState.inventory.speed || 1) * 2;
             if (keys['ArrowLeft'] || keys['a']) playerX = Math.max(0, playerX - speed);
             if (keys['ArrowRight'] || keys['d']) playerX = Math.min(720, playerX + speed);
             player.style.left = playerX + 'px';
@@ -340,7 +340,7 @@
         
         function updateMobilePosition() {
             if (!gameRunning || !mobileMoving) return;
-            const speed = 12 + (gameState.inventory.speed || 1) * 3;
+            const speed = 8 + (gameState.inventory.speed || 1) * 2;
             if (mobileMoving === 'left') playerX = Math.max(0, playerX - speed);
             if (mobileMoving === 'right') playerX = Math.min(720, playerX + speed);
             player.style.left = playerX + 'px';
