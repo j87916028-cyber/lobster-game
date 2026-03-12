@@ -310,7 +310,7 @@
         let gameLoop, spawnLoop;
         let currentLevel = 1;
         let lives = 3;
-        let combo = 0;
+        let combo = 0; player.style.filter = 'drop-shadow(0 5px 5px rgba(0,0,0,0.3))';
         let comboTimer = null;
         let lastCollectTime = 0;
         
@@ -379,12 +379,15 @@ function startGame() {
             score = 0;
             items = [];
             lives = 3 + (gameState.inventory.life || 0);
-            combo = 0;
+            combo = 0; player.style.filter = 'drop-shadow(0 5px 5px rgba(0,0,0,0.3))';
             playerX = 360;
             player.style.left = playerX + 'px';
             player.classList.add('bouncing');
             updateLives();
             updateCombo();
+            if(combo >= 10) player.style.filter = 'drop-shadow(0 0 20px #ff6b6b) hue-rotate(30deg)';
+            else if(combo >= 5) player.style.filter = 'drop-shadow(0 0 10px #ffd700)';
+            else player.style.filter = 'drop-shadow(0 5px 5px rgba(0,0,0,0.3))';
             document.querySelectorAll('.item, .combo-text').forEach(e => e.remove());
             gameLoop = setInterval(updateGame, 25);
             document.addEventListener("keydown", (e) => { if(e.key === "p" || e.key === "P") togglePause(); });
@@ -451,19 +454,22 @@ function startGame() {
             const multiplier = (gameState.inventory.multi || 1);
             const scoreMultiplier = (gameState.inventory.x2score || 1);
             
-            if (item.type === 'coin') {
+            if (item.type === 'coin') { playSound('coin');
                 score += 10 * multiplier * scoreMultiplier;
                 addCombo();
-            } else if (item.type === 'gem') {
+            } else if (item.type === 'gem') { playSound('gem');
                 score += 50 * multiplier * scoreMultiplier;
                 addCombo();
-            } else if (item.type === 'bomb') {
+            } else if (item.type === 'bomb') { playSound('bomb');
                 const shield = gameState.inventory.shield || 0;
                 if (shield > 0) {
                     gameState.inventory.shield = shield - 1;
                     localStorage.setItem('lobsterInventory', JSON.stringify(gameState.inventory));
                 } else {
                     lives--; combo = 0; updateLives(); updateCombo();
+            if(combo >= 10) player.style.filter = 'drop-shadow(0 0 20px #ff6b6b) hue-rotate(30deg)';
+            else if(combo >= 5) player.style.filter = 'drop-shadow(0 0 10px #ffd700)';
+            else player.style.filter = 'drop-shadow(0 5px 5px rgba(0,0,0,0.3))';
                     if (lives <= 0) endGame();
                 }
             } else if (item.type === 'gift') {
@@ -474,10 +480,12 @@ function startGame() {
                 else if (item.element.textContent === '🛡️') gameState.inventory.shield = Math.min(5, (gameState.inventory.shield || 0) + 1);
                 else if (item.element.textContent === '🧲') gameState.inventory.magnet = Math.min(5, (gameState.inventory.magnet || 0) + 1);
                 localStorage.setItem('lobsterInventory', JSON.stringify(gameState.inventory));
-                showComboText('升級!');
+                showComboText('升級!'); playSound('powerup');
             }
             
             item.element.classList.add('collected');
+                if(item.type === 'coin') createParticles(playerX + 30, 380, '#ffd700');
+                else if(item.type === 'gem') createParticles(playerX + 30, 380, '#00ffff');
             
             // 確保道具被正確移除
             setTimeout(() => {
@@ -496,6 +504,9 @@ function startGame() {
             combo = (now - lastCollectTime < 500) ? combo + 1 : 1;
             lastCollectTime = now;
             updateCombo();
+            if(combo >= 10) player.style.filter = 'drop-shadow(0 0 20px #ff6b6b) hue-rotate(30deg)';
+            else if(combo >= 5) player.style.filter = 'drop-shadow(0 0 10px #ffd700)';
+            else player.style.filter = 'drop-shadow(0 5px 5px rgba(0,0,0,0.3))';
             clearTimeout(comboTimer);
             comboTimer = setTimeout(() => { combo = 0; updateCombo(); }, 1500);
         }
@@ -527,6 +538,9 @@ function startGame() {
             player.classList.remove('bouncing');
             
             if (score > gameState.highScore) {
+                createParticles(400, 250, '#ffd700');
+                createParticles(400, 250, '#ff6b6b');
+                setTimeout(() => createParticles(400, 250, '#00ffff'), 200);
                 gameState.highScore = score;
                 localStorage.setItem('lobsterHighScore', score);
             }
@@ -608,3 +622,78 @@ function startGame() {
     </script>
 </body>
 </html>
+
+        // ========== 音效系統 ==========
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+        
+        function initAudio() {
+            if (!audioCtx) audioCtx = new AudioContext();
+        }
+        
+        function playSound(type) {
+            try {
+                initAudio();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                if (type === 'coin') {
+                    osc.frequency.value = 800;
+                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.1);
+                } else if (type === 'gem') {
+                    osc.frequency.value = 1200;
+                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.15);
+                } else if (type === 'bomb') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.value = 150;
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.3);
+                } else if (type === 'powerup') {
+                    osc.frequency.value = 600;
+                    osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                    osc.frequency.linearRampToValueAtTime(1200, audioCtx.currentTime + 0.2);
+                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.2);
+                }
+            } catch(e) {}
+        }
+
+        // ========== 粒子效果 ==========
+        function createParticles(x, y, color) {
+            for(let i = 0; i < 8; i++) {
+                const p = document.createElement('div');
+                p.style.cssText = `position:absolute;left:${x}px;top:${y}px;width:8px;height:8px;background:${color};border-radius:50%;pointer-events:none;z-index:100;`;
+                document.getElementById('gameContainer').appendChild(p);
+                
+                const angle = (Math.PI * 2 * i) / 8;
+                const speed = 3 + Math.random() * 3;
+                let vx = Math.cos(angle) * speed;
+                let vy = Math.sin(angle) * speed;
+                let life = 1;
+                
+                const animate = () => {
+                    life -= 0.03;
+                    if(life <= 0) { p.remove(); return; }
+                    x += vx;
+                    y += vy;
+                    vy += 0.2;
+                    p.style.left = x + 'px';
+                    p.style.top = y + 'px';
+                    p.style.opacity = life;
+                    requestAnimationFrame(animate);
+                };
+                animate();
+            }
+        }
