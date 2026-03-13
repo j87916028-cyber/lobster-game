@@ -85,6 +85,16 @@
         .player-catch {
             animation: playerCatch 0.2s ease-out;
         }
+        
+        /* 受傷震動動畫 */
+        @keyframes damageShake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-10px); background: rgba(255,0,0,0.3); }
+            40% { transform: translateX(10px); }
+            60% { transform: translateX(-10px); }
+            80% { transform: translateX(10px); }
+        }
+        
         #score {
             position: absolute;
             top: 20px;
@@ -93,6 +103,23 @@
             background: rgba(0,0,0,0.5);
             padding: 10px 20px;
             border-radius: 10px;
+        }
+        #lives {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 1.5rem;
+            background: rgba(0,0,0,0.5);
+            padding: 10px 20px;
+            border-radius: 10px;
+        }
+        .life-lost {
+            animation: lifeLost 0.5s ease-out;
+        }
+        @keyframes lifeLost {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.5; }
+            100% { transform: scale(0); opacity: 0; }
         }
         #startBtn {
             position: absolute;
@@ -232,6 +259,7 @@
     <h1>🦞 龍蝦大戰</h1>
     <div id="gameContainer">
         <div id="score">分數: 0</div>
+        <div id="lives">❤️❤️❤️</div>
         <div id="player">🦞</div>
         <button id="startBtn">開始遊戲</button>
         <div id="gameOver">
@@ -268,9 +296,11 @@
         const btnLeft = document.getElementById('btnLeft');
         const btnRight = document.getElementById('btnRight');
         const btnPause = document.getElementById('btnPause');
+        const livesDisplay = document.getElementById('lives');
 
         let playerX = 370;
         let score = 0;
+        let lives = 3; // 生命值系統
         let highScore = parseInt(localStorage.getItem('lobsterGameHighScore')) || 0;
         
         // 初始化最高分顯示（頁面載入時就顯示 localStorage 的值）
@@ -383,6 +413,50 @@
             setTimeout(() => popup.remove(), 800);
         }
 
+        // 更新生命值顯示
+        function updateLivesDisplay() {
+            let hearts = '';
+            for (let i = 0; i < lives; i++) {
+                hearts += '❤️';
+            }
+            livesDisplay.textContent = hearts;
+        }
+
+        // 玩家受傷時的動畫
+        function triggerDamageAnimation() {
+            gameContainer.style.animation = 'none';
+            void gameContainer.offsetWidth; // 強制重繪
+            gameContainer.style.animation = 'damageShake 0.5s ease-out';
+        }
+
+        // 碰到炸彈時的處理（扣血而非直接結束）
+        function handleDamage() {
+            playSound('bomb');
+            lives--;
+            updateLivesDisplay();
+            
+            // 受傷閃爍效果
+            player.style.transition = 'opacity 0.1s';
+            player.style.opacity = '0.3';
+            setTimeout(() => {
+                player.style.opacity = '1';
+            }, 200);
+            
+            if (lives <= 0) {
+                endGame();
+            } else {
+                // 短暫無敵時間
+                gameRunning = false;
+                setTimeout(() => {
+                    if (lives > 0) {
+                        gameRunning = true;
+                        lastTime = performance.now();
+                        animationFrameId = requestAnimationFrame(gameLoop);
+                    }
+                }, 1000);
+            }
+        }
+
         // 玩家接到物品時的動畫
         function triggerPlayerCatchAnimation() {
             player.classList.remove('player-catch');
@@ -453,9 +527,10 @@
                     bubble.x < playerRight) {
                     
                     if (bubble.isBad) {
-                        playSound('bomb');
-                        endGame();
-                        return;
+                        handleDamage(); // 改為扣血而非直接結束
+                        bubble.element.remove();
+                        bubbles.splice(i, 1);
+                        return; // 處理完這幀後退出，避免處理多個炸彈
                     } else {
                         score += 10;
                         playSound('coin');
@@ -577,6 +652,8 @@
             gameRunning = true;
             isPaused = false;
             score = 0;
+            lives = 3; // 重置生命值
+            updateLivesDisplay(); // 更新生命值顯示
             bubbles = [];
             playerX = 370;
             keys.left = false;
