@@ -451,6 +451,22 @@
                     gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
                     oscillator.start(ctx.currentTime);
                     oscillator.stop(ctx.currentTime + 0.3);
+                } else if (type === 'start') {
+                    // 遊戲開始：上升音調
+                    oscillator.frequency.setValueAtTime(440, ctx.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.2);
+                    gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+                    oscillator.start(ctx.currentTime);
+                    oscillator.stop(ctx.currentTime + 0.25);
+                } else if (type === 'gameover') {
+                    // 遊戲結束：下降音調
+                    oscillator.frequency.setValueAtTime(440, ctx.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(110, ctx.currentTime + 0.5);
+                    gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+                    oscillator.start(ctx.currentTime);
+                    oscillator.stop(ctx.currentTime + 0.5);
                 }
             } catch (e) {
                 // 音效失敗時靜默忽略
@@ -893,6 +909,7 @@
             document.querySelectorAll('.powerup-badge').forEach(b => b.remove());
 
             // 使用 requestAnimationFrame 啟動遊戲循環
+            playSound('start'); // 播放開始音效
             animationFrameId = requestAnimationFrame(gameLoop);
             
             // 短暫鎖定後解鎖
@@ -941,6 +958,7 @@
         function endGame() {
             gameRunning = false;
             isPaused = false;
+            playSound('gameover'); // 播放結束音效
             
             // 取消動畫框架防止記憶體洩漏
             if (animationFrameId) {
