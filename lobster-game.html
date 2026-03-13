@@ -532,6 +532,12 @@
                 hearts += '❤️';
             }
             livesDisplay.textContent = hearts;
+            
+            // 生命值減少時觸發動畫
+            if (lives < 3) {
+                livesDisplay.classList.add('life-lost');
+                setTimeout(() => livesDisplay.classList.remove('life-lost'), 500);
+            }
         }
 
         // 玩家受傷時的動畫
@@ -554,13 +560,20 @@
                 player.classList.remove('player-invincible');
                 endGame();
             } else {
-                // 短暫無敵時間（1秒）
+                // 暫停遊戲循環，進入無敵時間
                 gameRunning = false;
+                if (animationFrameId) {
+                    cancelAnimationFrame(animationFrameId);
+                    animationFrameId = null;
+                }
+                
+                // 短暫無敵時間（1秒）後恢復遊戲
                 setTimeout(() => {
                     if (lives > 0) {
                         player.classList.remove('player-invincible');
                         gameRunning = true;
                         lastTime = performance.now();
+                        spawnTimer = 0; // 重置生成計時器，避免無敵時間後突然生成大量氣泡
                         animationFrameId = requestAnimationFrame(gameLoop);
                     }
                 }, 1000);
