@@ -423,7 +423,8 @@
             START_LOCK_DURATION: 500,
             
             // 本地存儲鍵名
-            HIGH_SCORE_KEY: 'lobsterGameHighScore'
+            HIGH_SCORE_KEY: 'lobsterGameHighScore',
+            SOUND_ENABLED_KEY: 'lobsterGameSoundEnabled'
         };
         
         const ITEM_EMOJIS = {
@@ -472,7 +473,9 @@
         let animationFrameId = null;
         let isStarting = false; // 防止快速重複點擊
         let audioContext = null; // Web Audio API
-        let soundEnabled = true; // 音效開關
+        // 音效開關（從本地存儲讀取設置，預設為開啟）
+        let soundEnabled = localStorage.getItem(GAME_CONFIG.SOUND_ENABLED_KEY) !== 'false';
+        soundBtn.textContent = soundEnabled ? '🔊' : '🔇';
 
         // 初始化音效系統
         function initAudio() {
@@ -1077,6 +1080,7 @@
         soundBtn.addEventListener('click', () => {
             soundEnabled = !soundEnabled;
             soundBtn.textContent = soundEnabled ? '🔊' : '🔇';
+            localStorage.setItem(GAME_CONFIG.SOUND_ENABLED_KEY, soundEnabled);
         });
     </script>
 </body>
