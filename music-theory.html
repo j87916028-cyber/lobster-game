@@ -202,8 +202,19 @@
     <div class="streak" id="streakPopup">🔥 5連擊！</div>
     
     <script>
-        // 音頻上下文
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        // 延遲初始化 AudioContext（瀏覽器要求用戶交互後才能播放聲音）
+        let audioCtx = null;
+        
+        function getAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            // 如果 AudioContext 被暫停（瀏覽器策略），嘗試恢復
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
         
         const notes = ['Do', 'Re', 'Mi', 'Fa', 'Sol', 'La', 'Si'];
         const noteNames = { Do: 'C', Re: 'D', Mi: 'E', Fa: 'F', Sol: 'G', La: 'A', Si: 'B' };
@@ -217,16 +228,17 @@
         let correctAnswers = 0;
         
         function playNote(note) {
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
+            const ctx = getAudioContext();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
             osc.connect(gain);
-            gain.connect(audioCtx.destination);
+            gain.connect(ctx.destination);
             osc.frequency.value = noteFreqs[note];
             osc.type = 'sine';
-            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            gain.gain.setValueAtTime(0.3, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
             osc.start();
-            osc.stop(audioCtx.currentTime + 0.5);
+            osc.stop(ctx.currentTime + 0.5);
         }
         
         function setLevel(level) {

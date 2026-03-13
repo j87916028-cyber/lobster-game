@@ -2,7 +2,8 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <title>🦞 龍蝦大戰</title>
     <style>
         * {
@@ -56,19 +57,42 @@
             0% { top: -40px; opacity: 1; }
             100% { top: 520px; opacity: 0; }
         }
-        #score, #highScore {
+        
+        /* 分數彈出動畫 */
+        .score-popup {
+            position: absolute;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #ffd700;
+            text-shadow: 0 0 10px #ffd700;
+            animation: scoreFloat 0.8s ease-out forwards;
+            pointer-events: none;
+            z-index: 100;
+        }
+        
+        @keyframes scoreFloat {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-50px) scale(1.5); }
+        }
+        
+        /* 接到金幣時的玩家動畫 */
+        @keyframes playerCatch {
+            0% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.2); }
+            100% { transform: translateX(-50%) scale(1); }
+        }
+        
+        .player-catch {
+            animation: playerCatch 0.2s ease-out;
+        }
+        #score {
             position: absolute;
             top: 20px;
+            right: 20px;
             font-size: 1.5rem;
             background: rgba(0,0,0,0.5);
             padding: 10px 20px;
             border-radius: 10px;
-        }
-        #score {
-            right: 20px;
-        }
-        #highScore {
-            left: 20px;
         }
         #startBtn {
             position: absolute;
@@ -108,6 +132,11 @@
             font-size: 2rem;
             margin: 20px 0;
         }
+        #highScore {
+            font-size: 1.2rem;
+            color: #ffd700;
+            margin-bottom: 20px;
+        }
         #restartBtn {
             padding: 15px 30px;
             font-size: 1.2rem;
@@ -123,40 +152,98 @@
             font-size: 1.2rem;
             opacity: 0.8;
         }
+        
+        /* 行動裝置觸控按鈕 */
+        .touch-controls {
+            display: none;
+            margin-top: 20px;
+            gap: 30px;
+        }
+        
+        .touch-btn {
+            width: 80px;
+            height: 80px;
+            background: rgba(0, 212, 255, 0.3);
+            border: 3px solid #00d4ff;
+            border-radius: 50%;
+            font-size: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            transition: transform 0.1s, background 0.1s;
+        }
+        
+        .touch-btn:active {
+            transform: scale(0.9);
+            background: rgba(0, 212, 255, 0.6);
+        }
+        
+        /* 行動裝置適配 */
+        @media (max-width: 850px) {
+            #gameContainer {
+                width: 95vw;
+                height: 60vh;
+                max-height: 500px;
+            }
+            h1 {
+                font-size: 2rem;
+            }
+            .instructions {
+                font-size: 1rem;
+            }
+            .touch-controls {
+                display: flex;
+            }
+        }
     </style>
 </head>
 <body>
     <h1>🦞 龍蝦大戰</h1>
     <div id="gameContainer">
         <div id="score">分數: 0</div>
-        <div id="highScore">最高分: 0</div>
         <div id="player">🦞</div>
         <button id="startBtn">開始遊戲</button>
         <div id="gameOver">
             <h2>遊戲結束!</h2>
+            <div id="highScore">最高分: 0</div>
             <div id="finalScore">分數: 0</div>
             <button id="restartBtn">再玩一次</button>
         </div>
     </div>
     <p class="instructions">← → 方向鍵移動龍蝦，接住掉落的金幣！💰</p>
+    
+    <!-- 行動裝置觸控按鈕 -->
+    <div class="touch-controls">
+        <div class="touch-btn" id="btnLeft">◀</div>
+        <div class="touch-btn" id="btnRight">▶</div>
+    </div>
 
     <script>
         const player = document.getElementById('player');
         const gameContainer = document.getElementById('gameContainer');
         const scoreDisplay = document.getElementById('score');
-        const highScoreDisplay = document.getElementById('highScore');
         const startBtn = document.getElementById('startBtn');
         const gameOver = document.getElementById('gameOver');
         const finalScore = document.getElementById('finalScore');
+        const highScoreDisplay = document.getElementById('highScore');
         const restartBtn = document.getElementById('restartBtn');
 
         let playerX = 370;
         let score = 0;
         let highScore = parseInt(localStorage.getItem('lobsterGameHighScore')) || 0;
+        
+        // 初始化最高分顯示（頁面載入時就顯示 localStorage 的值）
+        highScoreDisplay.textContent = '最高分: ' + highScore;
+        
         let gameRunning = false;
         let bubbles = [];
         let lastTime = 0;
         let spawnTimer = 0;
+        let animationFrameId = null;
+        let isStarting = false; // 防止快速重複點擊
 
         // 預先計算玩家邊界（只計算一次）
         let playerLeft, playerRight, playerTop, playerBottom;
@@ -166,11 +253,52 @@
         const CONTAINER_HEIGHT = 500;
         const BUBBLE_SIZE = 40;
 
-        // 初始化最高分顯示
-        highScoreDisplay.textContent = '最高分: ' + highScore;
+        // 難度系統參數
+        const INITIAL_SPAWN_INTERVAL = 800; // 初始生成間隔 (ms)
+        const MIN_SPAWN_INTERVAL = 300;      // 最小生成間隔 (ms)
+        const INITIAL_BUBBLE_SPEED = 3;       // 初始氣泡速度
+        const MAX_BUBBLE_SPEED = 8;           // 最大氣泡速度
+        const DIFFICULTY_INCREASE_PER = 50;  // 每多少分數增加一次難度
+
+        // 計算當前難度等級
+        function getDifficultyLevel() {
+            return Math.floor(score / DIFFICULTY_INCREASE_PER);
+        }
+
+        // 計算當前生成間隔
+        function getCurrentSpawnInterval() {
+            const level = getDifficultyLevel();
+            return Math.max(MIN_SPAWN_INTERVAL, INITIAL_SPAWN_INTERVAL - (level * 50));
+        }
+
+        // 計算當前氣泡速度
+        function getCurrentBubbleSpeed() {
+            const level = getDifficultyLevel();
+            return Math.min(MAX_BUBBLE_SPEED, INITIAL_BUBBLE_SPEED + (level * 0.5) + (Math.random() * 2));
+        }
 
         const emojis = ['💰', '💎', '⭐', '🎵', '🎮'];
         const badEmojis = ['💣', '🔥', '👾'];
+
+        // 顯示分數彈出動畫
+        function showScorePopup(x, y, points) {
+            const popup = document.createElement('div');
+            popup.className = 'score-popup';
+            popup.textContent = '+' + points;
+            popup.style.left = x + 'px';
+            popup.style.top = y + 'px';
+            gameContainer.appendChild(popup);
+            
+            // 動畫結束後移除元素
+            setTimeout(() => popup.remove(), 800);
+        }
+
+        // 玩家接到物品時的動畫
+        function triggerPlayerCatchAnimation() {
+            player.classList.remove('player-catch');
+            void player.offsetWidth; // 強制重繪
+            player.classList.add('player-catch');
+        }
 
         // 使用 requestAnimationFrame 替代 setInterval
         function gameLoop(timestamp) {
@@ -182,9 +310,10 @@
             // 更新氣泡位置
             updateBubbles(deltaTime);
 
-            // 生成新氣泡
+            // 生成新氣泡（使用動態難度間隔）
             spawnTimer += deltaTime;
-            if (spawnTimer >= 800) {
+            const currentSpawnInterval = getCurrentSpawnInterval();
+            if (spawnTimer >= currentSpawnInterval) {
                 spawnBubble();
                 spawnTimer = 0;
             }
@@ -222,6 +351,10 @@
                     } else {
                         score += 10;
                         scoreDisplay.textContent = '分數: ' + score;
+                        // 顯示分數彈出動畫
+                        showScorePopup(bubble.x, bubble.y, 10);
+                        // 玩家動畫
+                        triggerPlayerCatchAnimation();
                         bubble.element.remove();
                         bubbles.splice(i, 1);
                     }
@@ -245,7 +378,70 @@
             player.style.left = playerX + 'px';
         });
 
+        // 觸控控制
+        const btnLeft = document.getElementById('btnLeft');
+        const btnRight = document.getElementById('btnRight');
+        let touchInterval = null;
+
+        function handleTouchStart(direction) {
+            if (!gameRunning) return;
+            // 立即移動一次
+            if (direction === 'left') {
+                playerX = Math.max(0, playerX - 30);
+            } else {
+                playerX = Math.min(740, playerX + 30);
+            }
+            player.style.left = playerX + 'px';
+            
+            // 長按時持續移動
+            touchInterval = setInterval(() => {
+                if (direction === 'left') {
+                    playerX = Math.max(0, playerX - 30);
+                } else {
+                    playerX = Math.min(740, playerX + 30);
+                }
+                player.style.left = playerX + 'px';
+            }, 100);
+        }
+
+        function handleTouchEnd() {
+            if (touchInterval) {
+                clearInterval(touchInterval);
+                touchInterval = null;
+            }
+        }
+
+        // 左按鈕
+        btnLeft.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            handleTouchStart('left');
+        });
+        btnLeft.addEventListener('touchend', handleTouchEnd);
+        btnLeft.addEventListener('mousedown', () => handleTouchStart('left'));
+        btnLeft.addEventListener('mouseup', handleTouchEnd);
+        btnLeft.addEventListener('mouseleave', handleTouchEnd);
+
+        // 右按鈕
+        btnRight.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            handleTouchStart('right');
+        });
+        btnRight.addEventListener('touchend', handleTouchEnd);
+        btnRight.addEventListener('mousedown', () => handleTouchStart('right'));
+        btnRight.addEventListener('mouseup', handleTouchEnd);
+        btnRight.addEventListener('mouseleave', handleTouchEnd);
+
         function startGame() {
+            // 防止快速重複點擊
+            if (isStarting) return;
+            isStarting = true;
+            
+            // 確保之前的動畫框架已取消
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            
             gameRunning = true;
             score = 0;
             bubbles = [];
@@ -253,15 +449,20 @@
             spawnTimer = 0;
             lastTime = performance.now();
             player.style.left = playerX + 'px';
+            player.classList.remove('player-catch');
             scoreDisplay.textContent = '分數: 0';
             startBtn.style.display = 'none';
             gameOver.style.display = 'none';
             
             // 清除舊的氣泡
             document.querySelectorAll('.bubble').forEach(b => b.remove());
+            document.querySelectorAll('.score-popup').forEach(p => p.remove());
 
             // 使用 requestAnimationFrame 啟動遊戲循環
-            requestAnimationFrame(gameLoop);
+            animationFrameId = requestAnimationFrame(gameLoop);
+            
+            // 短暫鎖定後解鎖
+            setTimeout(() => { isStarting = false; }, 500);
         }
 
         function spawnBubble() {
@@ -273,8 +474,9 @@
             bubble.style.left = x + 'px';
             bubble.style.top = '-40px';
             
-            // 80% 好東西，20% 壞東西
-            const isBad = Math.random() < 0.2;
+            // 根據難度增加壞東西機率 (最高 35%)
+            const badChance = Math.min(0.35, 0.2 + (getDifficultyLevel() * 0.03));
+            const isBad = Math.random() < badChance;
             bubble.textContent = isBad 
                 ? badEmojis[Math.floor(Math.random() * badEmojis.length)]
                 : emojis[Math.floor(Math.random() * emojis.length)];
@@ -284,7 +486,7 @@
                 element: bubble, 
                 x: x,
                 y: -40, 
-                speed: 3 + Math.random() * 3,
+                speed: getCurrentBubbleSpeed(),
                 isBad: isBad
             });
         }
@@ -292,15 +494,30 @@
         function endGame() {
             gameRunning = false;
             
+            // 取消動畫框架防止記憶體洩漏
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            
             // 更新最高分
             if (score > highScore) {
                 highScore = score;
                 localStorage.setItem('lobsterGameHighScore', highScore);
+                highScoreDisplay.textContent = '🎉 最高分: ' + highScore;
+            } else {
                 highScoreDisplay.textContent = '最高分: ' + highScore;
             }
             
             finalScore.textContent = '分數: ' + score;
             gameOver.style.display = 'flex';
+            
+            // 清理所有氣泡
+            bubbles.forEach(b => b.element.remove());
+            bubbles = [];
+            
+            // 解鎖開始按鈕
+            isStarting = false;
         }
 
         startBtn.addEventListener('click', startGame);
