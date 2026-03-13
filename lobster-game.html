@@ -706,6 +706,8 @@
 
         // 更新氣泡位置與碰撞檢測
         function updateBubbles(deltaTime) {
+            // 遊戲結束時停止處理氣泡，防止遊戲結束後還能得分
+            if (!gameRunning) return;
             // 更新玩家邊界（相對於 gameContainer）
             playerLeft = playerX;
             playerRight = playerX + PLAYER_WIDTH;
