@@ -249,6 +249,30 @@
         const CONTAINER_HEIGHT = 500;
         const BUBBLE_SIZE = 40;
 
+        // 難度系統參數
+        const INITIAL_SPAWN_INTERVAL = 800; // 初始生成間隔 (ms)
+        const MIN_SPAWN_INTERVAL = 300;      // 最小生成間隔 (ms)
+        const INITIAL_BUBBLE_SPEED = 3;       // 初始氣泡速度
+        const MAX_BUBBLE_SPEED = 8;           // 最大氣泡速度
+        const DIFFICULTY_INCREASE_PER = 50;  // 每多少分數增加一次難度
+
+        // 計算當前難度等級
+        function getDifficultyLevel() {
+            return Math.floor(score / DIFFICULTY_INCREASE_PER);
+        }
+
+        // 計算當前生成間隔
+        function getCurrentSpawnInterval() {
+            const level = getDifficultyLevel();
+            return Math.max(MIN_SPAWN_INTERVAL, INITIAL_SPAWN_INTERVAL - (level * 50));
+        }
+
+        // 計算當前氣泡速度
+        function getCurrentBubbleSpeed() {
+            const level = getDifficultyLevel();
+            return Math.min(MAX_BUBBLE_SPEED, INITIAL_BUBBLE_SPEED + (level * 0.5) + (Math.random() * 2));
+        }
+
         const emojis = ['💰', '💎', '⭐', '🎵', '🎮'];
         const badEmojis = ['💣', '🔥', '👾'];
 
@@ -282,9 +306,10 @@
             // 更新氣泡位置
             updateBubbles(deltaTime);
 
-            // 生成新氣泡
+            // 生成新氣泡（使用動態難度間隔）
             spawnTimer += deltaTime;
-            if (spawnTimer >= 800) {
+            const currentSpawnInterval = getCurrentSpawnInterval();
+            if (spawnTimer >= currentSpawnInterval) {
                 spawnBubble();
                 spawnTimer = 0;
             }
@@ -445,8 +470,9 @@
             bubble.style.left = x + 'px';
             bubble.style.top = '-40px';
             
-            // 80% 好東西，20% 壞東西
-            const isBad = Math.random() < 0.2;
+            // 根據難度增加壞東西機率 (最高 35%)
+            const badChance = Math.min(0.35, 0.2 + (getDifficultyLevel() * 0.03));
+            const isBad = Math.random() < badChance;
             bubble.textContent = isBad 
                 ? badEmojis[Math.floor(Math.random() * badEmojis.length)]
                 : emojis[Math.floor(Math.random() * emojis.length)];
@@ -456,7 +482,7 @@
                 element: bubble, 
                 x: x,
                 y: -40, 
-                speed: 3 + Math.random() * 3,
+                speed: getCurrentBubbleSpeed(),
                 isBad: isBad
             });
         }
