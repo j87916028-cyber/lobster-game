@@ -1076,8 +1076,10 @@
                     }
                 }
             } else {
-                // 分頁恢復顯示時，重新啟動遊戲循環
+                // 分頁恢復顯示時，正確恢復遊戲（重置暫停狀態並隱藏遮罩）
                 if (isPaused && gameRunning) {
+                    isPaused = false;
+                    pauseOverlay.style.display = 'none';
                     lastTime = performance.now();
                     animationFrameId = requestAnimationFrame(gameLoop);
                 }
