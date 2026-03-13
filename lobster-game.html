@@ -516,6 +516,11 @@
                 // 恢復時重新啟動動畫循環
                 animationFrameId = requestAnimationFrame(gameLoop);
             }
+            // 暫停時取消當前的動畫框架，防止暫停期間堆疊調用
+            else if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
         }
 
         // 觸控控制（統一使用 keys 系統，與鍵盤一致）
