@@ -234,6 +234,10 @@
         let playerX = 370;
         let score = 0;
         let highScore = parseInt(localStorage.getItem('lobsterGameHighScore')) || 0;
+        
+        // 初始化最高分顯示（頁面載入時就顯示 localStorage 的值）
+        highScoreDisplay.textContent = '最高分: ' + highScore;
+        
         let gameRunning = false;
         let bubbles = [];
         let lastTime = 0;
