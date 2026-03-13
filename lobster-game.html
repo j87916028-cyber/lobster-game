@@ -298,6 +298,23 @@
             cursor: pointer;
             color: #1a1a2e;
             font-weight: bold;
+            margin-top: 15px;
+        }
+        
+        #menuBtn {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            background: #ff6b6b;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            color: white;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        
+        #menuBtn:hover {
+            background: #ff5252;
         }
         .instructions {
             margin-top: 20px;
@@ -396,6 +413,7 @@
                 <span>💣 <span id="statBombs">0</span></span>
             </div>
             <button id="resumeBtn">繼續遊戲</button>
+            <button id="menuBtn">返回選單</button>
         </div>
     </div>
     <p class="instructions">← → 方向鍵移動龍蝦，接住掉落的金幣！💰 按 ESC 暫停</p>
@@ -494,6 +512,7 @@
         const statTime = document.getElementById('statTime');
         const statCoins = document.getElementById('statCoins');
         const statBombs = document.getElementById('statBombs');
+        const menuBtn = document.getElementById('menuBtn');
 
         let playerX = (GAME_CONFIG.CONTAINER_WIDTH - GAME_CONFIG.PLAYER_WIDTH) / 2;
         let score = 0;
@@ -1322,6 +1341,46 @@
 
         // 暫停/繼續按鈕
         resumeBtn.addEventListener('click', togglePause);
+        
+        // 返回選單按鈕
+        menuBtn.addEventListener('click', () => {
+            // 停止遊戲並返回選單
+            gameRunning = false;
+            isPaused = false;
+            
+            // 取消動畫框架
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            
+            // 清除所有道具計時器
+            Object.values(powerupTimers).forEach(t => clearTimeout(t));
+            powerupTimers = {};
+            
+            // 隱藏所有遊戲 UI
+            pauseOverlay.style.display = 'none';
+            gameOver.style.display = 'none';
+            
+            // 清理氣泡
+            bubbles.forEach(b => returnBubbleToPool(b.element));
+            bubbles = [];
+            
+            // 重置玩家位置
+            player.style.transform = 'translateX(-50%)';
+            player.classList.remove('player-catch', 'player-invincible');
+            isInvincible = false;
+            
+            // 顯示開始按鈕
+            startBtn.style.display = '';
+            
+            // 解鎖開始
+            isStarting = false;
+            
+            // 更新分數顯示
+            scoreDisplay.textContent = '分數: 0';
+            updateLivesDisplay();
+        });
         
         // 音效開關
         soundBtn.addEventListener('click', () => {
