@@ -905,7 +905,7 @@
 
         // 切換暫停狀態
         function togglePause() {
-            // 修復：遊戲未開始、正在開始中、或正在處理傷害時不能暫停
+            // 遊戲未開始、正在開始中、或遊戲已結束時不能暫停
             if (!gameRunning || isStarting) return;
             isPaused = !isPaused;
             pauseOverlay.style.display = isPaused ? 'flex' : 'none';
