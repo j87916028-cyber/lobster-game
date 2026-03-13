@@ -972,6 +972,38 @@
             togglePause();
         });
 
+        // ==================== 頁面可見性處理 (節省資源) ====================
+        // 當分頁隱藏時自動暫停遊戲，返回時處理
+        document.addEventListener('visibilitychange', () => {
+            if (!gameRunning) return;
+            
+            if (document.hidden) {
+                // 分頁隱藏時暫停遊戲（如果尚未暫停）
+                if (!isPaused) {
+                    isPaused = true;
+                    pauseOverlay.style.display = 'flex';
+                    pauseScore.textContent = '分數: ' + score;
+                    let hearts = '';
+                    for (let i = 0; i < lives; i++) {
+                        hearts += '❤️';
+                    }
+                    pauseLives.textContent = hearts;
+                    
+                    // 取消動畫框架
+                    if (animationFrameId) {
+                        cancelAnimationFrame(animationFrameId);
+                        animationFrameId = null;
+                    }
+                }
+            } else {
+                // 分頁恢復顯示時，重新啟動遊戲循環
+                if (isPaused && gameRunning) {
+                    lastTime = performance.now();
+                    animationFrameId = requestAnimationFrame(gameLoop);
+                }
+            }
+        });
+
         function startGame() {
             // 防止快速重複點擊
             if (isStarting) return;
