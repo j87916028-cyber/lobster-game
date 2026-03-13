@@ -564,6 +564,7 @@
 
         // 碰到炸彈時的處理（扣血而非直接結束）
         let isInvincible = false; // 無敵狀態標誌
+        let invincibleReason = null; // 無敵原因: 'damage' | 'shield' | null
 
         function handleDamage() {
             // 無敵時間內不再受傷
@@ -576,10 +577,12 @@
             // 無敵時間閃爍效果
             player.classList.add('player-invincible');
             isInvincible = true;
+            invincibleReason = 'damage';
             
             if (lives <= 0) {
                 player.classList.remove('player-invincible');
                 isInvincible = false;
+                invincibleReason = null;
                 endGame();
             } else {
                 // 無敵時間 1 秒，遊戲繼續進行
@@ -587,6 +590,7 @@
                     if (lives > 0) {
                         player.classList.remove('player-invincible');
                         isInvincible = false;
+                        invincibleReason = null;
                     }
                 }, 1000);
             }
@@ -617,6 +621,8 @@
             // 處理不同道具效果
             if (powerup.type === 'shield') {
                 activePowerups.shield = true;
+                isInvincible = true;
+                invincibleReason = 'shield'; // 設置無敵原因為護盾
                 player.classList.add('player-invincible');
                 updatePowerupIndicator();
                 
@@ -624,7 +630,12 @@
                 if (powerupTimers.shield) clearTimeout(powerupTimers.shield);
                 powerupTimers.shield = setTimeout(() => {
                     activePowerups.shield = false;
-                    if (!activePowerups.shield) player.classList.remove('player-invincible');
+                    // 只有在是護盾導致的無敵時才移除無敵效果
+                    if (invincibleReason === 'shield') {
+                        isInvincible = false;
+                        invincibleReason = null;
+                        player.classList.remove('player-invincible');
+                    }
                     updatePowerupIndicator();
                 }, powerup.duration);
             } 
@@ -890,6 +901,7 @@
             updatePowerupIndicator();
             player.classList.remove('player-invincible');
             isInvincible = false; // 重置無敵狀態
+            invincibleReason = null; // 重置無敵原因
             
             bubbles = [];
             playerX = (CONTAINER_WIDTH - PLAYER_WIDTH) / 2;
