@@ -236,6 +236,24 @@
             background: rgba(0, 212, 255, 0.6);
         }
         
+        /* 音效開關按鈕 */
+        #soundBtn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 1.5rem;
+            background: rgba(0,0,0,0.5);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            padding: 8px 15px;
+            transition: transform 0.2s;
+            z-index: 10;
+        }
+        #soundBtn:hover {
+            transform: scale(1.1);
+        }
+        
         /* 行動裝置適配 */
         @media (max-width: 850px) {
             #gameContainer {
@@ -259,6 +277,7 @@
     <h1>🦞 龍蝦大戰</h1>
     <div id="gameContainer">
         <div id="score">分數: 0</div>
+        <button id="soundBtn" title="音效開關">🔊</button>
         <div id="lives">❤️❤️❤️</div>
         <div id="player">🦞</div>
         <button id="startBtn">開始遊戲</button>
@@ -297,6 +316,7 @@
         const btnRight = document.getElementById('btnRight');
         const btnPause = document.getElementById('btnPause');
         const livesDisplay = document.getElementById('lives');
+        const soundBtn = document.getElementById('soundBtn');
 
         let playerX = (CONTAINER_WIDTH - PLAYER_WIDTH) / 2; // 玩家起始位置（居中）
         let score = 0;
@@ -314,6 +334,7 @@
         let animationFrameId = null;
         let isStarting = false; // 防止快速重複點擊
         let audioContext = null; // Web Audio API
+        let soundEnabled = true; // 音效開關
 
         // 初始化音效系統
         function initAudio() {
@@ -325,6 +346,9 @@
 
         // 播放音效（使用 Web Audio API 生成簡單音效）
         function playSound(type) {
+            // 音效關閉時跳過
+            if (!soundEnabled) return;
+            
             try {
                 const ctx = initAudio();
                 if (ctx.state === 'suspended') {
@@ -743,6 +767,12 @@
 
         // 暫停/繼續按鈕
         resumeBtn.addEventListener('click', togglePause);
+        
+        // 音效開關
+        soundBtn.addEventListener('click', () => {
+            soundEnabled = !soundEnabled;
+            soundBtn.textContent = soundEnabled ? '🔊' : '🔇';
+        });
     </script>
 </body>
 </html>
