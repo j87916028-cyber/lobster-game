@@ -1147,16 +1147,18 @@
             }
         }
 
-        // 左按鈕
-        btnLeft.addEventListener('touchstart', (e) => handleTouchStart('left', e));
+        // 左按鈕 - 添加 touchcancel 處理防止觸控中斷時按鍵卡住，並使用被動监听器優化效能
+        btnLeft.addEventListener('touchstart', (e) => handleTouchStart('left', e), { passive: false });
         btnLeft.addEventListener('touchend', () => handleTouchEnd('left'));
+        btnLeft.addEventListener('touchcancel', () => handleTouchEnd('left')); // 觸控中斷時重置
         btnLeft.addEventListener('mousedown', (e) => handleTouchStart('left', e));
         btnLeft.addEventListener('mouseup', () => handleTouchEnd('left'));
         btnLeft.addEventListener('mouseleave', () => handleTouchEnd('left'));
 
         // 右按鈕
-        btnRight.addEventListener('touchstart', (e) => handleTouchStart('right', e));
+        btnRight.addEventListener('touchstart', (e) => handleTouchStart('right', e), { passive: false });
         btnRight.addEventListener('touchend', () => handleTouchEnd('right'));
+        btnRight.addEventListener('touchcancel', () => handleTouchEnd('right')); // 觸控中斷時重置
         btnRight.addEventListener('mousedown', (e) => handleTouchStart('right', e));
         btnRight.addEventListener('mouseup', () => handleTouchEnd('right'));
         btnRight.addEventListener('mouseleave', () => handleTouchEnd('right'));
@@ -1205,6 +1207,13 @@
                 // 確保玩家不會跑出邊界
                 playerX = Math.max(PLAYER_LEFT_BOUND, Math.min(PLAYER_RIGHT_BOUND, playerX));
             }
+        });
+
+        // ==================== 視窗焦點處理 ====================
+        // 當視窗失去焦點時重置按鍵狀態，防止鍵盤卡住
+        window.addEventListener('blur', () => {
+            keys.left = false;
+            keys.right = false;
         });
 
         function startGame() {
