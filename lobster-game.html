@@ -720,8 +720,13 @@
                 if (powerupTimers.shield) clearTimeout(powerupTimers.shield);
                 powerupTimers.shield = setTimeout(() => {
                     activePowerups.shield = false;
-                    // 只有在是護盾導致的無敵時才移除無敵效果
+                    // 移除無敵效果（無論是否受傷，都應該在護盾結束後移除無敵狀態）
                     if (invincibleReason === 'shield') {
+                        isInvincible = false;
+                        invincibleReason = null;
+                        player.classList.remove('player-invincible');
+                    } else if (invincibleReason !== 'damage') {
+                        // 如果既不是護盾也不是受傷導致的無敵，則清除
                         isInvincible = false;
                         invincibleReason = null;
                         player.classList.remove('player-invincible');
