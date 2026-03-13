@@ -463,7 +463,7 @@
         let highScore = parseInt(localStorage.getItem(GAME_CONFIG.HIGH_SCORE_KEY)) || 0;
         
         // 初始化最高分顯示（頁面載入時就顯示 localStorage 的值）
-        highScoreDisplay.textContent = '最高分: ' + highScore;
+        highScoreDisplay.textContent = '最高分: ' + formatScore(highScore);
         
         let gameRunning = false;
         let isPaused = false;
@@ -651,10 +651,15 @@
         };
         let powerupTimers = {};
 
+        // 格式化分數顯示（千分位）
+        function formatScore(num) {
+            return num.toLocaleString('zh-TW');
+        }
+
         // 顯示分數彈出動畫
         function showScorePopup(x, y, points) {
             const popup = getPopupFromPool('score-popup');
-            popup.textContent = '+' + points;
+            popup.textContent = '+' + formatScore(points);
             popup.style.left = x + 'px';
             popup.style.top = y + 'px';
             gameContainer.appendChild(popup);
@@ -894,7 +899,7 @@
                         const points = activePowerups['2x'] ? GAME_CONFIG.COIN_2X_POINTS : GAME_CONFIG.COIN_BASE_POINTS;
                         score += points;
                         playSound('coin');
-                        scoreDisplay.textContent = '分數: ' + score;
+                        scoreDisplay.textContent = '分數: ' + formatScore(score);
                         // 顯示分數彈出動畫
                         showScorePopup(bubble.x, bubble.y, points);
                         // 玩家動畫
@@ -959,7 +964,7 @@
             
             // 暫停時更新顯示的分數和生命值
             if (isPaused) {
-                pauseScore.textContent = '分數: ' + score;
+                pauseScore.textContent = '分數: ' + formatScore(score);
                 let hearts = '';
                 for (let i = 0; i < lives; i++) {
                     hearts += '❤️';
@@ -1173,12 +1178,12 @@
             if (score > highScore) {
                 highScore = score;
                 localStorage.setItem('lobsterGameHighScore', highScore);
-                highScoreDisplay.textContent = '🎉 新紀錄!: ' + highScore;
+                highScoreDisplay.textContent = '🎉 新紀錄!: ' + formatScore(highScore);
             } else {
-                highScoreDisplay.textContent = '最高分: ' + highScore;
+                highScoreDisplay.textContent = '最高分: ' + formatScore(highScore);
             }
             
-            finalScore.textContent = '分數: ' + score;
+            finalScore.textContent = '分數: ' + formatScore(score);
             gameOver.style.display = 'flex';
             
             // 清理所有氣泡（返回物件池）
