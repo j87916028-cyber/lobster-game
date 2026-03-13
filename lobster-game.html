@@ -478,6 +478,10 @@
         // 重用 DOM 元素，避免頻繁創建/刪除導致的效能損耗
         const bubblePool = [];
         const POOL_MAX_SIZE = 30; // 池的最大大小
+        
+        // 彈出動畫元素物件池（分數彈出、道具彈出）
+        const popupPool = [];
+        const POPUP_POOL_MAX_SIZE = 15; // 彈出池的最大大小
 
         // 從池中取得氣泡元素，或創建新的
         function getBubbleFromPool() {
@@ -505,6 +509,36 @@
                 element.remove();
             }
         }
+        
+        // 從池中取得彈出動畫元素，或創建新的
+        function getPopupFromPool(className) {
+            if (popupPool.length > 0) {
+                const element = popupPool.pop();
+                element.className = className;
+                return element;
+            }
+            const element = document.createElement('div');
+            element.className = className;
+            return element;
+        }
+        
+        // 將彈出動畫元素返回池中
+        function returnPopupToPool(element) {
+            // 清除元素內容和樣式
+            element.textContent = '';
+            element.style.left = '';
+            element.style.top = '';
+            element.style.background = '';
+            element.style.display = '';
+            
+            if (popupPool.length < POPUP_POOL_MAX_SIZE) {
+                popupPool.push(element);
+            } else {
+                // 池滿時直接移除
+                element.remove();
+            }
+        }
+        
         // 音效開關（從本地存儲讀取設置，預設為開啟）
         let soundEnabled = localStorage.getItem(GAME_CONFIG.SOUND_ENABLED_KEY) !== 'false';
         soundBtn.textContent = soundEnabled ? '🔊' : '🔇';
@@ -619,15 +653,17 @@
 
         // 顯示分數彈出動畫
         function showScorePopup(x, y, points) {
-            const popup = document.createElement('div');
-            popup.className = 'score-popup';
+            const popup = getPopupFromPool('score-popup');
             popup.textContent = '+' + points;
             popup.style.left = x + 'px';
             popup.style.top = y + 'px';
             gameContainer.appendChild(popup);
             
-            // 動畫結束後移除元素
-            setTimeout(() => popup.remove(), GAME_CONFIG.SCORE_POPUP_DURATION);
+            // 動畫結束後返回池中
+            setTimeout(() => {
+                popup.remove();
+                returnPopupToPool(popup);
+            }, GAME_CONFIG.SCORE_POPUP_DURATION);
         }
 
         // 更新生命值顯示
@@ -697,16 +733,18 @@
         function activatePowerup(powerup, x, y) {
             playSound('coin');
             
-            // 顯示道具彈出動畫
-            const popup = document.createElement('div');
-            popup.className = 'powerup-popup';
+            // 顯示道具彈出動畫（使用物件池）
+            const popup = getPopupFromPool('powerup-popup');
             popup.textContent = powerup.name + '！';
             popup.style.left = x + 'px';
             popup.style.top = y + 'px';
             popup.style.background = powerup.type === 'shield' ? 'rgba(0,191,255,0.8)' : 
                                       powerup.type === '2x' ? 'rgba(255,215,0,0.8)' : 'rgba(255,0,0,0.8)';
             gameContainer.appendChild(popup);
-            setTimeout(() => popup.remove(), GAME_CONFIG.SCORE_POPUP_DURATION);
+            setTimeout(() => {
+                popup.remove();
+                returnPopupToPool(popup);
+            }, GAME_CONFIG.SCORE_POPUP_DURATION);
             
             // 處理不同道具效果
             if (powerup.type === 'shield') {
