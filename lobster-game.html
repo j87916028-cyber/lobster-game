@@ -373,6 +373,71 @@
     </div>
 
     <script>
+        // ==================== 遊戲配置常數 ====================
+        const GAME_CONFIG = {
+            // 遊戲容器尺寸
+            CONTAINER_WIDTH: 800,
+            CONTAINER_HEIGHT: 500,
+            
+            // 玩家尺寸
+            PLAYER_WIDTH: 60,
+            PLAYER_HEIGHT: 60,
+            PLAYER_BOTTOM: 20,           // 玩家距離底部的距離
+            PLAYER_MOVE_SPEED: 0.4,     // 移動速度 (像素/毫秒)
+            
+            // 氣泡/物品
+            BUBBLE_SIZE: 40,
+            BUBBLE_START_Y: -40,
+            
+            // 生命值
+            MAX_LIVES: 3,
+            MAX_LIVES_CAP: 5,            // 吃到愛心道具的上限
+            INVINCIBLE_DURATION: 1000,  // 受傷後無敵時間 (ms)
+            
+            // 分數
+            COIN_BASE_POINTS: 10,       // 普通金幣基礎分數
+            COIN_2X_POINTS: 20,         // 雙倍分數
+            
+            // 難度系統
+            INITIAL_SPAWN_INTERVAL: 800,
+            MIN_SPAWN_INTERVAL: 300,
+            INITIAL_BUBBLE_SPEED: 3,
+            MAX_BUBBLE_SPEED: 8,
+            DIFFICULTY_INCREASE_PER: 50,
+            SPAWN_DECREASE_PER_LEVEL: 50,
+            SPEED_INCREASE_PER_LEVEL: 0.5,
+            BAD_CHANCE_BASE: 0.2,
+            BAD_CHANCE_MAX: 0.35,
+            BAD_CHANCE_INCREASE: 0.03,
+            POWERUP_CHANCE: 0.1,
+            
+            // 道具持續時間
+            SHIELD_DURATION: 5000,
+            DOUBLE_DURATION: 8000,
+            
+            // 動畫時間
+            SCORE_POPUP_DURATION: 800,
+            PLAYER_CATCH_DURATION: 200,
+            DAMAGE_SHAKE_DURATION: 500,
+            LIFE_LOST_DURATION: 500,
+            START_LOCK_DURATION: 500,
+            
+            // 本地存儲鍵名
+            HIGH_SCORE_KEY: 'lobsterGameHighScore'
+        };
+        
+        const ITEM_EMOJIS = {
+            GOOD: ['💰', '💎', '⭐', '🎵', '🎮'],
+            BAD: ['💣', '🔥', '👾']
+        };
+        
+        const POWERUPS = [
+            { emoji: '🛡️', type: 'shield', duration: GAME_CONFIG.SHIELD_DURATION, name: '護盾' },
+            { emoji: '🌟', type: '2x', duration: GAME_CONFIG.DOUBLE_DURATION, name: '雙倍' },
+            { emoji: '❤️', type: 'heart', duration: 0, name: '生命+1' }
+        ];
+
+        // ==================== DOM 元素 ====================
         const player = document.getElementById('player');
         const gameContainer = document.getElementById('gameContainer');
         const scoreDisplay = document.getElementById('score');
@@ -391,10 +456,10 @@
         const pauseScore = document.getElementById('pauseScore');
         const pauseLives = document.getElementById('pauseLives');
 
-        let playerX = (CONTAINER_WIDTH - PLAYER_WIDTH) / 2; // 玩家起始位置（居中）
+        let playerX = (GAME_CONFIG.CONTAINER_WIDTH - GAME_CONFIG.PLAYER_WIDTH) / 2;
         let score = 0;
-        let lives = 3; // 生命值系統
-        let highScore = parseInt(localStorage.getItem('lobsterGameHighScore')) || 0;
+        let lives = GAME_CONFIG.MAX_LIVES;
+        let highScore = parseInt(localStorage.getItem(GAME_CONFIG.HIGH_SCORE_KEY)) || 0;
         
         // 初始化最高分顯示（頁面載入時就顯示 localStorage 的值）
         highScoreDisplay.textContent = '最高分: ' + highScore;
@@ -501,24 +566,14 @@
         // 計算當前生成間隔
         function getCurrentSpawnInterval() {
             const level = getDifficultyLevel();
-            return Math.max(MIN_SPAWN_INTERVAL, INITIAL_SPAWN_INTERVAL - (level * 50));
+            return Math.max(MIN_SPAWN_INTERVAL, INITIAL_SPAWN_INTERVAL - (level * GAME_CONFIG.SPAWN_DECREASE_PER_LEVEL));
         }
 
         // 計算當前氣泡速度
         function getCurrentBubbleSpeed() {
             const level = getDifficultyLevel();
-            return Math.min(MAX_BUBBLE_SPEED, INITIAL_BUBBLE_SPEED + (level * 0.5) + (Math.random() * 2));
+            return Math.min(MAX_BUBBLE_SPEED, INITIAL_BUBBLE_SPEED + (level * GAME_CONFIG.SPEED_INCREASE_PER_LEVEL) + (Math.random() * 2));
         }
-
-        const emojis = ['💰', '💎', '⭐', '🎵', '🎮'];
-        const badEmojis = ['💣', '🔥', '👾'];
-        
-        // 道具系統
-        const powerups = [
-            { emoji: '🛡️', type: 'shield', duration: 5000, name: '護盾' },
-            { emoji: '🌟', type: '2x', duration: 8000, name: '雙倍' },
-            { emoji: '❤️', type: 'heart', duration: 0, name: '生命+1' }
-        ];
         
         // 道具狀態
         let activePowerups = {
@@ -537,7 +592,7 @@
             gameContainer.appendChild(popup);
             
             // 動畫結束後移除元素
-            setTimeout(() => popup.remove(), 800);
+            setTimeout(() => popup.remove(), GAME_CONFIG.SCORE_POPUP_DURATION);
         }
 
         // 更新生命值顯示
@@ -549,9 +604,9 @@
             livesDisplay.textContent = hearts;
             
             // 生命值減少時觸發動畫
-            if (lives < 3) {
+            if (lives < GAME_CONFIG.MAX_LIVES) {
                 livesDisplay.classList.add('life-lost');
-                setTimeout(() => livesDisplay.classList.remove('life-lost'), 500);
+                setTimeout(() => livesDisplay.classList.remove('life-lost'), GAME_CONFIG.LIFE_LOST_DURATION);
             }
         }
 
@@ -559,7 +614,7 @@
         function triggerDamageAnimation() {
             gameContainer.style.animation = 'none';
             void gameContainer.offsetWidth; // 強制重繪
-            gameContainer.style.animation = 'damageShake 0.5s ease-out';
+            gameContainer.style.animation = `damageShake ${GAME_CONFIG.DAMAGE_SHAKE_DURATION}ms ease-out`;
         }
 
         // 碰到炸彈時的處理（扣血而非直接結束）
@@ -592,7 +647,7 @@
                         isInvincible = false;
                         invincibleReason = null;
                     }
-                }, 1000);
+                }, GAME_CONFIG.INVINCIBLE_DURATION);
             }
         }
 
@@ -616,7 +671,7 @@
             popup.style.background = powerup.type === 'shield' ? 'rgba(0,191,255,0.8)' : 
                                       powerup.type === '2x' ? 'rgba(255,215,0,0.8)' : 'rgba(255,0,0,0.8)';
             gameContainer.appendChild(popup);
-            setTimeout(() => popup.remove(), 1000);
+            setTimeout(() => popup.remove(), GAME_CONFIG.SCORE_POPUP_DURATION);
             
             // 處理不同道具效果
             if (powerup.type === 'shield') {
@@ -651,7 +706,7 @@
                 }, powerup.duration);
             }
             else if (powerup.type === 'heart') {
-                if (lives < 5) { // 最多5條命
+                if (lives < GAME_CONFIG.MAX_LIVES_CAP) {
                     lives++;
                     updateLivesDisplay();
                 }
@@ -723,8 +778,8 @@
             // 更新玩家邊界（相對於 gameContainer）
             playerLeft = playerX;
             playerRight = playerX + PLAYER_WIDTH;
-            playerTop = CONTAINER_HEIGHT - 20 - PLAYER_HEIGHT; // bottom: 20px
-            playerBottom = CONTAINER_HEIGHT - 20;
+            playerTop = CONTAINER_HEIGHT - GAME_CONFIG.PLAYER_BOTTOM - PLAYER_HEIGHT;
+            playerBottom = CONTAINER_HEIGHT - GAME_CONFIG.PLAYER_BOTTOM;
 
             for (let i = bubbles.length - 1; i >= 0; i--) {
                 const bubble = bubbles[i];
@@ -758,7 +813,7 @@
                         }
                         
                         // 普通金幣
-                        const points = activePowerups['2x'] ? 20 : 10;
+                        const points = activePowerups['2x'] ? GAME_CONFIG.COIN_2X_POINTS : GAME_CONFIG.COIN_BASE_POINTS;
                         score += points;
                         playSound('coin');
                         scoreDisplay.textContent = '分數: ' + score;
@@ -891,7 +946,7 @@
             gameRunning = true;
             isPaused = false;
             score = 0;
-            lives = 3; // 重置生命值
+            lives = GAME_CONFIG.MAX_LIVES; // 重置生命值
             updateLivesDisplay(); // 更新生命值顯示
             
             // 重置道具狀態
@@ -929,7 +984,7 @@
             animationFrameId = requestAnimationFrame(gameLoop);
             
             // 短暫鎖定後解鎖
-            setTimeout(() => { isStarting = false; }, 500);
+            setTimeout(() => { isStarting = false; }, GAME_CONFIG.START_LOCK_DURATION);
         }
 
         function spawnBubble() {
@@ -940,30 +995,30 @@
             const x = Math.random() * (CONTAINER_WIDTH - BUBBLE_SIZE);
             bubble.style.left = x + 'px';
             // 初始位置使用 transform（效能更好）
-            bubble.style.transform = 'translateY(-40px)';
+            bubble.style.transform = `translateY(${GAME_CONFIG.BUBBLE_START_Y}px)`;
             
-            // 根據難度增加壞東西機率 (最高 35%)
-            const badChance = Math.min(0.35, 0.2 + (getDifficultyLevel() * 0.03));
+            // 根據難度增加壞東西機率
+            const badChance = Math.min(GAME_CONFIG.BAD_CHANCE_MAX, GAME_CONFIG.BAD_CHANCE_BASE + (getDifficultyLevel() * GAME_CONFIG.BAD_CHANCE_INCREASE));
             const isBad = Math.random() < badChance;
             
-            // 10% 機率生成道具（不在壞東西中）
+            // 道具機率生成（不在壞東西中）
             let isPowerup = false;
             let powerupType = null;
-            if (!isBad && Math.random() < 0.1) {
+            if (!isBad && Math.random() < GAME_CONFIG.POWERUP_CHANCE) {
                 isPowerup = true;
-                powerupType = powerups[Math.floor(Math.random() * powerups.length)];
+                powerupType = POWERUPS[Math.floor(Math.random() * POWERUPS.length)];
                 bubble.textContent = powerupType.emoji;
             } else {
                 bubble.textContent = isBad 
-                    ? badEmojis[Math.floor(Math.random() * badEmojis.length)]
-                    : emojis[Math.floor(Math.random() * emojis.length)];
+                    ? ITEM_EMOJIS.BAD[Math.floor(Math.random() * ITEM_EMOJIS.BAD.length)]
+                    : ITEM_EMOJIS.GOOD[Math.floor(Math.random() * ITEM_EMOJIS.GOOD.length)];
             }
             
             gameContainer.appendChild(bubble);
             bubbles.push({ 
                 element: bubble, 
                 x: x,
-                y: -40, 
+                y: GAME_CONFIG.BUBBLE_START_Y, 
                 speed: getCurrentBubbleSpeed(),
                 isBad: isBad,
                 isPowerup: isPowerup,
