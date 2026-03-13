@@ -683,8 +683,11 @@
         const keys = { left: false, right: false };
         const MOVE_SPEED = GAME_CONFIG.PLAYER_MOVE_SPEED; // 像素/毫秒
 
-        // 預先計算玩家邊界（只計算一次）
-        let playerLeft, playerRight, playerTop, playerBottom;
+        // 預先計算玩家邊界（只計算一次，效能優化）
+        const PLAYER_LEFT_BOUND = 0;
+        const PLAYER_RIGHT_BOUND = GAME_CONFIG.CONTAINER_WIDTH - GAME_CONFIG.PLAYER_WIDTH;
+        const PLAYER_TOP_BOUND = GAME_CONFIG.CONTAINER_HEIGHT - GAME_CONFIG.PLAYER_BOTTOM - GAME_CONFIG.PLAYER_HEIGHT;
+        const PLAYER_BOTTOM_BOUND = GAME_CONFIG.CONTAINER_HEIGHT - GAME_CONFIG.PLAYER_BOTTOM;
 
         // 難度系統參數（使用 GAME_CONFIG 中的值）
         const DIFFICULTY_INCREASE_PER = GAME_CONFIG.DIFFICULTY_INCREASE_PER;
@@ -965,11 +968,9 @@
         function updateBubbles(deltaTime) {
             // 遊戲結束時停止處理氣泡，防止遊戲結束後還能得分
             if (!gameRunning) return;
-            // 更新玩家邊界（相對於 gameContainer）
-            playerLeft = playerX;
-            playerRight = playerX + GAME_CONFIG.PLAYER_WIDTH;
-            playerTop = GAME_CONFIG.CONTAINER_HEIGHT - GAME_CONFIG.PLAYER_BOTTOM - GAME_CONFIG.PLAYER_HEIGHT;
-            playerBottom = GAME_CONFIG.CONTAINER_HEIGHT - GAME_CONFIG.PLAYER_BOTTOM;
+            // 使用預先計算的固定邊界值（效能優化）
+            const playerLeft = playerX;
+            const playerRight = playerX + GAME_CONFIG.PLAYER_WIDTH;
 
             for (let i = bubbles.length - 1; i >= 0; i--) {
                 const bubble = bubbles[i];
@@ -983,8 +984,8 @@
                 const bubbleBottom = bubble.y + GAME_CONFIG.BUBBLE_SIZE;
                 const bubbleRight = bubble.x + GAME_CONFIG.BUBBLE_SIZE;
 
-                if (bubbleBottom > playerTop &&
-                    bubble.y < playerBottom &&
+                if (bubbleBottom > PLAYER_TOP_BOUND &&
+                    bubble.y < PLAYER_BOTTOM_BOUND &&
                     bubbleRight > playerLeft &&
                     bubble.x < playerRight) {
                     
