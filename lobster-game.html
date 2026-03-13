@@ -95,6 +95,16 @@
             80% { transform: translateX(10px); }
         }
         
+        /* 無敵時間閃爍效果 */
+        @keyframes invincible {
+            0%, 100% { opacity: 1; filter: drop-shadow(0 0 5px gold); }
+            50% { opacity: 0.5; filter: drop-shadow(0 0 15px gold); }
+        }
+        
+        .player-invincible {
+            animation: invincible 0.25s infinite;
+        }
+        
         #score {
             position: absolute;
             top: 20px;
@@ -459,20 +469,18 @@
             lives--;
             updateLivesDisplay();
             
-            // 受傷閃爍效果
-            player.style.transition = 'opacity 0.1s';
-            player.style.opacity = '0.3';
-            setTimeout(() => {
-                player.style.opacity = '1';
-            }, 200);
+            // 無敵時間閃爍效果
+            player.classList.add('player-invincible');
             
             if (lives <= 0) {
+                player.classList.remove('player-invincible');
                 endGame();
             } else {
-                // 短暫無敵時間
+                // 短暫無敵時間（1秒）
                 gameRunning = false;
                 setTimeout(() => {
                     if (lives > 0) {
+                        player.classList.remove('player-invincible');
                         gameRunning = true;
                         lastTime = performance.now();
                         animationFrameId = requestAnimationFrame(gameLoop);
