@@ -968,6 +968,13 @@
                 animationFrameId = null;
             }
             
+            // 清除所有道具計時器，防止遊戲結束後計時器繼續運行
+            Object.values(powerupTimers).forEach(t => clearTimeout(t));
+            powerupTimers = {};
+            
+            // 重置無敵狀態
+            isInvincible = false;
+            
             // 隱藏暫停畫面
             pauseOverlay.style.display = 'none';
             
