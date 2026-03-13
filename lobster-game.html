@@ -57,6 +57,34 @@
             0% { top: -40px; opacity: 1; }
             100% { top: 520px; opacity: 0; }
         }
+        
+        /* 分數彈出動畫 */
+        .score-popup {
+            position: absolute;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #ffd700;
+            text-shadow: 0 0 10px #ffd700;
+            animation: scoreFloat 0.8s ease-out forwards;
+            pointer-events: none;
+            z-index: 100;
+        }
+        
+        @keyframes scoreFloat {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-50px) scale(1.5); }
+        }
+        
+        /* 接到金幣時的玩家動畫 */
+        @keyframes playerCatch {
+            0% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.2); }
+            100% { transform: translateX(-50%) scale(1); }
+        }
+        
+        .player-catch {
+            animation: playerCatch 0.2s ease-out;
+        }
         #score {
             position: absolute;
             top: 20px;
@@ -210,6 +238,8 @@
         let bubbles = [];
         let lastTime = 0;
         let spawnTimer = 0;
+        let animationFrameId = null;
+        let isStarting = false; // 防止快速重複點擊
 
         // 預先計算玩家邊界（只計算一次）
         let playerLeft, playerRight, playerTop, playerBottom;
@@ -221,6 +251,26 @@
 
         const emojis = ['💰', '💎', '⭐', '🎵', '🎮'];
         const badEmojis = ['💣', '🔥', '👾'];
+
+        // 顯示分數彈出動畫
+        function showScorePopup(x, y, points) {
+            const popup = document.createElement('div');
+            popup.className = 'score-popup';
+            popup.textContent = '+' + points;
+            popup.style.left = x + 'px';
+            popup.style.top = y + 'px';
+            gameContainer.appendChild(popup);
+            
+            // 動畫結束後移除元素
+            setTimeout(() => popup.remove(), 800);
+        }
+
+        // 玩家接到物品時的動畫
+        function triggerPlayerCatchAnimation() {
+            player.classList.remove('player-catch');
+            void player.offsetWidth; // 強制重繪
+            player.classList.add('player-catch');
+        }
 
         // 使用 requestAnimationFrame 替代 setInterval
         function gameLoop(timestamp) {
@@ -272,6 +322,10 @@
                     } else {
                         score += 10;
                         scoreDisplay.textContent = '分數: ' + score;
+                        // 顯示分數彈出動畫
+                        showScorePopup(bubble.x, bubble.y, 10);
+                        // 玩家動畫
+                        triggerPlayerCatchAnimation();
                         bubble.element.remove();
                         bubbles.splice(i, 1);
                     }
@@ -349,6 +403,16 @@
         btnRight.addEventListener('mouseleave', handleTouchEnd);
 
         function startGame() {
+            // 防止快速重複點擊
+            if (isStarting) return;
+            isStarting = true;
+            
+            // 確保之前的動畫框架已取消
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            
             gameRunning = true;
             score = 0;
             bubbles = [];
@@ -356,15 +420,20 @@
             spawnTimer = 0;
             lastTime = performance.now();
             player.style.left = playerX + 'px';
+            player.classList.remove('player-catch');
             scoreDisplay.textContent = '分數: 0';
             startBtn.style.display = 'none';
             gameOver.style.display = 'none';
             
             // 清除舊的氣泡
             document.querySelectorAll('.bubble').forEach(b => b.remove());
+            document.querySelectorAll('.score-popup').forEach(p => p.remove());
 
             // 使用 requestAnimationFrame 啟動遊戲循環
-            requestAnimationFrame(gameLoop);
+            animationFrameId = requestAnimationFrame(gameLoop);
+            
+            // 短暫鎖定後解鎖
+            setTimeout(() => { isStarting = false; }, 500);
         }
 
         function spawnBubble() {
@@ -395,6 +464,12 @@
         function endGame() {
             gameRunning = false;
             
+            // 取消動畫框架防止記憶體洩漏
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            
             // 更新最高分
             if (score > highScore) {
                 highScore = score;
@@ -410,6 +485,9 @@
             // 清理所有氣泡
             bubbles.forEach(b => b.element.remove());
             bubbles = [];
+            
+            // 解鎖開始按鈕
+            isStarting = false;
         }
 
         startBtn.addEventListener('click', startGame);
