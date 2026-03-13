@@ -251,6 +251,7 @@
     <div class="touch-controls">
         <div class="touch-btn" id="btnLeft">◀</div>
         <div class="touch-btn" id="btnRight">▶</div>
+        <div class="touch-btn" id="btnPause">⏸</div>
     </div>
 
     <script>
@@ -262,6 +263,11 @@
         const finalScore = document.getElementById('finalScore');
         const highScoreDisplay = document.getElementById('highScore');
         const restartBtn = document.getElementById('restartBtn');
+        const pauseOverlay = document.getElementById('pauseOverlay');
+        const resumeBtn = document.getElementById('resumeBtn');
+        const btnLeft = document.getElementById('btnLeft');
+        const btnRight = document.getElementById('btnRight');
+        const btnPause = document.getElementById('btnPause');
 
         let playerX = 370;
         let score = 0;
@@ -504,7 +510,6 @@
         function togglePause() {
             if (!gameRunning || isStarting) return;
             isPaused = !isPaused;
-            const pauseOverlay = document.getElementById('pauseOverlay');
             pauseOverlay.style.display = isPaused ? 'flex' : 'none';
             if (!isPaused) {
                 lastTime = performance.now(); // 重置 deltaTime
@@ -514,9 +519,6 @@
         }
 
         // 觸控控制（統一使用 keys 系統，與鍵盤一致）
-        const btnLeft = document.getElementById('btnLeft');
-        const btnRight = document.getElementById('btnRight');
-
         function handleTouchStart(direction, e) {
             e.preventDefault();
             if (!gameRunning) return;
@@ -548,6 +550,13 @@
         btnRight.addEventListener('mousedown', (e) => handleTouchStart('right', e));
         btnRight.addEventListener('mouseup', () => handleTouchEnd('right'));
         btnRight.addEventListener('mouseleave', () => handleTouchEnd('right'));
+
+        // 暫停按鈕
+        btnPause.addEventListener('click', togglePause);
+        btnPause.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            togglePause();
+        });
 
         function startGame() {
             // 防止快速重複點擊
@@ -651,8 +660,6 @@
         restartBtn.addEventListener('click', startGame);
 
         // 暫停/繼續按鈕
-        const pauseOverlay = document.getElementById('pauseOverlay');
-        const resumeBtn = document.getElementById('resumeBtn');
         resumeBtn.addEventListener('click', togglePause);
     </script>
 </body>
