@@ -114,6 +114,19 @@
             z-index: 10;
         }
         
+        #difficultyIndicator {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1rem;
+            background: rgba(0,0,0,0.5);
+            padding: 5px 15px;
+            border-radius: 15px;
+            color: #00d4ff;
+            z-index: 10;
+        }
+        
         .powerup-badge {
             padding: 5px 10px;
             border-radius: 15px;
@@ -348,6 +361,7 @@
         <button id="soundBtn" title="音效開關">🔊</button>
         <div id="lives">❤️❤️❤️</div>
         <div id="powerupIndicator"></div>
+        <div id="difficultyIndicator">難度 1</div>
         <div id="player">🦞</div>
         <button id="startBtn">開始遊戲</button>
         <div id="gameOver">
@@ -686,6 +700,18 @@
             }
         }
 
+        // 更新難度等級顯示
+        function updateDifficultyDisplay() {
+            const difficultyIndicator = document.getElementById('difficultyIndicator');
+            const level = getDifficultyLevel();
+            difficultyIndicator.textContent = '難度 ' + (level + 1);
+            
+            // 難度提升時的視覺效果
+            if (level > 0) {
+                difficultyIndicator.style.color = level >= 5 ? '#ff6b6b' : level >= 3 ? '#ffd700' : '#00d4ff';
+            }
+        }
+
         // 玩家受傷時的動畫
         function triggerDamageAnimation() {
             gameContainer.style.animation = 'none';
@@ -900,6 +926,8 @@
                         score += points;
                         playSound('coin');
                         scoreDisplay.textContent = '分數: ' + formatScore(score);
+                        // 更新難度顯示
+                        updateDifficultyDisplay();
                         // 顯示分數彈出動畫
                         showScorePopup(bubble.x, bubble.y, points);
                         // 玩家動畫
@@ -1094,6 +1122,7 @@
             player.style.transform = 'translateX(-50%)';
             player.classList.remove('player-catch');
             scoreDisplay.textContent = '分數: 0';
+            updateDifficultyDisplay(); // 初始化難度顯示
             startBtn.style.display = 'none';
             gameOver.style.display = 'none';
             pauseOverlay.style.display = 'none';
