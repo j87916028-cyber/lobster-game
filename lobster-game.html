@@ -530,7 +530,7 @@
                         handleDamage(); // 改為扣血而非直接結束
                         bubble.element.remove();
                         bubbles.splice(i, 1);
-                        return; // 處理完這幀後退出，避免處理多個炸彈
+                        continue; // 繼續檢查其他氣泡的碰撞
                     } else {
                         score += 10;
                         playSound('coin');
