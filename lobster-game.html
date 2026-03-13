@@ -298,7 +298,7 @@
         const btnPause = document.getElementById('btnPause');
         const livesDisplay = document.getElementById('lives');
 
-        let playerX = 370;
+        let playerX = (CONTAINER_WIDTH - PLAYER_WIDTH) / 2; // 玩家起始位置（居中）
         let score = 0;
         let lives = 3; // 生命值系統
         let highScore = parseInt(localStorage.getItem('lobsterGameHighScore')) || 0;
@@ -655,7 +655,7 @@
             lives = 3; // 重置生命值
             updateLivesDisplay(); // 更新生命值顯示
             bubbles = [];
-            playerX = 370;
+            playerX = (CONTAINER_WIDTH - PLAYER_WIDTH) / 2;
             keys.left = false;
             keys.right = false;
             spawnTimer = 0;
