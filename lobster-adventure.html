@@ -278,12 +278,12 @@
         <div id="ground"></div>
         <div id="menu">
             <div class="menu-title">🦞 龍蝦大冒險</div>
-            <button class="menu-btn" onclick="startGame()">🎮 開始遊戲</button>
-            <button class="menu-btn shop" onclick="openShop()">🏪 商店</button>
-            <button class="menu-btn secondary" onclick="openLeaderboard()">📊 排行榜</button>
-            <button class="menu-btn purple" onclick="showAchievements()">🏅 成就</button>
-            <button class="menu-btn daily" onclick="showDailyChallenge()">📅 每日</button>
-            <button class="menu-btn lang" onclick="toggleLanguage()">🌐 語言</button>
+            <button type="button" class="menu-btn" onclick="startGame()">🎮 開始遊戲</button>
+            <button type="button" class="menu-btn shop" onclick="openShop()">🏪 商店</button>
+            <button type="button" class="menu-btn secondary" onclick="openLeaderboard()">📊 排行榜</button>
+            <button type="button" class="menu-btn purple" onclick="showAchievements()">🏅 成就</button>
+            <button type="button" class="menu-btn daily" onclick="showDailyChallenge()">📅 每日</button>
+            <button type="button" class="menu-btn lang" onclick="toggleLanguage()">🌐 語言</button>
         </div>
         <div id="shop">
             <span class="closeBtn" onclick="closeShop()">✕</span>
@@ -299,8 +299,8 @@
     </div>
     <p class="instructions">電腦：← → 鍵 / 手機：觸控螢幕左右移動<br>接金幣💰避開炸彈💣！</p>
     <div class="mobile-controls">
-        <button class="mobile-btn" ontouchstart="moveLeft()">⬅️</button>
-        <button class="mobile-btn" ontouchstart="moveRight()">➡️</button>
+        <button type="button" class="mobile-btn" ontouchstart="moveLeft()">⬅️</button>
+        <button type="button" class="mobile-btn" ontouchstart="moveRight()">➡️</button>
     </div>
 
     <script defer>
@@ -567,7 +567,7 @@ function startGame() {
             
             const m = document.createElement('div');
             m.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);z-index:9999;display:flex;align-items:center;justify-content:center;';
-            m.innerHTML = '<div style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:40px;border-radius:25px;text-align:center;max-width:350px;"><h2 style="color:#ff6b6b;margin-bottom:20px;">🎮 遊戲結束！</h2><p style="color:#fff;font-size:1.5rem;margin:10px 0;">得分: ' + score + '</p><p style="color:#ffd700;font-size:1.2rem;margin:10px 0;">獲得金幣: +' + earnedCoins + '</p><input id="playerNameInput" type="text" placeholder="輸入名字" style="margin:20px 0;padding:12px;border-radius:10px;border:none;width:80%;text-align:center;" value="匿名"><br><button onclick="saveScore()" style="padding:12px 30px;background:#4caf50;border:none;border-radius:10px;color:white;font-size:1.1rem;cursor:pointer;">儲存</button></div>';
+            m.innerHTML = '<div style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:40px;border-radius:25px;text-align:center;max-width:350px;"><h2 style="color:#ff6b6b;margin-bottom:20px;">🎮 遊戲結束！</h2><p style="color:#fff;font-size:1.5rem;margin:10px 0;">得分: ' + score + '</p><p style="color:#ffd700;font-size:1.2rem;margin:10px 0;">獲得金幣: +' + earnedCoins + '</p><input id="playerNameInput" type="text" placeholder="輸入名字" style="margin:20px 0;padding:12px;border-radius:10px;border:none;width:80%;text-align:center;" value="匿名"><br><button type="button" onclick="saveScore()" style="padding:12px 30px;background:#4caf50;border:none;border-radius:10px;color:white;font-size:1.1rem;cursor:pointer;">儲存</button></div>';
             document.body.appendChild(m);
             window.saveScore = function() {
                 const name = document.getElementById('playerNameInput').value || '匿名';
@@ -608,12 +608,12 @@ function startGame() {
             const owned = gameState.inventory[item.id] || 0;
             if (owned >= item.maxLevel) { const m = document.createElement('div');
         m.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;';
-        m.innerHTML = '<div style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:30px;border-radius:20px;text-align:center;"><p style="color:#ff6b6b;font-size:1.2rem;">已滿等！</p><button onclick="this.parentElement.parentElement.remove()" style="margin-top:15px;padding:8px 20px;background:#e94560;border:none;border-radius:8px;color:white;cursor:pointer;">關閉</button></div>';
+        m.innerHTML = '<div style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:30px;border-radius:20px;text-align:center;"><p style="color:#ff6b6b;font-size:1.2rem;">已滿等！</p><button type="button" onclick="this.parentElement.parentElement.remove()" style="margin-top:15px;padding:8px 20px;background:#e94560;border:none;border-radius:8px;color:white;cursor:pointer;">關閉</button></div>';
         document.body.appendChild(m); return; }
             const price = item.price * (owned + 1);
             if (gameState.coins < price) { const m = document.createElement('div');
         m.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;';
-        m.innerHTML = '<div style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:30px;border-radius:20px;text-align:center;"><p style="color:#ff6b6b;font-size:1.2rem;">金幣不足！需要 ' + price + ' 💰</p><button onclick="this.parentElement.parentElement.remove()" style="margin-top:15px;padding:8px 20px;background:#e94560;border:none;border-radius:8px;color:white;cursor:pointer;">關閉</button></div>';
+        m.innerHTML = '<div style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:30px;border-radius:20px;text-align:center;"><p style="color:#ff6b6b;font-size:1.2rem;">金幣不足！需要 ' + price + ' 💰</p><button type="button" onclick="this.parentElement.parentElement.remove()" style="margin-top:15px;padding:8px 20px;background:#e94560;border:none;border-radius:8px;color:white;cursor:pointer;">關閉</button></div>';
         document.body.appendChild(m); return; }
             
             gameState.coins -= price;
@@ -626,7 +626,7 @@ function startGame() {
             renderShop();
             const m = document.createElement('div');
         m.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;';
-        m.innerHTML = '<div style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:30px;border-radius:20px;text-align:center;"><p style="color:#4caf50;font-size:1.2rem;">購買成功！🎉</p><button onclick="this.parentElement.parentElement.remove()" style="margin-top:15px;padding:8px 20px;background:#4caf50;border:none;border-radius:8px;color:white;cursor:pointer;">關閉</button></div>';
+        m.innerHTML = '<div style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:30px;border-radius:20px;text-align:center;"><p style="color:#4caf50;font-size:1.2rem;">購買成功！🎉</p><button type="button" onclick="this.parentElement.parentElement.remove()" style="margin-top:15px;padding:8px 20px;background:#4caf50;border:none;border-radius:8px;color:white;cursor:pointer;">關閉</button></div>';
         document.body.appendChild(m);
         }
         
@@ -875,7 +875,7 @@ function showAchievements() {
         `;
     });
     
-    container.innerHTML += '<button onclick="closeMenu()" style="margin-top:20px;padding:12px 30px;font-size:1.1rem;background:linear-gradient(135deg,#ffd700,#ff8c00);border:none;border-radius:25px;cursor:pointer;">返回</button>';
+    container.innerHTML += '<button type="button" onclick="closeMenu()" style="margin-top:20px;padding:12px 30px;font-size:1.1rem;background:linear-gradient(135deg,#ffd700,#ff8c00);border:none;border-radius:25px;cursor:pointer;">返回</button>';
     document.getElementById('leaderboard').style.display = 'flex';
 }
 
@@ -1185,7 +1185,7 @@ function showDailyChallenge() {
         `;
     });
     
-    container.innerHTML += '<button onclick="closeMenu()" style="margin-top:20px;padding:12px 30px;background:linear-gradient(135deg,#ffd700,#ff8c00);border:none;border-radius:25px;cursor:pointer;">返回</button>';
+    container.innerHTML += '<button type="button" onclick="closeMenu()" style="margin-top:20px;padding:12px 30px;background:linear-gradient(135deg,#ffd700,#ff8c00);border:none;border-radius:25px;cursor:pointer;">返回</button>';
     document.getElementById('leaderboard').style.display = 'flex';
 }
 
@@ -1231,7 +1231,7 @@ function addHelpButton() {
     btn.onclick = function() {
         const m = document.createElement('div');
         m.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;';
-        m.innerHTML = '<div style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:30px;border-radius:20px;max-width:350px;text-align:center;"><h2 style="color:#ff6b6b;margin-bottom:15px;">🦞 龍蝦大冒險</h2><p style="color:#ccc;margin:8px 0;">← → 鍵或滑鼠移動</p><p style="color:#ccc;margin:8px 0;">手機左右滑動</p><p style="color:#ffd700;margin:8px 0;">目標：接金幣🪙 避開炸彈💣</p><button onclick="this.parentElement.parentElement.remove()" style="margin-top:20px;padding:10px 30px;background:#e94560;border:none;border-radius:10px;color:white;cursor:pointer;">關閉</button></div>';
+        m.innerHTML = '<div style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:30px;border-radius:20px;max-width:350px;text-align:center;"><h2 style="color:#ff6b6b;margin-bottom:15px;">🦞 龍蝦大冒險</h2><p style="color:#ccc;margin:8px 0;">← → 鍵或滑鼠移動</p><p style="color:#ccc;margin:8px 0;">手機左右滑動</p><p style="color:#ffd700;margin:8px 0;">目標：接金幣🪙 避開炸彈💣</p><button type="button" onclick="this.parentElement.parentElement.remove()" style="margin-top:20px;padding:10px 30px;background:#e94560;border:none;border-radius:10px;color:white;cursor:pointer;">關閉</button></div>';
         document.body.appendChild(m);
     };
     document.body.appendChild(btn);
