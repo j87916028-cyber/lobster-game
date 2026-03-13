@@ -104,6 +104,11 @@
             font-size: 2rem;
             margin: 20px 0;
         }
+        #highScore {
+            font-size: 1.2rem;
+            color: #ffd700;
+            margin-bottom: 20px;
+        }
         #restartBtn {
             padding: 15px 30px;
             font-size: 1.2rem;
@@ -175,6 +180,7 @@
         <button id="startBtn">開始遊戲</button>
         <div id="gameOver">
             <h2>遊戲結束!</h2>
+            <div id="highScore">最高分: 0</div>
             <div id="finalScore">分數: 0</div>
             <button id="restartBtn">再玩一次</button>
         </div>
@@ -194,10 +200,12 @@
         const startBtn = document.getElementById('startBtn');
         const gameOver = document.getElementById('gameOver');
         const finalScore = document.getElementById('finalScore');
+        const highScoreDisplay = document.getElementById('highScore');
         const restartBtn = document.getElementById('restartBtn');
 
         let playerX = 370;
         let score = 0;
+        let highScore = parseInt(localStorage.getItem('lobsterGameHighScore')) || 0;
         let gameRunning = false;
         let bubbles = [];
         let lastTime = 0;
@@ -386,8 +394,22 @@
 
         function endGame() {
             gameRunning = false;
+            
+            // 更新最高分
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('lobsterGameHighScore', highScore);
+                highScoreDisplay.textContent = '🎉 最高分: ' + highScore;
+            } else {
+                highScoreDisplay.textContent = '最高分: ' + highScore;
+            }
+            
             finalScore.textContent = '分數: ' + score;
             gameOver.style.display = 'flex';
+            
+            // 清理所有氣泡
+            bubbles.forEach(b => b.element.remove());
+            bubbles = [];
         }
 
         startBtn.addEventListener('click', startGame);
