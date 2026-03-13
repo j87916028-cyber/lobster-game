@@ -202,6 +202,15 @@
             color: #00d4ff;
             margin-bottom: 20px;
         }
+        #pauseScore {
+            font-size: 1.5rem;
+            color: #ffd700;
+            margin-bottom: 10px;
+        }
+        #pauseLives {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+        }
         #resumeBtn {
             padding: 15px 30px;
             font-size: 1.2rem;
@@ -299,6 +308,8 @@
         </div>
         <div id="pauseOverlay">
             <h2>暫停</h2>
+            <div id="pauseScore">分數: 0</div>
+            <div id="pauseLives">❤️❤️❤️</div>
             <button id="resumeBtn">繼續遊戲</button>
         </div>
     </div>
@@ -327,6 +338,8 @@
         const btnPause = document.getElementById('btnPause');
         const livesDisplay = document.getElementById('lives');
         const soundBtn = document.getElementById('soundBtn');
+        const pauseScore = document.getElementById('pauseScore');
+        const pauseLives = document.getElementById('pauseLives');
 
         let playerX = (CONTAINER_WIDTH - PLAYER_WIDTH) / 2; // 玩家起始位置（居中）
         let score = 0;
@@ -618,6 +631,17 @@
             if (!gameRunning || isStarting) return;
             isPaused = !isPaused;
             pauseOverlay.style.display = isPaused ? 'flex' : 'none';
+            
+            // 暫停時更新顯示的分數和生命值
+            if (isPaused) {
+                pauseScore.textContent = '分數: ' + score;
+                let hearts = '';
+                for (let i = 0; i < lives; i++) {
+                    hearts += '❤️';
+                }
+                pauseLives.textContent = hearts;
+            }
+            
             if (!isPaused) {
                 lastTime = performance.now(); // 重置 deltaTime
                 // 恢復時重新啟動動畫循環
