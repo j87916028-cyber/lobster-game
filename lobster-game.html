@@ -597,71 +597,81 @@
             return audioContext;
         }
 
-        // 播放音效（使用 Web Audio API 生成簡單音效）
-        function playSound(type) {
-            // 音效關閉時跳過
-            if (!soundEnabled) return;
+        // 播放單一頻率音調（通用輔助函數）
+        function playTone(startFreq, endFreq, duration, volume = 0.3) {
+            const ctx = initAudio();
+            if (ctx.state === 'suspended') ctx.resume();
             
-            try {
-                const ctx = initAudio();
-                if (ctx.state === 'suspended') {
-                    ctx.resume();
-                }
-                
+            const oscillator = ctx.createOscillator();
+            const gainNode = ctx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(ctx.destination);
+            
+            oscillator.frequency.setValueAtTime(startFreq, ctx.currentTime);
+            if (endFreq !== startFreq) {
+                oscillator.frequency.exponentialRampToValueAtTime(endFreq, ctx.currentTime + duration);
+            }
+            gainNode.gain.setValueAtTime(volume, ctx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
+            
+            oscillator.start(ctx.currentTime);
+            oscillator.stop(ctx.currentTime + duration);
+        }
+
+        // 播放多音符音調（用於愛心等複雜音效）
+        function playMultiTone(notes, duration, volume = 0.3) {
+            const ctx = initAudio();
+            if (ctx.state === 'suspended') ctx.resume();
+            
+            notes.forEach((freq, i) => {
                 const oscillator = ctx.createOscillator();
                 const gainNode = ctx.createGain();
                 
                 oscillator.connect(gainNode);
                 gainNode.connect(ctx.destination);
                 
-                if (type === 'coin') {
-                    // 接金幣：高音嗶聲
-                    oscillator.frequency.setValueAtTime(880, ctx.currentTime);
-                    oscillator.frequency.exponentialRampToValueAtTime(1760, ctx.currentTime + 0.1);
-                    gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
-                    oscillator.start(ctx.currentTime);
-                    oscillator.stop(ctx.currentTime + 0.15);
-                } else if (type === 'bomb') {
-                    // 碰到炸彈：低音轟聲
-                    oscillator.frequency.setValueAtTime(200, ctx.currentTime);
-                    oscillator.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.3);
-                    gainNode.gain.setValueAtTime(0.4, ctx.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-                    oscillator.start(ctx.currentTime);
-                    oscillator.stop(ctx.currentTime + 0.3);
-                } else if (type === 'start') {
-                    // 遊戲開始：上升音調
-                    oscillator.frequency.setValueAtTime(440, ctx.currentTime);
-                    oscillator.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.2);
-                    gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
-                    oscillator.start(ctx.currentTime);
-                    oscillator.stop(ctx.currentTime + 0.25);
-                } else if (type === 'gameover') {
-                    // 遊戲結束：下降音調
-                    oscillator.frequency.setValueAtTime(440, ctx.currentTime);
-                    oscillator.frequency.exponentialRampToValueAtTime(110, ctx.currentTime + 0.5);
-                    gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
-                    oscillator.start(ctx.currentTime);
-                    oscillator.stop(ctx.currentTime + 0.5);
-                } else if (type === 'powerup') {
-                    // 取得道具：上升音調（快）
-                    oscillator.frequency.setValueAtTime(523, ctx.currentTime);
-                    oscillator.frequency.exponentialRampToValueAtTime(1047, ctx.currentTime + 0.15);
-                    gainNode.gain.setValueAtTime(0.25, ctx.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
-                    oscillator.start(ctx.currentTime);
-                    oscillator.stop(ctx.currentTime + 0.2);
-                } else if (type === 'heart') {
-                    // 取得愛心：兩個音符上揚
-                    oscillator.frequency.setValueAtTime(659, ctx.currentTime);
-                    oscillator.frequency.setValueAtTime(880, ctx.currentTime + 0.1);
-                    gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
-                    oscillator.start(ctx.currentTime);
-                    oscillator.stop(ctx.currentTime + 0.25);
+                const startTime = ctx.currentTime + (i * duration / notes.length);
+                oscillator.frequency.setValueAtTime(freq, startTime);
+                gainNode.gain.setValueAtTime(volume, startTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + (duration / notes.length));
+                
+                oscillator.start(startTime);
+                oscillator.stop(startTime + (duration / notes.length));
+            });
+        }
+
+        // 播放音效（使用 Web Audio API 生成簡單音效）
+        function playSound(type) {
+            // 音效關閉時跳過
+            if (!soundEnabled) return;
+            
+            try {
+                switch (type) {
+                    case 'coin':
+                        // 接金幣：高音嗶聲
+                        playTone(880, 1760, 0.15, 0.3);
+                        break;
+                    case 'bomb':
+                        // 碰到炸彈：低音轟聲
+                        playTone(200, 50, 0.3, 0.4);
+                        break;
+                    case 'start':
+                        // 遊戲開始：上升音調
+                        playTone(440, 880, 0.25, 0.3);
+                        break;
+                    case 'gameover':
+                        // 遊戲結束：下降音調
+                        playTone(440, 110, 0.5, 0.3);
+                        break;
+                    case 'powerup':
+                        // 取得道具：上升音調（快）
+                        playTone(523, 1047, 0.2, 0.25);
+                        break;
+                    case 'heart':
+                        // 取得愛心：兩個音符上揚
+                        playMultiTone([659, 880], 0.25, 0.3);
+                        break;
                 }
             } catch (e) {
                 // 音效失敗時靜默忽略
