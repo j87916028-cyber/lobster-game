@@ -308,6 +308,14 @@
             inventory: JSON.parse(localStorage.getItem('lobsterInventory') || '{}'),
         };
         
+        // localStorage 錯誤處理
+        try {
+            localStorage.setItem('test', 'test');
+            localStorage.removeItem('test');
+        } catch(e) {
+            console.warn('localStorage 不可用:', e);
+        }
+        
         const shopItems = [
             { id: 'speed', name: '⚡ 速度', price: 100, maxLevel: 10, desc: '移動更快' },
             { id: 'magnet', name: '🧲 磁鐵', price: 200, maxLevel: 5, desc: '自動吸取' },
