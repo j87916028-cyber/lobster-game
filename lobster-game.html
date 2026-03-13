@@ -678,6 +678,12 @@
 
         // 難度系統參數（使用 GAME_CONFIG 中的值）
         const DIFFICULTY_INCREASE_PER = GAME_CONFIG.DIFFICULTY_INCREASE_PER;
+        
+        // 從 GAME_CONFIG 提取常用難度參數（避免重複查閱）
+        const MIN_SPAWN_INTERVAL = GAME_CONFIG.MIN_SPAWN_INTERVAL;
+        const MAX_BUBBLE_SPEED = GAME_CONFIG.MAX_BUBBLE_SPEED;
+        const INITIAL_SPAWN_INTERVAL = GAME_CONFIG.INITIAL_SPAWN_INTERVAL;
+        const INITIAL_BUBBLE_SPEED = GAME_CONFIG.INITIAL_BUBBLE_SPEED;
 
         // 計算當前難度等級
         function getDifficultyLevel() {
