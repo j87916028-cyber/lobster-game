@@ -1214,6 +1214,9 @@
             bubbles.forEach(b => returnBubbleToPool(b.element));
             bubbles = [];
             
+            // 重置生成計時器，避免重新開始時立即生成氣泡
+            spawnTimer = 0;
+            
             // 解鎖開始按鈕
             isStarting = false;
         }
