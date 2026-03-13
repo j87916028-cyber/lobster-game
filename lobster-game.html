@@ -105,6 +105,56 @@
             animation: invincible 0.25s infinite;
         }
         
+        /* 道具效果指示器 */
+        #powerupIndicator {
+            position: absolute;
+            top: 60px;
+            left: 20px;
+            display: flex;
+            gap: 8px;
+            z-index: 10;
+        }
+        
+        .powerup-badge {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            animation: powerupPulse 0.5s infinite alternate;
+        }
+        
+        .powerup-shield {
+            background: rgba(0, 191, 255, 0.8);
+            box-shadow: 0 0 10px #00bfff;
+        }
+        
+        .powerup-2x {
+            background: rgba(255, 215, 0, 0.8);
+            box-shadow: 0 0 10px #ffd700;
+        }
+        
+        @keyframes powerupPulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.1); }
+        }
+        
+        /* 道具彈出動畫 */
+        .powerup-popup {
+            position: absolute;
+            font-size: 1.2rem;
+            font-weight: bold;
+            padding: 8px 15px;
+            border-radius: 10px;
+            animation: powerupFloat 1s ease-out forwards;
+            pointer-events: none;
+            z-index: 100;
+        }
+        
+        @keyframes powerupFloat {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-40px) scale(1.2); }
+        }
+        
         #score {
             position: absolute;
             top: 20px;
@@ -298,6 +348,7 @@
         <div id="score">分數: 0</div>
         <button id="soundBtn" title="音效開關">🔊</button>
         <div id="lives">❤️❤️❤️</div>
+        <div id="powerupIndicator"></div>
         <div id="player">🦞</div>
         <button id="startBtn">開始遊戲</button>
         <div id="gameOver">
@@ -446,6 +497,20 @@
 
         const emojis = ['💰', '💎', '⭐', '🎵', '🎮'];
         const badEmojis = ['💣', '🔥', '👾'];
+        
+        // 道具系統
+        const powerups = [
+            { emoji: '🛡️', type: 'shield', duration: 5000, name: '護盾' },
+            { emoji: '🌟', type: '2x', duration: 8000, name: '雙倍' },
+            { emoji: '❤️', type: 'heart', duration: 0, name: '生命+1' }
+        ];
+        
+        // 道具狀態
+        let activePowerups = {
+            shield: false,
+            '2x': false
+        };
+        let powerupTimers = {};
 
         // 顯示分數彈出動畫
         function showScorePopup(x, y, points) {
@@ -507,6 +572,73 @@
             player.classList.remove('player-catch');
             void player.offsetWidth; // 強制重繪
             player.classList.add('player-catch');
+        }
+
+        // 啟動道具效果
+        function activatePowerup(powerup, x, y) {
+            playSound('coin');
+            
+            // 顯示道具彈出動畫
+            const popup = document.createElement('div');
+            popup.className = 'powerup-popup';
+            popup.textContent = powerup.name + '！';
+            popup.style.left = x + 'px';
+            popup.style.top = y + 'px';
+            popup.style.background = powerup.type === 'shield' ? 'rgba(0,191,255,0.8)' : 
+                                      powerup.type === '2x' ? 'rgba(255,215,0,0.8)' : 'rgba(255,0,0,0.8)';
+            gameContainer.appendChild(popup);
+            setTimeout(() => popup.remove(), 1000);
+            
+            // 處理不同道具效果
+            if (powerup.type === 'shield') {
+                activePowerups.shield = true;
+                player.classList.add('player-invincible');
+                updatePowerupIndicator();
+                
+                // 清除之前的計時器
+                if (powerupTimers.shield) clearTimeout(powerupTimers.shield);
+                powerupTimers.shield = setTimeout(() => {
+                    activePowerups.shield = false;
+                    if (!activePowerups.shield) player.classList.remove('player-invincible');
+                    updatePowerupIndicator();
+                }, powerup.duration);
+            } 
+            else if (powerup.type === '2x') {
+                activePowerups['2x'] = true;
+                updatePowerupIndicator();
+                
+                // 清除之前的計時器
+                if (powerupTimers['2x']) clearTimeout(powerupTimers['2x']);
+                powerupTimers['2x'] = setTimeout(() => {
+                    activePowerups['2x'] = false;
+                    updatePowerupIndicator();
+                }, powerup.duration);
+            }
+            else if (powerup.type === 'heart') {
+                if (lives < 5) { // 最多5條命
+                    lives++;
+                    updateLivesDisplay();
+                }
+            }
+        }
+
+        // 更新道具指示器顯示
+        function updatePowerupIndicator() {
+            const indicator = document.getElementById('powerupIndicator');
+            indicator.innerHTML = '';
+            
+            if (activePowerups.shield) {
+                const badge = document.createElement('div');
+                badge.className = 'powerup-badge powerup-shield';
+                badge.textContent = '🛡️ 護盾';
+                indicator.appendChild(badge);
+            }
+            if (activePowerups['2x']) {
+                const badge = document.createElement('div');
+                badge.className = 'powerup-badge powerup-2x';
+                badge.textContent = '🌟 雙倍';
+                indicator.appendChild(badge);
+            }
         }
 
         // 使用 requestAnimationFrame 替代 setInterval
@@ -577,11 +709,21 @@
                         bubbles.splice(i, 1);
                         continue; // 繼續檢查其他氣泡的碰撞
                     } else {
-                        score += 10;
+                        // 處理道具
+                        if (bubble.isPowerup) {
+                            activatePowerup(bubble.powerupType, bubble.x, bubble.y);
+                            bubble.element.remove();
+                            bubbles.splice(i, 1);
+                            continue;
+                        }
+                        
+                        // 普通金幣
+                        const points = activePowerups['2x'] ? 20 : 10;
+                        score += points;
                         playSound('coin');
                         scoreDisplay.textContent = '分數: ' + score;
                         // 顯示分數彈出動畫
-                        showScorePopup(bubble.x, bubble.y, 10);
+                        showScorePopup(bubble.x, bubble.y, points);
                         // 玩家動畫
                         triggerPlayerCatchAnimation();
                         bubble.element.remove();
@@ -711,6 +853,14 @@
             score = 0;
             lives = 3; // 重置生命值
             updateLivesDisplay(); // 更新生命值顯示
+            
+            // 重置道具狀態
+            activePowerups = { shield: false, '2x': false };
+            Object.values(powerupTimers).forEach(t => clearTimeout(t));
+            powerupTimers = {};
+            updatePowerupIndicator();
+            player.classList.remove('player-invincible');
+            
             bubbles = [];
             playerX = (CONTAINER_WIDTH - PLAYER_WIDTH) / 2;
             keys.left = false;
@@ -727,6 +877,7 @@
             // 清除舊的氣泡
             document.querySelectorAll('.bubble').forEach(b => b.remove());
             document.querySelectorAll('.score-popup').forEach(p => p.remove());
+            document.querySelectorAll('.powerup-popup').forEach(p => p.remove());
 
             // 使用 requestAnimationFrame 啟動遊戲循環
             animationFrameId = requestAnimationFrame(gameLoop);
@@ -748,9 +899,19 @@
             // 根據難度增加壞東西機率 (最高 35%)
             const badChance = Math.min(0.35, 0.2 + (getDifficultyLevel() * 0.03));
             const isBad = Math.random() < badChance;
-            bubble.textContent = isBad 
-                ? badEmojis[Math.floor(Math.random() * badEmojis.length)]
-                : emojis[Math.floor(Math.random() * emojis.length)];
+            
+            // 10% 機率生成道具（不在壞東西中）
+            let isPowerup = false;
+            let powerupType = null;
+            if (!isBad && Math.random() < 0.1) {
+                isPowerup = true;
+                powerupType = powerups[Math.floor(Math.random() * powerups.length)];
+                bubble.textContent = powerupType.emoji;
+            } else {
+                bubble.textContent = isBad 
+                    ? badEmojis[Math.floor(Math.random() * badEmojis.length)]
+                    : emojis[Math.floor(Math.random() * emojis.length)];
+            }
             
             gameContainer.appendChild(bubble);
             bubbles.push({ 
@@ -758,7 +919,9 @@
                 x: x,
                 y: -40, 
                 speed: getCurrentBubbleSpeed(),
-                isBad: isBad
+                isBad: isBad,
+                isPowerup: isPowerup,
+                powerupType: powerupType
             });
         }
 
