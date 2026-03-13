@@ -671,23 +671,13 @@
 
         // 統一移動控制系統（使用遊戲循環 + deltaTime）
         const keys = { left: false, right: false };
-        const MOVE_SPEED = 0.4; // 像素/毫秒
+        const MOVE_SPEED = GAME_CONFIG.PLAYER_MOVE_SPEED; // 像素/毫秒
 
         // 預先計算玩家邊界（只計算一次）
         let playerLeft, playerRight, playerTop, playerBottom;
-        const PLAYER_WIDTH = 60;
-        const PLAYER_HEIGHT = 60;
-        const CONTAINER_WIDTH = 800;
-        const CONTAINER_HEIGHT = 500;
-        const BUBBLE_SIZE = 40;
-        const MAX_PLAYER_X = CONTAINER_WIDTH - PLAYER_WIDTH;
 
-        // 難度系統參數
-        const INITIAL_SPAWN_INTERVAL = 800; // 初始生成間隔 (ms)
-        const MIN_SPAWN_INTERVAL = 300;      // 最小生成間隔 (ms)
-        const INITIAL_BUBBLE_SPEED = 3;       // 初始氣泡速度
-        const MAX_BUBBLE_SPEED = 8;           // 最大氣泡速度
-        const DIFFICULTY_INCREASE_PER = 50;  // 每多少分數增加一次難度
+        // 難度系統參數（使用 GAME_CONFIG 中的值）
+        const DIFFICULTY_INCREASE_PER = GAME_CONFIG.DIFFICULTY_INCREASE_PER;
 
         // 計算當前難度等級
         function getDifficultyLevel() {
@@ -935,10 +925,10 @@
                 playerX = Math.max(0, playerX - MOVE_SPEED * deltaTime);
             }
             if (keys.right) {
-                playerX = Math.min(MAX_PLAYER_X, playerX + MOVE_SPEED * deltaTime);
+                playerX = Math.min(GAME_CONFIG.CONTAINER_WIDTH - GAME_CONFIG.PLAYER_WIDTH, playerX + MOVE_SPEED * deltaTime);
             }
             // 使用 transform 代替 left，利用 GPU 加速避免重排
-            const playerOffsetX = playerX - (CONTAINER_WIDTH - PLAYER_WIDTH) / 2;
+            const playerOffsetX = playerX - (GAME_CONFIG.CONTAINER_WIDTH - GAME_CONFIG.PLAYER_WIDTH) / 2;
             player.style.transform = `translateX(calc(-50% + ${playerOffsetX}px))`;
 
             // 更新氣泡位置
@@ -961,9 +951,9 @@
             if (!gameRunning) return;
             // 更新玩家邊界（相對於 gameContainer）
             playerLeft = playerX;
-            playerRight = playerX + PLAYER_WIDTH;
-            playerTop = CONTAINER_HEIGHT - GAME_CONFIG.PLAYER_BOTTOM - PLAYER_HEIGHT;
-            playerBottom = CONTAINER_HEIGHT - GAME_CONFIG.PLAYER_BOTTOM;
+            playerRight = playerX + GAME_CONFIG.PLAYER_WIDTH;
+            playerTop = GAME_CONFIG.CONTAINER_HEIGHT - GAME_CONFIG.PLAYER_BOTTOM - GAME_CONFIG.PLAYER_HEIGHT;
+            playerBottom = GAME_CONFIG.CONTAINER_HEIGHT - GAME_CONFIG.PLAYER_BOTTOM;
 
             for (let i = bubbles.length - 1; i >= 0; i--) {
                 const bubble = bubbles[i];
@@ -974,8 +964,8 @@
                 bubble.element.style.transform = `translateY(${bubble.y}px)`;
 
                 // 簡化的碰撞檢測（使用預先計算的數值，避免 getBoundingClientRect）
-                const bubbleBottom = bubble.y + BUBBLE_SIZE;
-                const bubbleRight = bubble.x + BUBBLE_SIZE;
+                const bubbleBottom = bubble.y + GAME_CONFIG.BUBBLE_SIZE;
+                const bubbleRight = bubble.x + GAME_CONFIG.BUBBLE_SIZE;
 
                 if (bubbleBottom > playerTop &&
                     bubble.y < playerBottom &&
@@ -1015,7 +1005,7 @@
                 }
 
                 // 超出範圍
-                if (bubble.y > CONTAINER_HEIGHT + BUBBLE_SIZE) {
+                if (bubble.y > GAME_CONFIG.CONTAINER_HEIGHT + GAME_CONFIG.BUBBLE_SIZE) {
                     returnBubbleToPool(bubble.element);
                     bubbles.splice(i, 1);
                 }
@@ -1193,7 +1183,7 @@
             // 先將舊氣泡返回物件池，再清空陣列
             bubbles.forEach(b => returnBubbleToPool(b.element));
             bubbles = [];
-            playerX = (CONTAINER_WIDTH - PLAYER_WIDTH) / 2;
+            playerX = (GAME_CONFIG.CONTAINER_WIDTH - GAME_CONFIG.PLAYER_WIDTH) / 2;
             keys.left = false;
             keys.right = false;
             spawnTimer = 0;
@@ -1230,7 +1220,7 @@
             
             // 使用物件池取得 DOM 元素（效能優化）
             const bubble = getBubbleFromPool();
-            const x = Math.random() * (CONTAINER_WIDTH - BUBBLE_SIZE);
+            const x = Math.random() * (GAME_CONFIG.CONTAINER_WIDTH - GAME_CONFIG.BUBBLE_SIZE);
             bubble.style.left = x + 'px';
             // 初始位置使用 transform（效能更好）
             bubble.style.transform = `translateY(${GAME_CONFIG.BUBBLE_START_Y}px)`;
