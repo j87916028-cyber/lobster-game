@@ -1207,9 +1207,13 @@
             gameOver.style.display = 'none';
             pauseOverlay.style.display = 'none';
             
-            // 清除舊的彈出元素（氣泡已透過物件池處理）
-            document.querySelectorAll('.score-popup').forEach(p => p.remove());
-            document.querySelectorAll('.powerup-popup').forEach(p => p.remove());
+            // 清除舊的彈出元素（返回到物件池以重複使用）
+            document.querySelectorAll('.score-popup').forEach(p => {
+                returnPopupToPool(p);
+            });
+            document.querySelectorAll('.powerup-popup').forEach(p => {
+                returnPopupToPool(p);
+            });
             // 清除道具指示器殘留
             document.querySelectorAll('.powerup-badge').forEach(b => b.remove());
 
