@@ -548,33 +548,30 @@
         }
 
         // 碰到炸彈時的處理（扣血而非直接結束）
+        let isInvincible = false; // 無敵狀態標誌
+
         function handleDamage() {
+            // 無敵時間內不再受傷
+            if (isInvincible) return;
+            
             playSound('bomb');
             lives--;
             updateLivesDisplay();
             
             // 無敵時間閃爍效果
             player.classList.add('player-invincible');
+            isInvincible = true;
             
             if (lives <= 0) {
                 player.classList.remove('player-invincible');
+                isInvincible = false;
                 endGame();
             } else {
-                // 暫停遊戲循環，進入無敵時間
-                gameRunning = false;
-                if (animationFrameId) {
-                    cancelAnimationFrame(animationFrameId);
-                    animationFrameId = null;
-                }
-                
-                // 短暫無敵時間（1秒）後恢復遊戲
+                // 無敵時間 1 秒，遊戲繼續進行
                 setTimeout(() => {
                     if (lives > 0) {
                         player.classList.remove('player-invincible');
-                        gameRunning = true;
-                        lastTime = performance.now();
-                        spawnTimer = 0; // 重置生成計時器，避免無敵時間後突然生成大量氣泡
-                        animationFrameId = requestAnimationFrame(gameLoop);
+                        isInvincible = false;
                     }
                 }, 1000);
             }
@@ -873,6 +870,7 @@
             powerupTimers = {};
             updatePowerupIndicator();
             player.classList.remove('player-invincible');
+            isInvincible = false; // 重置無敵狀態
             
             bubbles = [];
             playerX = (CONTAINER_WIDTH - PLAYER_WIDTH) / 2;
