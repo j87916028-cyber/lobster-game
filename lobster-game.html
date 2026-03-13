@@ -386,11 +386,12 @@
 
         // 使用 requestAnimationFrame 替代 setInterval
         function gameLoop(timestamp) {
-            if (!gameRunning || isPaused) {
-                if (isPaused) {
-                    // 保持動畫框架以便暫停後繼續
-                    animationFrameId = requestAnimationFrame(gameLoop);
-                }
+            if (!gameRunning) {
+                return; // 遊戲結束，停止動畫循環
+            }
+            
+            if (isPaused) {
+                // 暫停時不請求新框架，節省 CPU
                 return;
             }
 
@@ -470,6 +471,16 @@
         }
 
         document.addEventListener('keydown', (e) => {
+            // Enter 鍵開始/重新開始遊戲
+            if (e.key === 'Enter') {
+                if (!gameRunning) {
+                    startGame();
+                } else if (gameOver.style.display === 'flex') {
+                    startGame();
+                }
+                return;
+            }
+            
             if (!gameRunning) return;
             if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
                 keys.left = true;
@@ -496,6 +507,8 @@
             pauseOverlay.style.display = isPaused ? 'flex' : 'none';
             if (!isPaused) {
                 lastTime = performance.now(); // 重置 deltaTime
+                // 恢復時重新啟動動畫循環
+                animationFrameId = requestAnimationFrame(gameLoop);
             }
         }
 
