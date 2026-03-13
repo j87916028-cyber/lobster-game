@@ -614,6 +614,22 @@
                     gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
                     oscillator.start(ctx.currentTime);
                     oscillator.stop(ctx.currentTime + 0.5);
+                } else if (type === 'powerup') {
+                    // 取得道具：上升音調（快）
+                    oscillator.frequency.setValueAtTime(523, ctx.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(1047, ctx.currentTime + 0.15);
+                    gainNode.gain.setValueAtTime(0.25, ctx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+                    oscillator.start(ctx.currentTime);
+                    oscillator.stop(ctx.currentTime + 0.2);
+                } else if (type === 'heart') {
+                    // 取得愛心：兩個音符上揚
+                    oscillator.frequency.setValueAtTime(659, ctx.currentTime);
+                    oscillator.frequency.setValueAtTime(880, ctx.currentTime + 0.1);
+                    gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+                    oscillator.start(ctx.currentTime);
+                    oscillator.stop(ctx.currentTime + 0.25);
                 }
             } catch (e) {
                 // 音效失敗時靜默忽略
@@ -763,7 +779,12 @@
 
         // 啟動道具效果
         function activatePowerup(powerup, x, y) {
-            playSound('coin');
+            // 根據道具類型播放不同音效
+            if (powerup.type === 'heart') {
+                playSound('heart');
+            } else {
+                playSound('powerup');
+            }
             
             // 顯示道具彈出動畫（使用物件池）
             const popup = getPopupFromPool('powerup-popup');
