@@ -2,7 +2,8 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <title>🦞 龍蝦大戰</title>
     <style>
         * {
@@ -118,6 +119,52 @@
             font-size: 1.2rem;
             opacity: 0.8;
         }
+        
+        /* 行動裝置觸控按鈕 */
+        .touch-controls {
+            display: none;
+            margin-top: 20px;
+            gap: 30px;
+        }
+        
+        .touch-btn {
+            width: 80px;
+            height: 80px;
+            background: rgba(0, 212, 255, 0.3);
+            border: 3px solid #00d4ff;
+            border-radius: 50%;
+            font-size: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            transition: transform 0.1s, background 0.1s;
+        }
+        
+        .touch-btn:active {
+            transform: scale(0.9);
+            background: rgba(0, 212, 255, 0.6);
+        }
+        
+        /* 行動裝置適配 */
+        @media (max-width: 850px) {
+            #gameContainer {
+                width: 95vw;
+                height: 60vh;
+                max-height: 500px;
+            }
+            h1 {
+                font-size: 2rem;
+            }
+            .instructions {
+                font-size: 1rem;
+            }
+            .touch-controls {
+                display: flex;
+            }
+        }
     </style>
 </head>
 <body>
@@ -133,6 +180,12 @@
         </div>
     </div>
     <p class="instructions">← → 方向鍵移動龍蝦，接住掉落的金幣！💰</p>
+    
+    <!-- 行動裝置觸控按鈕 -->
+    <div class="touch-controls">
+        <div class="touch-btn" id="btnLeft">◀</div>
+        <div class="touch-btn" id="btnRight">▶</div>
+    </div>
 
     <script>
         const player = document.getElementById('player');
@@ -233,6 +286,59 @@
             }
             player.style.left = playerX + 'px';
         });
+
+        // 觸控控制
+        const btnLeft = document.getElementById('btnLeft');
+        const btnRight = document.getElementById('btnRight');
+        let touchInterval = null;
+
+        function handleTouchStart(direction) {
+            if (!gameRunning) return;
+            // 立即移動一次
+            if (direction === 'left') {
+                playerX = Math.max(0, playerX - 30);
+            } else {
+                playerX = Math.min(740, playerX + 30);
+            }
+            player.style.left = playerX + 'px';
+            
+            // 長按時持續移動
+            touchInterval = setInterval(() => {
+                if (direction === 'left') {
+                    playerX = Math.max(0, playerX - 30);
+                } else {
+                    playerX = Math.min(740, playerX + 30);
+                }
+                player.style.left = playerX + 'px';
+            }, 100);
+        }
+
+        function handleTouchEnd() {
+            if (touchInterval) {
+                clearInterval(touchInterval);
+                touchInterval = null;
+            }
+        }
+
+        // 左按鈕
+        btnLeft.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            handleTouchStart('left');
+        });
+        btnLeft.addEventListener('touchend', handleTouchEnd);
+        btnLeft.addEventListener('mousedown', () => handleTouchStart('left'));
+        btnLeft.addEventListener('mouseup', handleTouchEnd);
+        btnLeft.addEventListener('mouseleave', handleTouchEnd);
+
+        // 右按鈕
+        btnRight.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            handleTouchStart('right');
+        });
+        btnRight.addEventListener('touchend', handleTouchEnd);
+        btnRight.addEventListener('mousedown', () => handleTouchStart('right'));
+        btnRight.addEventListener('mouseup', handleTouchEnd);
+        btnRight.addEventListener('mouseleave', handleTouchEnd);
 
         function startGame() {
             gameRunning = true;
