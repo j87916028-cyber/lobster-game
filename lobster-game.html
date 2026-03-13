@@ -147,6 +147,34 @@
             color: #1a1a2e;
             font-weight: bold;
         }
+        #pauseOverlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+        }
+        #pauseOverlay h2 {
+            font-size: 3rem;
+            color: #00d4ff;
+            margin-bottom: 20px;
+        }
+        #resumeBtn {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            background: #00d4ff;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            color: #1a1a2e;
+            font-weight: bold;
+        }
         .instructions {
             margin-top: 20px;
             font-size: 1.2rem;
@@ -212,8 +240,12 @@
             <div id="finalScore">分數: 0</div>
             <button id="restartBtn">再玩一次</button>
         </div>
+        <div id="pauseOverlay">
+            <h2>暫停</h2>
+            <button id="resumeBtn">繼續遊戲</button>
+        </div>
     </div>
-    <p class="instructions">← → 方向鍵移動龍蝦，接住掉落的金幣！💰</p>
+    <p class="instructions">← → 方向鍵移動龍蝦，接住掉落的金幣！💰 按 ESC 暫停</p>
     
     <!-- 行動裝置觸控按鈕 -->
     <div class="touch-controls">
@@ -239,11 +271,16 @@
         highScoreDisplay.textContent = '最高分: ' + highScore;
         
         let gameRunning = false;
+        let isPaused = false;
         let bubbles = [];
         let lastTime = 0;
         let spawnTimer = 0;
         let animationFrameId = null;
         let isStarting = false; // 防止快速重複點擊
+
+        // 統一移動控制系統（使用遊戲循環 + deltaTime）
+        const keys = { left: false, right: false };
+        const MOVE_SPEED = 0.4; // 像素/毫秒
 
         // 預先計算玩家邊界（只計算一次）
         let playerLeft, playerRight, playerTop, playerBottom;
@@ -252,6 +289,7 @@
         const CONTAINER_WIDTH = 800;
         const CONTAINER_HEIGHT = 500;
         const BUBBLE_SIZE = 40;
+        const MAX_PLAYER_X = CONTAINER_WIDTH - PLAYER_WIDTH;
 
         // 難度系統參數
         const INITIAL_SPAWN_INTERVAL = 800; // 初始生成間隔 (ms)
@@ -302,10 +340,25 @@
 
         // 使用 requestAnimationFrame 替代 setInterval
         function gameLoop(timestamp) {
-            if (!gameRunning) return;
+            if (!gameRunning || isPaused) {
+                if (isPaused) {
+                    // 保持動畫框架以便暫停後繼續
+                    animationFrameId = requestAnimationFrame(gameLoop);
+                }
+                return;
+            }
 
             const deltaTime = timestamp - lastTime;
             lastTime = timestamp;
+
+            // 統一移動邏輯（鍵盤 + 觸控）
+            if (keys.left) {
+                playerX = Math.max(0, playerX - MOVE_SPEED * deltaTime);
+            }
+            if (keys.right) {
+                playerX = Math.min(MAX_PLAYER_X, playerX + MOVE_SPEED * deltaTime);
+            }
+            player.style.left = playerX + 'px';
 
             // 更新氣泡位置
             updateBubbles(deltaTime);
@@ -318,7 +371,7 @@
                 spawnTimer = 0;
             }
 
-            requestAnimationFrame(gameLoop);
+            animationFrameId = requestAnimationFrame(gameLoop);
         }
 
         // 更新氣泡位置與碰撞檢測
@@ -370,66 +423,69 @@
 
         document.addEventListener('keydown', (e) => {
             if (!gameRunning) return;
-            if (e.key === 'ArrowLeft' || e.key === 'a') {
-                playerX = Math.max(0, playerX - 30);
-            } else if (e.key === 'ArrowRight' || e.key === 'd') {
-                playerX = Math.min(740, playerX + 30);
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                keys.left = true;
+            } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                keys.right = true;
+            } else if (e.key === 'Escape') {
+                togglePause();
             }
-            player.style.left = playerX + 'px';
         });
 
-        // 觸控控制
-        const btnLeft = document.getElementById('btnLeft');
-        const btnRight = document.getElementById('btnRight');
-        let touchInterval = null;
-
-        function handleTouchStart(direction) {
-            if (!gameRunning) return;
-            // 立即移動一次
-            if (direction === 'left') {
-                playerX = Math.max(0, playerX - 30);
-            } else {
-                playerX = Math.min(740, playerX + 30);
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                keys.left = false;
+            } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                keys.right = false;
             }
-            player.style.left = playerX + 'px';
-            
-            // 長按時持續移動
-            touchInterval = setInterval(() => {
-                if (direction === 'left') {
-                    playerX = Math.max(0, playerX - 30);
-                } else {
-                    playerX = Math.min(740, playerX + 30);
-                }
-                player.style.left = playerX + 'px';
-            }, 100);
+        });
+
+        // 切換暫停狀態
+        function togglePause() {
+            if (!gameRunning || isStarting) return;
+            isPaused = !isPaused;
+            const pauseOverlay = document.getElementById('pauseOverlay');
+            pauseOverlay.style.display = isPaused ? 'flex' : 'none';
+            if (!isPaused) {
+                lastTime = performance.now(); // 重置 deltaTime
+            }
         }
 
-        function handleTouchEnd() {
-            if (touchInterval) {
-                clearInterval(touchInterval);
-                touchInterval = null;
+        // 觸控控制（統一使用 keys 系統，與鍵盤一致）
+        const btnLeft = document.getElementById('btnLeft');
+        const btnRight = document.getElementById('btnRight');
+
+        function handleTouchStart(direction, e) {
+            e.preventDefault();
+            if (!gameRunning) return;
+            if (direction === 'left') {
+                keys.left = true;
+            } else {
+                keys.right = true;
+            }
+        }
+
+        function handleTouchEnd(direction) {
+            if (direction === 'left') {
+                keys.left = false;
+            } else {
+                keys.right = false;
             }
         }
 
         // 左按鈕
-        btnLeft.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            handleTouchStart('left');
-        });
-        btnLeft.addEventListener('touchend', handleTouchEnd);
-        btnLeft.addEventListener('mousedown', () => handleTouchStart('left'));
-        btnLeft.addEventListener('mouseup', handleTouchEnd);
-        btnLeft.addEventListener('mouseleave', handleTouchEnd);
+        btnLeft.addEventListener('touchstart', (e) => handleTouchStart('left', e));
+        btnLeft.addEventListener('touchend', () => handleTouchEnd('left'));
+        btnLeft.addEventListener('mousedown', (e) => handleTouchStart('left', e));
+        btnLeft.addEventListener('mouseup', () => handleTouchEnd('left'));
+        btnLeft.addEventListener('mouseleave', () => handleTouchEnd('left'));
 
         // 右按鈕
-        btnRight.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            handleTouchStart('right');
-        });
-        btnRight.addEventListener('touchend', handleTouchEnd);
-        btnRight.addEventListener('mousedown', () => handleTouchStart('right'));
-        btnRight.addEventListener('mouseup', handleTouchEnd);
-        btnRight.addEventListener('mouseleave', handleTouchEnd);
+        btnRight.addEventListener('touchstart', (e) => handleTouchStart('right', e));
+        btnRight.addEventListener('touchend', () => handleTouchEnd('right'));
+        btnRight.addEventListener('mousedown', (e) => handleTouchStart('right', e));
+        btnRight.addEventListener('mouseup', () => handleTouchEnd('right'));
+        btnRight.addEventListener('mouseleave', () => handleTouchEnd('right'));
 
         function startGame() {
             // 防止快速重複點擊
@@ -443,9 +499,12 @@
             }
             
             gameRunning = true;
+            isPaused = false;
             score = 0;
             bubbles = [];
             playerX = 370;
+            keys.left = false;
+            keys.right = false;
             spawnTimer = 0;
             lastTime = performance.now();
             player.style.left = playerX + 'px';
@@ -453,6 +512,7 @@
             scoreDisplay.textContent = '分數: 0';
             startBtn.style.display = 'none';
             gameOver.style.display = 'none';
+            pauseOverlay.style.display = 'none';
             
             // 清除舊的氣泡
             document.querySelectorAll('.bubble').forEach(b => b.remove());
@@ -493,12 +553,16 @@
 
         function endGame() {
             gameRunning = false;
+            isPaused = false;
             
             // 取消動畫框架防止記憶體洩漏
             if (animationFrameId) {
                 cancelAnimationFrame(animationFrameId);
                 animationFrameId = null;
             }
+            
+            // 隱藏暫停畫面
+            pauseOverlay.style.display = 'none';
             
             // 更新最高分
             if (score > highScore) {
@@ -522,6 +586,11 @@
 
         startBtn.addEventListener('click', startGame);
         restartBtn.addEventListener('click', startGame);
+
+        // 暫停/繼續按鈕
+        const pauseOverlay = document.getElementById('pauseOverlay');
+        const resumeBtn = document.getElementById('resumeBtn');
+        resumeBtn.addEventListener('click', togglePause);
     </script>
 </body>
 </html>
