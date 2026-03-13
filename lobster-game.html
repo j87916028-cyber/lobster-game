@@ -341,8 +341,15 @@
             justify-content: center;
             user-select: none;
             -webkit-user-select: none;
+            -webkit-touch-callout: none; /* 防止 iOS 長按彈出菜單 */
             touch-action: manipulation;
             transition: transform 0.1s, background 0.1s;
+            -webkit-tap-highlight-color: transparent; /* 移除點擊高亮 */
+        }
+        
+        /* 禁用雙擊縮放 */
+        * {
+            touch-action: manipulation;
         }
         
         .touch-btn:active {
