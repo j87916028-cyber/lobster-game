@@ -791,6 +791,7 @@
             if (isInvincible) return;
             
             playSound('bomb');
+            triggerDamageAnimation(); // 受傷時觸發畫面震動動畫
             lives--;
             updateLivesDisplay();
             
