@@ -669,6 +669,11 @@
         function formatScore(num) {
             return num.toLocaleString('zh-TW');
         }
+        
+        // 生成愛心字符串（共用函數，避免重複代碼）
+        function getHeartsString(count) {
+            return '❤️'.repeat(Math.max(0, count));
+        }
 
         // 顯示分數彈出動畫
         function showScorePopup(x, y, points) {
@@ -687,11 +692,7 @@
 
         // 更新生命值顯示
         function updateLivesDisplay() {
-            let hearts = '';
-            for (let i = 0; i < lives; i++) {
-                hearts += '❤️';
-            }
-            livesDisplay.textContent = hearts;
+            livesDisplay.textContent = getHeartsString(lives);
             
             // 生命值減少時觸發動畫
             if (lives < GAME_CONFIG.MAX_LIVES) {
@@ -993,11 +994,7 @@
             // 暫停時更新顯示的分數和生命值
             if (isPaused) {
                 pauseScore.textContent = '分數: ' + formatScore(score);
-                let hearts = '';
-                for (let i = 0; i < lives; i++) {
-                    hearts += '❤️';
-                }
-                pauseLives.textContent = hearts;
+                pauseLives.textContent = getHeartsString(lives);
             }
             
             if (!isPaused) {
@@ -1063,11 +1060,7 @@
                     isPaused = true;
                     pauseOverlay.style.display = 'flex';
                     pauseScore.textContent = '分數: ' + score;
-                    let hearts = '';
-                    for (let i = 0; i < lives; i++) {
-                        hearts += '❤️';
-                    }
-                    pauseLives.textContent = hearts;
+                    pauseLives.textContent = getHeartsString(lives);
                     
                     // 取消動畫框架
                     if (animationFrameId) {
