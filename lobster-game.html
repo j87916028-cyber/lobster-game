@@ -277,6 +277,52 @@
         let spawnTimer = 0;
         let animationFrameId = null;
         let isStarting = false; // 防止快速重複點擊
+        let audioContext = null; // Web Audio API
+
+        // 初始化音效系統
+        function initAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            return audioContext;
+        }
+
+        // 播放音效（使用 Web Audio API 生成簡單音效）
+        function playSound(type) {
+            try {
+                const ctx = initAudio();
+                if (ctx.state === 'suspended') {
+                    ctx.resume();
+                }
+                
+                const oscillator = ctx.createOscillator();
+                const gainNode = ctx.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(ctx.destination);
+                
+                if (type === 'coin') {
+                    // 接金幣：高音嗶聲
+                    oscillator.frequency.setValueAtTime(880, ctx.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(1760, ctx.currentTime + 0.1);
+                    gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+                    oscillator.start(ctx.currentTime);
+                    oscillator.stop(ctx.currentTime + 0.15);
+                } else if (type === 'bomb') {
+                    // 碰到炸彈：低音轟聲
+                    oscillator.frequency.setValueAtTime(200, ctx.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.3);
+                    gainNode.gain.setValueAtTime(0.4, ctx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+                    oscillator.start(ctx.currentTime);
+                    oscillator.stop(ctx.currentTime + 0.3);
+                }
+            } catch (e) {
+                // 音效失敗時靜默忽略
+                console.log('音效播放失敗:', e);
+            }
+        }
 
         // 統一移動控制系統（使用遊戲循環 + deltaTime）
         const keys = { left: false, right: false };
@@ -399,10 +445,12 @@
                     bubble.x < playerRight) {
                     
                     if (bubble.isBad) {
+                        playSound('bomb');
                         endGame();
                         return;
                     } else {
                         score += 10;
+                        playSound('coin');
                         scoreDisplay.textContent = '分數: ' + score;
                         // 顯示分數彈出動畫
                         showScorePopup(bubble.x, bubble.y, 10);
