@@ -875,6 +875,12 @@
         }
 
         document.addEventListener('keydown', (e) => {
+            // 遊戲控制鍵需要阻止預設行為，防止網頁滾動
+            const gameKeys = ['Enter', 'ArrowLeft', 'ArrowRight', 'Escape', 'a', 'A', 'd', 'D', ' '];
+            if (gameKeys.includes(e.key)) {
+                e.preventDefault();
+            }
+            
             // Enter 鍵開始/重新開始遊戲
             if (e.key === 'Enter') {
                 if (!gameRunning) {
@@ -891,6 +897,9 @@
             } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
                 keys.right = true;
             } else if (e.key === 'Escape') {
+                togglePause();
+            } else if (e.key === ' ') {
+                // 空白鍵也可用於暫停
                 togglePause();
             }
         });
