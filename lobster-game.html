@@ -514,7 +514,13 @@
         const statBombs = document.getElementById('statBombs');
         const menuBtn = document.getElementById('menuBtn');
 
-        let playerX = (GAME_CONFIG.CONTAINER_WIDTH - GAME_CONFIG.PLAYER_WIDTH) / 2;
+        // 動態獲取遊戲容器尺寸（支援 RWD 響應式設計）
+        function getGameDimensions() {
+            const rect = gameContainer.getBoundingClientRect();
+            return { width: rect.width, height: rect.height };
+        }
+
+        let playerX = 0; // 初始化為 0，startGame 時會正確設置
         let score = 0;
         let lives = GAME_CONFIG.MAX_LIVES;
         let highScore = parseInt(localStorage.getItem(GAME_CONFIG.HIGH_SCORE_KEY)) || 0;
@@ -702,11 +708,20 @@
         const keys = { left: false, right: false };
         const MOVE_SPEED = GAME_CONFIG.PLAYER_MOVE_SPEED; // 像素/毫秒
 
-        // 預先計算玩家邊界（只計算一次，效能優化）
-        const PLAYER_LEFT_BOUND = 0;
-        const PLAYER_RIGHT_BOUND = GAME_CONFIG.CONTAINER_WIDTH - GAME_CONFIG.PLAYER_WIDTH;
-        const PLAYER_TOP_BOUND = GAME_CONFIG.CONTAINER_HEIGHT - GAME_CONFIG.PLAYER_BOTTOM - GAME_CONFIG.PLAYER_HEIGHT;
-        const PLAYER_BOTTOM_BOUND = GAME_CONFIG.CONTAINER_HEIGHT - GAME_CONFIG.PLAYER_BOTTOM;
+        // 遊戲邊界（動態計算，支援 RWD）
+        let PLAYER_LEFT_BOUND = 0;
+        let PLAYER_RIGHT_BOUND = GAME_CONFIG.CONTAINER_WIDTH - GAME_CONFIG.PLAYER_WIDTH;
+        let PLAYER_TOP_BOUND = GAME_CONFIG.CONTAINER_HEIGHT - GAME_CONFIG.PLAYER_BOTTOM - GAME_CONFIG.PLAYER_HEIGHT;
+        let PLAYER_BOTTOM_BOUND = GAME_CONFIG.CONTAINER_HEIGHT - GAME_CONFIG.PLAYER_BOTTOM;
+
+        // 更新遊戲邊界（調用時機：遊戲開始、窗口大小變化）
+        function updateGameBounds() {
+            const dims = getGameDimensions();
+            PLAYER_LEFT_BOUND = 0;
+            PLAYER_RIGHT_BOUND = dims.width - GAME_CONFIG.PLAYER_WIDTH;
+            PLAYER_TOP_BOUND = dims.height - GAME_CONFIG.PLAYER_BOTTOM - GAME_CONFIG.PLAYER_HEIGHT;
+            PLAYER_BOTTOM_BOUND = dims.height - GAME_CONFIG.PLAYER_BOTTOM;
+        }
 
         // 難度系統參數（使用 GAME_CONFIG 中的值）
         const DIFFICULTY_INCREASE_PER = GAME_CONFIG.DIFFICULTY_INCREASE_PER;
@@ -958,15 +973,15 @@
             // 更新遊戲時間統計
             gameStats.elapsedTime = (Date.now() - gameStats.startTime) / 1000;
 
-            // 統一移動邏輯（鍵盤 + 觸控）
+            // 統一移動邏輯（鍵盤 + 觸控），使用動態邊界
             if (keys.left) {
-                playerX = Math.max(0, playerX - MOVE_SPEED * deltaTime);
+                playerX = Math.max(PLAYER_LEFT_BOUND, playerX - MOVE_SPEED * deltaTime);
             }
             if (keys.right) {
-                playerX = Math.min(GAME_CONFIG.CONTAINER_WIDTH - GAME_CONFIG.PLAYER_WIDTH, playerX + MOVE_SPEED * deltaTime);
+                playerX = Math.min(PLAYER_RIGHT_BOUND, playerX + MOVE_SPEED * deltaTime);
             }
             // 使用 transform 代替 left，利用 GPU 加速避免重排
-            const playerOffsetX = playerX - (GAME_CONFIG.CONTAINER_WIDTH - GAME_CONFIG.PLAYER_WIDTH) / 2;
+            const playerOffsetX = playerX - PLAYER_RIGHT_BOUND / 2;
             player.style.transform = `translateX(calc(-50% + ${playerOffsetX}px))`;
 
             // 更新氣泡位置
@@ -1040,8 +1055,9 @@
                     }
                 }
 
-                // 超出範圍
-                if (bubble.y > GAME_CONFIG.CONTAINER_HEIGHT + GAME_CONFIG.BUBBLE_SIZE) {
+                // 超出範圍（使用動態高度）
+                const dims = getGameDimensions();
+                if (bubble.y > dims.height + GAME_CONFIG.BUBBLE_SIZE) {
                     returnBubbleToPool(bubble.element);
                     bubbles.splice(i, 1);
                 }
@@ -1182,6 +1198,15 @@
             }
         });
 
+        // 窗口大小變化時更新遊戲邊界（支援 RWD）
+        window.addEventListener('resize', () => {
+            if (gameRunning) {
+                updateGameBounds();
+                // 確保玩家不會跑出邊界
+                playerX = Math.max(PLAYER_LEFT_BOUND, Math.min(PLAYER_RIGHT_BOUND, playerX));
+            }
+        });
+
         function startGame() {
             // 防止快速重複點擊，並確保之前的動畫框架已正確取消
             if (isStarting) return;
@@ -1228,7 +1253,9 @@
             isInvincible = false; // 重置無敵狀態
             invincibleReason = null; // 重置無敵原因
             
-            playerX = (GAME_CONFIG.CONTAINER_WIDTH - GAME_CONFIG.PLAYER_WIDTH) / 2;
+            // 更新遊戲邊界（支援 RWD）
+            updateGameBounds();
+            playerX = PLAYER_RIGHT_BOUND / 2; // 置中
             keys.left = false;
             keys.right = false;
             spawnTimer = 0;
@@ -1253,9 +1280,10 @@
         function spawnBubble() {
             if (!gameRunning) return;
             
-            // 使用物件池取得 DOM 元素（效能優化）
+            // 使用物件池取得 DOM 元素（效能優化），使用動態寬度
+            const dims = getGameDimensions();
             const bubble = getBubbleFromPool();
-            const x = Math.random() * (GAME_CONFIG.CONTAINER_WIDTH - GAME_CONFIG.BUBBLE_SIZE);
+            const x = Math.random() * (dims.width - GAME_CONFIG.BUBBLE_SIZE);
             bubble.style.left = x + 'px';
             // 初始位置使用 transform（效能更好）
             bubble.style.transform = `translateY(${GAME_CONFIG.BUBBLE_START_Y}px)`;
