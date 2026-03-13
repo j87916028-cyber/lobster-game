@@ -51,7 +51,7 @@
             width: 40px;
             height: 40px;
             font-size: 30px;
-            animation: fall 3s linear;
+            will-change: transform; /* 硬體加速提示 */
         }
         @keyframes fall {
             0% { top: -40px; opacity: 1; }
@@ -434,7 +434,8 @@
                 
                 // 使用 deltaTime 保持速度一致
                 bubble.y += bubble.speed * (deltaTime / 16);
-                bubble.element.style.top = bubble.y + 'px';
+                // 使用 transform 代替 top（效能更好，使用 GPU 加速）
+                bubble.element.style.transform = `translateY(${bubble.y}px)`;
 
                 // 簡化的碰撞檢測（使用預先計算的數值，避免 getBoundingClientRect）
                 const bubbleBottom = bubble.y + BUBBLE_SIZE;
@@ -593,7 +594,8 @@
             bubble.className = 'bubble';
             const x = Math.random() * (CONTAINER_WIDTH - BUBBLE_SIZE);
             bubble.style.left = x + 'px';
-            bubble.style.top = '-40px';
+            // 初始位置使用 transform（效能更好）
+            bubble.style.transform = 'translateY(-40px)';
             
             // 根據難度增加壞東西機率 (最高 35%)
             const badChance = Math.min(0.35, 0.2 + (getDifficultyLevel() * 0.03));
