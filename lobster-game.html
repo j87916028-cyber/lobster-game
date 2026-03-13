@@ -271,8 +271,24 @@
         }
         #pauseLives {
             font-size: 1.5rem;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
         }
+        
+        #gameStats {
+            font-size: 0.9rem;
+            color: #aaa;
+            text-align: center;
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+        }
+        
+        #gameStats span {
+            display: inline-block;
+            margin: 0 8px;
+        }
+        
         #resumeBtn {
             padding: 15px 30px;
             font-size: 1.2rem;
@@ -374,6 +390,11 @@
             <h2>暫停</h2>
             <div id="pauseScore">分數: 0</div>
             <div id="pauseLives">❤️❤️❤️</div>
+            <div id="gameStats">
+                <span>⏱️ <span id="statTime">0:00</span></span>
+                <span>💰 <span id="statCoins">0</span></span>
+                <span>💣 <span id="statBombs">0</span></span>
+            </div>
             <button id="resumeBtn">繼續遊戲</button>
         </div>
     </div>
@@ -470,6 +491,9 @@
         const soundBtn = document.getElementById('soundBtn');
         const pauseScore = document.getElementById('pauseScore');
         const pauseLives = document.getElementById('pauseLives');
+        const statTime = document.getElementById('statTime');
+        const statCoins = document.getElementById('statCoins');
+        const statBombs = document.getElementById('statBombs');
 
         let playerX = (GAME_CONFIG.CONTAINER_WIDTH - GAME_CONFIG.PLAYER_WIDTH) / 2;
         let score = 0;
@@ -487,6 +511,14 @@
         let animationFrameId = null;
         let isStarting = false; // 防止快速重複點擊
         let audioContext = null; // Web Audio API
+        
+        // 遊戲統計數據
+        let gameStats = {
+            coinsCollected: 0,
+            bombsHit: 0,
+            startTime: 0,
+            elapsedTime: 0
+        };
 
         // ==================== DOM 元素物件池 (效能優化) ====================
         // 重用 DOM 元素，避免頻繁創建/刪除導致的效能損耗
@@ -690,6 +722,20 @@
         function getHeartsString(count) {
             return '❤️'.repeat(Math.max(0, count));
         }
+        
+        // 格式化時間顯示（分:秒）
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return mins + ':' + secs.toString().padStart(2, '0');
+        }
+        
+        // 更新遊戲統計顯示
+        function updateStatsDisplay() {
+            statTime.textContent = formatTime(gameStats.elapsedTime);
+            statCoins.textContent = gameStats.coinsCollected;
+            statBombs.textContent = gameStats.bombsHit;
+        }
 
         // 顯示分數彈出動畫
         function showScorePopup(x, y, points) {
@@ -747,6 +793,9 @@
             playSound('bomb');
             lives--;
             updateLivesDisplay();
+            
+            // 更新受到炸彈攻擊統計
+            gameStats.bombsHit++;
             
             // 無敵時間閃爍效果
             player.classList.add('player-invincible');
@@ -876,6 +925,9 @@
 
             const deltaTime = timestamp - lastTime;
             lastTime = timestamp;
+            
+            // 更新遊戲時間統計
+            gameStats.elapsedTime = (Date.now() - gameStats.startTime) / 1000;
 
             // 統一移動邏輯（鍵盤 + 觸控）
             if (keys.left) {
@@ -950,6 +1002,8 @@
                         scoreDisplay.textContent = '分數: ' + formatScore(score);
                         // 更新難度顯示
                         updateDifficultyDisplay();
+                        // 更新收集金幣統計
+                        gameStats.coinsCollected++;
                         // 顯示分數彈出動畫
                         showScorePopup(bubble.x, bubble.y, points);
                         // 玩家動畫
@@ -1016,6 +1070,7 @@
             if (isPaused) {
                 pauseScore.textContent = '分數: ' + formatScore(score);
                 pauseLives.textContent = getHeartsString(lives);
+                updateStatsDisplay(); // 更新遊戲統計顯示
             }
             
             if (!isPaused) {
@@ -1116,6 +1171,14 @@
             score = 0;
             lives = GAME_CONFIG.MAX_LIVES; // 重置生命值
             updateLivesDisplay(); // 更新生命值顯示
+            
+            // 重置遊戲統計
+            gameStats = {
+                coinsCollected: 0,
+                bombsHit: 0,
+                startTime: Date.now(),
+                elapsedTime: 0
+            };
             
             // 重置道具狀態
             activePowerups = { shield: false, '2x': false };
