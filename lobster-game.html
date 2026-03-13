@@ -43,8 +43,7 @@
             font-size: 50px;
             bottom: 20px;
             left: 50%;
-            transform: translateX(-50%);
-            transition: left 0.1s;
+            will-change: transform; /* GPU 加速提示 */
         }
         .bubble {
             position: absolute;
@@ -688,7 +687,9 @@
             if (keys.right) {
                 playerX = Math.min(MAX_PLAYER_X, playerX + MOVE_SPEED * deltaTime);
             }
-            player.style.left = playerX + 'px';
+            // 使用 transform 代替 left，利用 GPU 加速避免重排
+            const playerOffsetX = playerX - (CONTAINER_WIDTH - PLAYER_WIDTH) / 2;
+            player.style.transform = `translateX(calc(-50% + ${playerOffsetX}px))`;
 
             // 更新氣泡位置
             updateBubbles(deltaTime);
@@ -896,7 +897,8 @@
             keys.right = false;
             spawnTimer = 0;
             lastTime = performance.now();
-            player.style.left = playerX + 'px';
+            // 使用 transform 初始化玩家位置
+            player.style.transform = 'translateX(-50%)';
             player.classList.remove('player-catch');
             scoreDisplay.textContent = '分數: 0';
             startBtn.style.display = 'none';
