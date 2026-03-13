@@ -1183,15 +1183,27 @@
         });
 
         function startGame() {
-            // 防止快速重複點擊
+            // 防止快速重複點擊，並確保之前的動畫框架已正確取消
             if (isStarting) return;
-            isStarting = true;
             
-            // 確保之前的動畫框架已取消
+            // 確保之前的動畫框架已取消（防止多個遊戲循環同時運行）
             if (animationFrameId) {
                 cancelAnimationFrame(animationFrameId);
                 animationFrameId = null;
             }
+            
+            // 清理舊的氣泡（防止残餘）
+            bubbles.forEach(b => returnBubbleToPool(b.element));
+            bubbles = [];
+            
+            // 清理舊的彈出元素
+            document.querySelectorAll('.score-popup, .powerup-popup').forEach(p => {
+                returnPopupToPool(p);
+            });
+            // 清除道具指示器殘留
+            document.querySelectorAll('.powerup-badge').forEach(b => b.remove());
+            
+            isStarting = true;
             
             gameRunning = true;
             isPaused = false;
@@ -1216,9 +1228,6 @@
             isInvincible = false; // 重置無敵狀態
             invincibleReason = null; // 重置無敵原因
             
-            // 先將舊氣泡返回物件池，再清空陣列
-            bubbles.forEach(b => returnBubbleToPool(b.element));
-            bubbles = [];
             playerX = (GAME_CONFIG.CONTAINER_WIDTH - GAME_CONFIG.PLAYER_WIDTH) / 2;
             keys.left = false;
             keys.right = false;
@@ -1233,16 +1242,6 @@
             gameOver.style.display = 'none';
             pauseOverlay.style.display = 'none';
             
-            // 清除舊的彈出元素（返回到物件池以重複使用）
-            document.querySelectorAll('.score-popup').forEach(p => {
-                returnPopupToPool(p);
-            });
-            document.querySelectorAll('.powerup-popup').forEach(p => {
-                returnPopupToPool(p);
-            });
-            // 清除道具指示器殘留
-            document.querySelectorAll('.powerup-badge').forEach(b => b.remove());
-
             // 使用 requestAnimationFrame 啟動遊戲循環
             playSound('start'); // 播放開始音效
             animationFrameId = requestAnimationFrame(gameLoop);
