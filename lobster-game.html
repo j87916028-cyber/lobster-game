@@ -473,6 +473,38 @@
         let animationFrameId = null;
         let isStarting = false; // 防止快速重複點擊
         let audioContext = null; // Web Audio API
+
+        // ==================== DOM 元素物件池 (效能優化) ====================
+        // 重用 DOM 元素，避免頻繁創建/刪除導致的效能損耗
+        const bubblePool = [];
+        const POOL_MAX_SIZE = 30; // 池的最大大小
+
+        // 從池中取得氣泡元素，或創建新的
+        function getBubbleFromPool() {
+            if (bubblePool.length > 0) {
+                const element = bubblePool.pop();
+                return element;
+            }
+            const element = document.createElement('div');
+            element.className = 'bubble';
+            return element;
+        }
+
+        // 將氣泡元素返回池中
+        function returnBubbleToPool(element) {
+            // 清除元素內容和樣式
+            element.textContent = '';
+            element.style.left = '';
+            element.style.transform = '';
+            element.style.display = '';
+            
+            if (bubblePool.length < POOL_MAX_SIZE) {
+                bubblePool.push(element);
+            } else {
+                // 池滿時直接移除
+                element.remove();
+            }
+        }
         // 音效開關（從本地存儲讀取設置，預設為開啟）
         let soundEnabled = localStorage.getItem(GAME_CONFIG.SOUND_ENABLED_KEY) !== 'false';
         soundBtn.textContent = soundEnabled ? '🔊' : '🔇';
@@ -803,14 +835,14 @@
                     
                     if (bubble.isBad) {
                         handleDamage(); // 改為扣血而非直接結束
-                        bubble.element.remove();
+                        returnBubbleToPool(bubble.element);
                         bubbles.splice(i, 1);
                         continue; // 繼續檢查其他氣泡的碰撞
                     } else {
                         // 處理道具
                         if (bubble.isPowerup) {
                             activatePowerup(bubble.powerupType, bubble.x, bubble.y);
-                            bubble.element.remove();
+                            returnBubbleToPool(bubble.element);
                             bubbles.splice(i, 1);
                             continue;
                         }
@@ -824,14 +856,14 @@
                         showScorePopup(bubble.x, bubble.y, points);
                         // 玩家動畫
                         triggerPlayerCatchAnimation();
-                        bubble.element.remove();
+                        returnBubbleToPool(bubble.element);
                         bubbles.splice(i, 1);
                     }
                 }
 
                 // 超出範圍
                 if (bubble.y > CONTAINER_HEIGHT + BUBBLE_SIZE) {
-                    bubble.element.remove();
+                    returnBubbleToPool(bubble.element);
                     bubbles.splice(i, 1);
                 }
             }
@@ -961,6 +993,8 @@
             isInvincible = false; // 重置無敵狀態
             invincibleReason = null; // 重置無敵原因
             
+            // 先將舊氣泡返回物件池，再清空陣列
+            bubbles.forEach(b => returnBubbleToPool(b.element));
             bubbles = [];
             playerX = (CONTAINER_WIDTH - PLAYER_WIDTH) / 2;
             keys.left = false;
@@ -975,8 +1009,7 @@
             gameOver.style.display = 'none';
             pauseOverlay.style.display = 'none';
             
-            // 清除舊的氣泡和彈出元素
-            document.querySelectorAll('.bubble').forEach(b => b.remove());
+            // 清除舊的彈出元素（氣泡已透過物件池處理）
             document.querySelectorAll('.score-popup').forEach(p => p.remove());
             document.querySelectorAll('.powerup-popup').forEach(p => p.remove());
             // 清除道具指示器殘留
@@ -993,12 +1026,14 @@
         function spawnBubble() {
             if (!gameRunning) return;
             
-            const bubble = document.createElement('div');
-            bubble.className = 'bubble';
+            // 使用物件池取得 DOM 元素（效能優化）
+            const bubble = getBubbleFromPool();
             const x = Math.random() * (CONTAINER_WIDTH - BUBBLE_SIZE);
             bubble.style.left = x + 'px';
             // 初始位置使用 transform（效能更好）
             bubble.style.transform = `translateY(${GAME_CONFIG.BUBBLE_START_Y}px)`;
+            // 確保元素可見
+            bubble.style.display = '';
             
             // 根據難度增加壞東西機率
             const badChance = Math.min(GAME_CONFIG.BAD_CHANCE_MAX, GAME_CONFIG.BAD_CHANCE_BASE + (getDifficultyLevel() * GAME_CONFIG.BAD_CHANCE_INCREASE));
@@ -1062,8 +1097,8 @@
             finalScore.textContent = '分數: ' + score;
             gameOver.style.display = 'flex';
             
-            // 清理所有氣泡
-            bubbles.forEach(b => b.element.remove());
+            // 清理所有氣泡（返回物件池）
+            bubbles.forEach(b => returnBubbleToPool(b.element));
             bubbles = [];
             
             // 解鎖開始按鈕
