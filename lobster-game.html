@@ -56,14 +56,19 @@
             0% { top: -40px; opacity: 1; }
             100% { top: 520px; opacity: 0; }
         }
-        #score {
+        #score, #highScore {
             position: absolute;
             top: 20px;
-            right: 20px;
             font-size: 1.5rem;
             background: rgba(0,0,0,0.5);
             padding: 10px 20px;
             border-radius: 10px;
+        }
+        #score {
+            right: 20px;
+        }
+        #highScore {
+            left: 20px;
         }
         #startBtn {
             position: absolute;
@@ -124,6 +129,7 @@
     <h1>🦞 龍蝦大戰</h1>
     <div id="gameContainer">
         <div id="score">分數: 0</div>
+        <div id="highScore">最高分: 0</div>
         <div id="player">🦞</div>
         <button id="startBtn">開始遊戲</button>
         <div id="gameOver">
@@ -138,6 +144,7 @@
         const player = document.getElementById('player');
         const gameContainer = document.getElementById('gameContainer');
         const scoreDisplay = document.getElementById('score');
+        const highScoreDisplay = document.getElementById('highScore');
         const startBtn = document.getElementById('startBtn');
         const gameOver = document.getElementById('gameOver');
         const finalScore = document.getElementById('finalScore');
@@ -145,6 +152,7 @@
 
         let playerX = 370;
         let score = 0;
+        let highScore = parseInt(localStorage.getItem('lobsterGameHighScore')) || 0;
         let gameRunning = false;
         let bubbles = [];
         let lastTime = 0;
@@ -157,6 +165,9 @@
         const CONTAINER_WIDTH = 800;
         const CONTAINER_HEIGHT = 500;
         const BUBBLE_SIZE = 40;
+
+        // 初始化最高分顯示
+        highScoreDisplay.textContent = '最高分: ' + highScore;
 
         const emojis = ['💰', '💎', '⭐', '🎵', '🎮'];
         const badEmojis = ['💣', '🔥', '👾'];
@@ -280,6 +291,14 @@
 
         function endGame() {
             gameRunning = false;
+            
+            // 更新最高分
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('lobsterGameHighScore', highScore);
+                highScoreDisplay.textContent = '最高分: ' + highScore;
+            }
+            
             finalScore.textContent = '分數: ' + score;
             gameOver.style.display = 'flex';
         }
