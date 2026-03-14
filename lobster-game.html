@@ -1159,10 +1159,15 @@
         let soundEnabled = getStorageItem(GAME_CONFIG.SOUND_ENABLED_KEY, 'true') !== 'false';
         soundBtn.textContent = soundEnabled ? '🔊' : '🔇';
 
-        // 初始化音效系統
+        // 初始化音效系統（添加錯誤處理，支援私人瀏覽模式）
         function initAudio() {
             if (!audioContext) {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                try {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (e) {
+                    console.warn('無法初始化 AudioContext，音效將被禁用:', e);
+                    return null;
+                }
             }
             return audioContext;
         }
@@ -1170,6 +1175,7 @@
         // 播放單一頻率音調（通用輔助函數）
         function playTone(startFreq, endFreq, duration, volume = 0.3) {
             const ctx = initAudio();
+            if (!ctx) return; // AudioContext 不可用
             if (ctx.state === 'suspended') ctx.resume();
             
             const oscillator = ctx.createOscillator();
@@ -1192,6 +1198,7 @@
         // 播放多音符音調（用於愛心等複雜音效）
         function playMultiTone(notes, duration, volume = 0.3) {
             const ctx = initAudio();
+            if (!ctx) return; // AudioContext 不可用
             if (ctx.state === 'suspended') ctx.resume();
             
             notes.forEach((freq, i) => {
