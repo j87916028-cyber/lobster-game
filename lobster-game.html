@@ -1010,6 +1010,10 @@
         function updateBubbles(deltaTime) {
             // 遊戲結束時停止處理氣泡，防止遊戲結束後還能得分
             if (!gameRunning) return;
+            
+            // 效能優化：每幀只計算一次遊戲尺寸，避免在氣泡循環中重複調用
+            const dims = getGameDimensions();
+            
             // 使用預先計算的固定邊界值（效能優化）
             const playerLeft = playerX;
             const playerRight = playerX + GAME_CONFIG.PLAYER_WIDTH;
@@ -1063,8 +1067,7 @@
                     }
                 }
 
-                // 超出範圍（使用動態高度）
-                const dims = getGameDimensions();
+                // 超出範圍（使用預先計算的遊戲尺寸）
                 if (bubble.y > dims.height + GAME_CONFIG.BUBBLE_SIZE) {
                     returnBubbleToPool(bubble.element);
                     bubbles.splice(i, 1);
