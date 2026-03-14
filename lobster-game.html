@@ -291,6 +291,27 @@
             margin-bottom: 20px;
         }
         
+        #performanceRating {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding: 10px 20px;
+            border-radius: 15px;
+            animation: ratingPop 0.5s ease-out;
+        }
+        
+        @keyframes ratingPop {
+            0% { transform: scale(0.5); opacity: 0; }
+            70% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .rating-s { background: linear-gradient(135deg, #ffd700, #ff8c00); color: #1a1a2e; box-shadow: 0 0 20px #ffd700; }
+        .rating-a { background: linear-gradient(135deg, #00ff88, #00d4ff); color: #1a1a2e; box-shadow: 0 0 15px #00ff88; }
+        .rating-b { background: linear-gradient(135deg, #00d4ff, #6b5b95); color: white; box-shadow: 0 0 10px #00d4ff; }
+        .rating-c { background: rgba(255,255,255,0.2); color: #aaa; }
+        .rating-d { background: rgba(255,107,107,0.3); color: #ff6b6b; }
+        
         @keyframes powerupPulse {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.1); }
@@ -720,6 +741,7 @@
         <button id="resetHighScoreBtn" title="重置最高分">🗑️</button>
         <div id="gameOver">
             <h2>遊戲結束!</h2>
+            <div id="performanceRating"></div>
             <div id="highScore">最高分: 0</div>
             <div id="finalScore">分數: 0</div>
             <div id="gameStatsEnd">
@@ -2154,10 +2176,84 @@
             statCoinsEnd.textContent = gameStats.coinsCollected;
             statBombsEnd.textContent = gameStats.bombsHit;
             
+            // 顯示遊戲表現評價
+            showPerformanceRating();
+            
             gameOver.style.display = 'flex';
             
             // 解鎖開始按鈕
             isStarting = false;
+        }
+        
+        // 計算遊戲表現評價
+        function showPerformanceRating() {
+            const ratingElement = document.getElementById('performanceRating');
+            
+            // 根據分數、存活時間和收集金幣數計算評價
+            const time = gameStats.elapsedTime;
+            const coins = gameStats.coinsCollected;
+            const bombsHit = gameStats.bombsHit;
+            
+            // 評分邏輯：考慮分數、存活時間、金幣收集效率
+            let rating = 'd';
+            let text = '💀 再接再厲！';
+            
+            // 計算綜合評分 (0-100)
+            let totalScore = 0;
+            
+            // 分數貢獻 (最高 50 分)
+            if (score >= 5000) totalScore += 50;
+            else if (score >= 3000) totalScore += 40;
+            else if (score >= 2000) totalScore += 30;
+            else if (score >= 1000) totalScore += 20;
+            else if (score >= 500) totalScore += 10;
+            else totalScore += score / 50;
+            
+            // 存活時間貢獻 (最高 30 分)
+            if (time >= 180) totalScore += 30;
+            else if (time >= 120) totalScore += 25;
+            else if (time >= 60) totalScore += 20;
+            else if (time >= 30) totalScore += 15;
+            else if (time >= 10) totalScore += 10;
+            else totalScore += time / 3;
+            
+            // 金幣效率獎勵 (最高 20 分)
+            if (time > 0) {
+                const coinsPerSecond = coins / time;
+                if (coinsPerSecond >= 3) totalScore += 20;
+                else if (coinsPerSecond >= 2) totalScore += 15;
+                else if (coinsPerSecond >= 1) totalScore += 10;
+                else totalScore += coinsPerSecond * 10;
+            }
+            
+            // 扣分：被炸彈擊中
+            totalScore -= bombsHit * 5;
+            
+            // 根據總分評定等級
+            if (totalScore >= 80 || (score > highScore && score > 0)) {
+                rating = 's';
+                text = '🏆 神一般的表現！';
+            } else if (totalScore >= 60) {
+                rating = 'a';
+                text = '✨ 厲害厲害！';
+            } else if (totalScore >= 40) {
+                rating = 'b';
+                text = '👍 很不錯！';
+            } else if (totalScore >= 20) {
+                rating = 'c';
+                text = '😅 還可以~';
+            } else {
+                rating = 'd';
+                text = '💀 再接再厲！';
+            }
+            
+            // 新紀錄時特殊評價
+            if (score > highScore && score > 0) {
+                text = '🎉 新紀錄！' + text;
+            }
+            
+            ratingElement.textContent = text;
+            ratingElement.className = 'rating-' + rating;
         }
 
         startBtn.addEventListener('click', startGame);
