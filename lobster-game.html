@@ -488,6 +488,21 @@
             transition: transform 0.2s;
             z-index: 10;
         }
+        
+        /* 說明按鈕 */
+        #helpBtn {
+            position: absolute;
+            top: 20px;
+            right: 70px;
+            font-size: 1.5rem;
+            background: rgba(0,0,0,0.5);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            padding: 8px 15px;
+            transition: transform 0.2s;
+            z-index: 10;
+        }
         #pauseBtn:hover {
             transform: scale(1.1);
         }
@@ -509,6 +524,62 @@
                 display: flex;
             }
         }
+        
+        /* 遊戲說明弹窗 */
+        #helpOverlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            padding: 20px;
+        }
+        
+        #helpOverlay h2 {
+            font-size: 2rem;
+            color: #00d4ff;
+            margin-bottom: 20px;
+            text-shadow: 0 0 15px #00d4ff;
+        }
+        
+        #helpOverlay .help-content {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px 30px;
+            border-radius: 15px;
+            font-size: 1.1rem;
+            line-height: 1.8;
+        }
+        
+        #helpOverlay .help-content kbd {
+            background: #333;
+            padding: 3px 10px;
+            border-radius: 5px;
+            border: 1px solid #555;
+            font-family: monospace;
+            color: #ffd700;
+        }
+        
+        #helpOverlay .help-close {
+            margin-top: 20px;
+            padding: 10px 25px;
+            font-size: 1rem;
+            background: #00d4ff;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            color: #1a1a2e;
+            font-weight: bold;
+        }
+        
+        #helpOverlay .help-close:hover {
+            background: #00bfff;
+        }
     </style>
 </head>
 <body>
@@ -517,6 +588,7 @@
         <div id="score">分數: 0</div>
         <button id="soundBtn" title="音效開關">🔊</button>
         <button id="pauseBtn" title="暫停 (ESC)">⏸️</button>
+        <button id="helpBtn" title="說明 (H)">❓</button>
         <div id="lives">❤️❤️❤️</div>
         <div id="powerupIndicator"></div>
         <div id="difficultyIndicator">難度 1</div>
@@ -547,6 +619,23 @@
             </div>
             <button id="resumeBtn">繼續遊戲</button>
             <button id="menuBtn">返回選單</button>
+        </div>
+        <div id="helpOverlay">
+            <h2>⌨️ 操作說明</h2>
+            <div class="help-content">
+                <div><kbd>←</kbd> <kbd>→</kbd> 或 <kbd>A</kbd> <kbd>D</kbd> - 移動龍蝦</div>
+                <div><kbd>Enter</kbd> - 開始遊戲</div>
+                <div><kbd>ESC</kbd> <kbd>P</kbd> <kbd>Space</kbd> - 暫停/繼續</div>
+                <div><kbd>M</kbd> - 靜音切換</div>
+                <div><kbd>H</kbd> - 顯示說明</div>
+                <hr style="margin: 15px 0; border-color: #444;">
+                <div>💰 接住金幣和寶石得分</div>
+                <div>🛡️ 護盾 - 無敵 5 秒</div>
+                <div>🌟 雙倍 - 分数 x2</div>
+                <div>❤️ 生命 - 回復 1 條命</div>
+                <div>💣 炸彈 - 扣 1 條命</div>
+            </div>
+            <button class="help-close">知道了！</button>
         </div>
     </div>
     <p class="instructions">← → 方向鍵移動龍蝦，接住掉落的金幣！💰 按 ESC/P 暫停 | M 靜音切換</p>
@@ -647,6 +736,9 @@
         const statCoins = document.getElementById('statCoins');
         const statBombs = document.getElementById('statBombs');
         const menuBtn = document.getElementById('menuBtn');
+        // 說明彈窗元素
+        const helpOverlay = document.getElementById('helpOverlay');
+        const helpBtn = document.querySelector('.help-close');
         // 遊戲結束畫面的統計數據元素
         const statTimeEnd = document.getElementById('statTimeEnd');
         const statCoinsEnd = document.getElementById('statCoinsEnd');
@@ -1445,6 +1537,9 @@
                 soundEnabled = !soundEnabled;
                 soundBtn.textContent = soundEnabled ? '🔊' : '🔇';
                 setStorageItem(GAME_CONFIG.SOUND_ENABLED_KEY, soundEnabled);
+            } else if (e.key === 'h' || e.key === 'H') {
+                // H 鍵顯示說明
+                toggleHelp();
             } else if (e.key === ' ') {
                 // 空白鍵也可用於暫停
                 togglePause();
@@ -1483,6 +1578,39 @@
                 cancelAnimationFrame(animationFrameId);
                 animationFrameId = null;
             }
+        }
+
+        // 切換說明顯示
+        function toggleHelp() {
+            const isHelpVisible = helpOverlay.style.display === 'flex';
+            helpOverlay.style.display = isHelpVisible ? 'none' : 'flex';
+            
+            // 顯示說明時暫停遊戲（如果遊戲正在運行）
+            if (!isHelpVisible && gameRunning && !isPaused) {
+                isPaused = true;
+                pauseOverlay.style.display = 'flex';
+                pauseScore.textContent = '分數: ' + formatScore(score);
+                pauseLives.textContent = getHeartsString(lives);
+                updateStatsDisplay();
+                if (animationFrameId) {
+                    cancelAnimationFrame(animationFrameId);
+                    animationFrameId = null;
+                }
+            }
+        }
+
+        // 關閉說明按鈕事件
+        if (helpBtn) {
+            helpBtn.addEventListener('click', () => {
+                helpOverlay.style.display = 'none';
+                // 恢復遊戲（如果之前是因為顯示說明而暫停）
+                if (gameRunning && isPaused) {
+                    isPaused = false;
+                    pauseOverlay.style.display = 'none';
+                    lastTime = performance.now();
+                    animationFrameId = requestAnimationFrame(gameLoop);
+                }
+            });
         }
 
         // 觸控控制（統一使用 keys 系統，與鍵盤一致）
@@ -1552,6 +1680,16 @@
             e.preventDefault();
             togglePause();
         });
+        
+        // 說明按鈕點擊事件
+        const helpBtnElement = document.getElementById('helpBtn');
+        if (helpBtnElement) {
+            helpBtnElement.addEventListener('click', toggleHelp);
+            helpBtnElement.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                toggleHelp();
+            });
+        }
 
         // ==================== 頁面可見性處理 (節省資源) ====================
         document.addEventListener('visibilitychange', () => {
