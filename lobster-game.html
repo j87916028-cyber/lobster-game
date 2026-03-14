@@ -721,6 +721,7 @@
         let PLAYER_RIGHT_BOUND = GAME_CONFIG.CONTAINER_WIDTH - GAME_CONFIG.PLAYER_WIDTH;
         let PLAYER_TOP_BOUND = GAME_CONFIG.CONTAINER_HEIGHT - GAME_CONFIG.PLAYER_BOTTOM - GAME_CONFIG.PLAYER_HEIGHT;
         let PLAYER_BOTTOM_BOUND = GAME_CONFIG.CONTAINER_HEIGHT - GAME_CONFIG.PLAYER_BOTTOM;
+        let cachedGameHeight = GAME_CONFIG.CONTAINER_HEIGHT; // 緩存遊戲高度（效能優化）
 
         // 更新遊戲邊界（調用時機：遊戲開始、窗口大小變化）
         function updateGameBounds() {
@@ -729,6 +730,7 @@
             PLAYER_RIGHT_BOUND = dims.width - GAME_CONFIG.PLAYER_WIDTH;
             PLAYER_TOP_BOUND = dims.height - GAME_CONFIG.PLAYER_BOTTOM - GAME_CONFIG.PLAYER_HEIGHT;
             PLAYER_BOTTOM_BOUND = dims.height - GAME_CONFIG.PLAYER_BOTTOM;
+            cachedGameHeight = dims.height; // 緩存高度，避免每幀調用 getBoundingClientRect
         }
 
         // 難度系統參數（使用 GAME_CONFIG 中的值）
@@ -1011,8 +1013,8 @@
             // 遊戲結束時停止處理氣泡，防止遊戲結束後還能得分
             if (!gameRunning) return;
             
-            // 效能優化：每幀只計算一次遊戲尺寸，避免在氣泡循環中重複調用
-            const dims = getGameDimensions();
+            // 效能優化：使用緩存的游戏高度，避免每幀調用 getBoundingClientRect
+            const gameHeight = cachedGameHeight;
             
             // 使用預先計算的固定邊界值（效能優化）
             const playerLeft = playerX;
@@ -1067,8 +1069,8 @@
                     }
                 }
 
-                // 超出範圍（使用預先計算的遊戲尺寸）
-                if (bubble.y > dims.height + GAME_CONFIG.BUBBLE_SIZE) {
+                // 超出範圍（使用緩存的游戏高度）
+                if (bubble.y > gameHeight + GAME_CONFIG.BUBBLE_SIZE) {
                     returnBubbleToPool(bubble.element);
                     bubbles.splice(i, 1);
                 }
