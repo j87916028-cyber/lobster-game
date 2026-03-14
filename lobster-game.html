@@ -757,6 +757,11 @@
                 animationFrameId = null;
             }
             
+            // 暫停 AudioContext 以節省資源
+            if (audioContext && audioContext.state === 'running') {
+                audioContext.suspend();
+            }
+            
             // 清除所有道具計時器
             Object.values(powerupTimers).forEach(t => clearTimeout(t));
             powerupTimers = {};
@@ -1569,6 +1574,11 @@
                         cancelAnimationFrame(animationFrameId);
                         animationFrameId = null;
                     }
+                    
+                    // 暫停 AudioContext 以節省資源
+                    if (audioContext && audioContext.state === 'running') {
+                        audioContext.suspend();
+                    }
                 }
             } else {
                 // 分頁恢復顯示時，只有因為分頁隱藏而暫停時才恢復
@@ -1579,6 +1589,11 @@
                     pauseOverlay.style.display = 'none';
                     lastTime = performance.now();
                     animationFrameId = requestAnimationFrame(gameLoop);
+                    
+                    // 恢復 AudioContext
+                    if (audioContext && audioContext.state === 'suspended') {
+                        audioContext.resume();
+                    }
                 }
             }
         });
@@ -1681,6 +1696,11 @@
             isInvincible = false; // 重置無敵狀態
             invincibleReason = null; // 重置無敵原因
             pausedByVisibility = false; // 重置可見性暫停狀態
+            
+            // 確保 AudioContext 處於運行狀態（用戶交互後才能播放聲音）
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
             
             // 重置連擊系統
             resetCombo();
