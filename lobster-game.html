@@ -1566,15 +1566,17 @@
                 pauseScore.textContent = '分數: ' + formatScore(score);
                 pauseLives.textContent = getHeartsString(lives);
                 updateStatsDisplay(); // 更新遊戲統計顯示
-            }
-            
-            if (!isPaused) {
+                // 暫停時釋放螢幕喚醒鎖
+                releaseWakeLock();
+            } else {
                 lastTime = performance.now(); // 重置 deltaTime
                 // 恢復時重新啟動動畫循環
                 animationFrameId = requestAnimationFrame(gameLoop);
+                // 恢復時請求螢幕喚醒鎖
+                requestWakeLock();
             }
             // 暫停時取消當前的動畫框架，防止暫停期間堆疊調用
-            else if (animationFrameId) {
+            if (isPaused && animationFrameId) {
                 cancelAnimationFrame(animationFrameId);
                 animationFrameId = null;
             }
@@ -1858,9 +1860,11 @@
             pauseOverlay.style.display = 'none';
             
             // 顯示倒數計時，然後啟動遊戲
-            showCountdown(() => {
+            showCountdown(async () => {
                 isStarting = false;
                 animationFrameId = requestAnimationFrame(gameLoop);
+                // 請求螢幕喚醒鎖（遊戲實際開始後）
+                await requestWakeLock();
             });
             
             // 短暫鎖定後解鎖（但倒數期間不解鎖）
@@ -1911,6 +1915,9 @@
             gameRunning = false;
             isPaused = false;
             playSound('gameover'); // 播放結束音效
+            
+            // 釋放螢幕喚醒鎖
+            releaseWakeLock();
             
             // 使用統一清理函數（不重置遊戲狀態，只清理資源）
             cleanupGame(false);
@@ -1979,6 +1986,48 @@
         
         // 暫停按鈕
         pauseBtn.addEventListener('click', togglePause);
+        
+        // ==================== Screen Wake Lock (防止遊戲時螢幕休眠) ====================
+        let wakeLock = null;
+        
+        // 請求螢幕喚醒鎖
+        async function requestWakeLock() {
+            if ('wakeLock' in navigator && wakeLock === null) {
+                try {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    // 當 wake lock 被自動釋放時（例如系統資源不足），重置狀態
+                    wakeLock.addEventListener('release', () => {
+                        wakeLock = null;
+                    });
+                } catch (err) {
+                    // 不支援或無法取得 wake lock 時靜默失敗
+                    wakeLock = null;
+                }
+            }
+        }
+        
+        // 釋放螢幕喚醒鎖
+        async function releaseWakeLock() {
+            if (wakeLock !== null) {
+                try {
+                    await wakeLock.release();
+                } catch (err) {
+                    // 忽略釋放錯誤
+                }
+                wakeLock = null;
+            }
+        }
+        
+        // 當用戶切換分頁時釋放 wake lock（系統會自動釋放，但手動處理更穩健）
+        document.addEventListener('visibilitychange', async () => {
+            if (document.visibilityState === 'visible' && gameRunning && !isPaused) {
+                // 切換回來時重新請求 wake lock
+                await requestWakeLock();
+            } else {
+                // 切換離開時釋放 wake lock
+                await releaseWakeLock();
+            }
+        });
     </script>
 </body>
 </html>
