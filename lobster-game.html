@@ -878,6 +878,8 @@
         const COMBO_WINDOW = 1500; // 連擊有效時間 (ms)
         const MAX_COMBO_MULTIPLIER = 5; // 最大連擊倍數
         const comboIndicator = document.getElementById('comboIndicator');
+        const difficultyIndicator = document.getElementById('difficultyIndicator'); // 緩存難度顯示元素（效能優化）
+        const powerupIndicator = document.getElementById('powerupIndicator'); // 緩存道具指示器元素（效能優化）
 
         // 無敵時間計時器（修復：儲存計時器以便清除）
         let invincibleTimeout = null;
@@ -1323,13 +1325,12 @@
             }
         }
 
-        // 更新難度等級顯示
+        // 更新難度等級顯示（使用緩存的 DOM 元素）
         function updateDifficultyDisplay() {
-            const difficultyIndicator = document.getElementById('difficultyIndicator');
-            const level = getDifficultyLevel();
-            difficultyIndicator.textContent = '難度 ' + (level + 1);
+            difficultyIndicator.textContent = '難度 ' + (getDifficultyLevel() + 1);
             
             // 難度提升時的視覺效果
+            const level = getDifficultyLevel();
             if (level > 0) {
                 difficultyIndicator.style.color = level >= 5 ? '#ff6b6b' : level >= 3 ? '#ffd700' : '#00d4ff';
             }
@@ -1483,22 +1484,21 @@
             }
         }
 
-        // 更新道具指示器顯示
+        // 更新道具指示器顯示（使用緩存的 DOM 元素）
         function updatePowerupIndicator() {
-            const indicator = document.getElementById('powerupIndicator');
-            indicator.innerHTML = '';
+            powerupIndicator.innerHTML = '';
             
             if (activePowerups.shield) {
                 const badge = document.createElement('div');
                 badge.className = 'powerup-badge powerup-shield';
                 badge.textContent = '🛡️ 護盾';
-                indicator.appendChild(badge);
+                powerupIndicator.appendChild(badge);
             }
             if (activePowerups['2x']) {
                 const badge = document.createElement('div');
                 badge.className = 'powerup-badge powerup-2x';
                 badge.textContent = '🌟 雙倍';
-                indicator.appendChild(badge);
+                powerupIndicator.appendChild(badge);
             }
         }
 
