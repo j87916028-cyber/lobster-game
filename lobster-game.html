@@ -1022,6 +1022,16 @@
         const difficultyIndicator = document.getElementById('difficultyIndicator'); // 緩存難度顯示元素（效能優化）
         const powerupIndicator = document.getElementById('powerupIndicator'); // 緩存道具指示器元素（效能優化）
 
+        // 可用道具緩存（效能優化：避免每次生成氣泡時重複 filter）
+        let availablePowerupsCache = [];
+
+        // 更新可用道具緩存（當生命值變化時調用）
+        function updateAvailablePowerupsCache() {
+            availablePowerupsCache = POWERUPS.filter(p => 
+                p.type !== 'heart' || lives < GAME_CONFIG.MAX_LIVES_CAP
+            );
+        }
+
         // 無敵時間計時器（修復：儲存計時器以便清除）
         let invincibleTimeout = null;
 
@@ -1609,6 +1619,7 @@
             triggerDamageAnimation(); // 受傷時觸發畫面震動動畫
             triggerVibration('bomb');  // 受傷時觸發觸覺震動反饋
             lives--;
+            updateAvailablePowerupsCache(); // 更新可用道具緩存
             updateLivesDisplay();
             
             // 重置連擊（受到傷害時中斷連擊）
@@ -1712,6 +1723,7 @@
             else if (powerup.type === 'heart') {
                 if (lives < GAME_CONFIG.MAX_LIVES_CAP) {
                     lives++;
+                    updateAvailablePowerupsCache(); // 更新可用道具緩存
                     updateLivesDisplay();
                 }
             }
@@ -2276,6 +2288,7 @@
             isPaused = false;
             score = 0;
             lives = GAME_CONFIG.MAX_LIVES; // 重置生命值
+            updateAvailablePowerupsCache(); // 初始化可用道具緩存
             updateLivesDisplay(); // 更新生命值顯示
             
             // 重置遊戲統計
@@ -2355,11 +2368,8 @@
             let powerupType = null;
             if (!isBad && Math.random() < GAME_CONFIG.POWERUP_CHANCE) {
                 isPowerup = true;
-                // 取得可用道具（排除愛心如果已滿血）
-                const availablePowerups = POWERUPS.filter(p => 
-                    p.type !== 'heart' || lives < GAME_CONFIG.MAX_LIVES_CAP
-                );
-                powerupType = availablePowerups[Math.floor(Math.random() * availablePowerups.length)];
+                // 取得可用道具（排除愛心如果已滿血，使用緩存優化效能）
+                powerupType = availablePowerupsCache[Math.floor(Math.random() * availablePowerupsCache.length)];
                 bubble.textContent = powerupType.emoji;
             } else {
                 bubble.textContent = isBad 
