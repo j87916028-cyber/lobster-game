@@ -1008,6 +1008,22 @@
                 countdownOverlay = null;
             }
             
+            // 清除觸控計時器並重置觸控狀態（防止記憶體洩漏和狀態殘留）
+            if (typeof touchTimeoutLeft !== 'undefined' && touchTimeoutLeft) {
+                clearTimeout(touchTimeoutLeft);
+                touchTimeoutLeft = null;
+            }
+            if (typeof touchTimeoutRight !== 'undefined' && touchTimeoutRight) {
+                clearTimeout(touchTimeoutRight);
+                touchTimeoutRight = null;
+            }
+            if (typeof isTouchingLeft !== 'undefined') {
+                isTouchingLeft = false;
+            }
+            if (typeof isTouchingRight !== 'undefined') {
+                isTouchingRight = false;
+            }
+            
             // 清理所有氣泡（從 DOM 移除並返回池中）
             bubbles.forEach(b => {
                 b.element.remove(); // 從 DOM 中移除
@@ -1049,6 +1065,10 @@
                 
                 // 重置玩家位置
                 player.style.transform = 'translateX(-50%)';
+                
+                // 重置鍵盤狀態（防止殘留按鍵導致遊戲一開始就移動）
+                keys.left = false;
+                keys.right = false;
             }
         }
 
