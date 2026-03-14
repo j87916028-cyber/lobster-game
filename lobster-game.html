@@ -500,6 +500,14 @@
             touch-action: manipulation;
             transition: transform 0.1s, background 0.1s;
             -webkit-tap-highlight-color: transparent; /* 移除點擊高亮 */
+            color: white; /* 按鈕文字顏色 */
+            cursor: pointer; /* 指標游標 */
+        }
+        
+        /* 移除 button 預設樣式 */
+        button.touch-btn {
+            padding: 0;
+            line-height: 1;
         }
         
         /* 禁用雙擊縮放 */
@@ -578,6 +586,35 @@
             }
             .touch-controls {
                 display: flex;
+            }
+        }
+        
+        /* 減少動畫偏好支援 (無障礙) */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+            .score-popup, .powerup-popup {
+                animation: none !important;
+                opacity: 1;
+            }
+            .player-catch {
+                animation: none !important;
+            }
+            .player-invincible {
+                animation: none !important;
+            }
+            #comboIndicator {
+                animation: none !important;
+                opacity: 1;
+            }
+            .powerup-badge {
+                animation: none !important;
+            }
+            .new-record {
+                animation: none !important;
             }
         }
         
@@ -701,11 +738,11 @@
     </div>
     <p class="instructions">← → 方向鍵移動龍蝦，接住掉落的金幣！💰 按 ESC/P 暫停 | M 靜音切換</p>
     
-    <!-- 行動裝置觸控按鈕 -->
+    <!-- 行動裝置觸控按鈕 (使用 button 元素以支援無障礙) -->
     <div class="touch-controls">
-        <div class="touch-btn" id="btnLeft">◀</div>
-        <div class="touch-btn" id="btnRight">▶</div>
-        <div class="touch-btn" id="btnPause">⏸</div>
+        <button class="touch-btn" id="btnLeft" aria-label="向左移動">◀</button>
+        <button class="touch-btn" id="btnRight" aria-label="向右移動">▶</button>
+        <button class="touch-btn" id="btnPause" aria-label="暫停遊戲">⏸</button>
     </div>
 
     <script>
