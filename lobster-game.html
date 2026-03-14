@@ -21,6 +21,9 @@
             justify-content: center;
             color: white;
             overflow: hidden;
+            -webkit-font-smoothing: antialiased; /* 字體渲染優化 */
+            overscroll-behavior: none; /* 防止手機橡皮筋效果 */
+            touch-action: manipulation; /* 優化觸控體驗 */
         }
         h1 {
             font-size: 3rem;
@@ -35,7 +38,7 @@
             border-radius: 20px;
             border: 3px solid #00d4ff;
             overflow: hidden;
-            contain: strict; /* CSS contain 屬性：隔離內容渲染，提升效能 */
+            contain: layout style paint; /* 完整隔離：layout+style+paint 避免遊戲元素影響外部渲染 */
         }
         #player {
             position: absolute;
@@ -586,6 +589,26 @@
             }
             .touch-controls {
                 display: flex;
+            }
+        }
+        
+        /* 更小的螢幕優化 */
+        @media (max-width: 480px) {
+            #gameContainer {
+                height: 50vh;
+                border-width: 2px;
+            }
+            h1 {
+                font-size: 1.5rem;
+                margin-bottom: 10px;
+            }
+            .touch-controls {
+                gap: 20px;
+            }
+            .touch-btn {
+                width: 60px;
+                height: 60px;
+                font-size: 2rem;
             }
         }
         
