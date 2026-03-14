@@ -127,6 +127,20 @@
             color: #00d4ff;
             z-index: 10;
         }
+
+        #fpsDisplay {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 0.85rem;
+            background: rgba(0,0,0,0.5);
+            padding: 5px 10px;
+            border-radius: 10px;
+            color: #00ff88;
+            z-index: 10;
+            font-family: monospace;
+            opacity: 0.7;
+        }
         
         #comboIndicator {
             position: absolute;
@@ -449,6 +463,7 @@
         <div id="lives">❤️❤️❤️</div>
         <div id="powerupIndicator"></div>
         <div id="difficultyIndicator">難度 1</div>
+        <div id="fpsDisplay">FPS: --</div>
         <div id="comboIndicator"></div>
         <div id="player">🦞</div>
         <button id="startBtn">開始遊戲</button>
@@ -592,6 +607,12 @@
         let spawnTimer = 0;
         let animationFrameId = null;
         let isStarting = false; // 防止快速重複點擊
+
+        // FPS 計算變數
+        let fps = 0;
+        let frameCount = 0;
+        let fpsLastTime = 0;
+        const fpsDisplay = document.getElementById('fpsDisplay');
         let audioContext = null; // Web Audio API
         
         // 遊戲統計數據
@@ -1075,6 +1096,15 @@
                 return;
             }
 
+            // FPS 計算：每秒更新一次
+            frameCount++;
+            if (timestamp - fpsLastTime >= 1000) {
+                fps = frameCount;
+                frameCount = 0;
+                fpsLastTime = timestamp;
+                fpsDisplay.textContent = 'FPS: ' + fps;
+            }
+
             const deltaTime = timestamp - lastTime;
             lastTime = timestamp;
             
@@ -1360,6 +1390,11 @@
                 cancelAnimationFrame(animationFrameId);
                 animationFrameId = null;
             }
+
+            // 初始化 FPS 計算
+            frameCount = 0;
+            fpsLastTime = performance.now();
+            fpsDisplay.textContent = 'FPS: --';
             
             // 清理舊的氣泡（防止残餘）
             bubbles.forEach(b => returnBubbleToPool(b.element));
