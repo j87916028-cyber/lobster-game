@@ -2618,12 +2618,86 @@
                 navigator.serviceWorker.register('./sw.js')
                     .then((registration) => {
                         console.log('SW registered:', registration.scope);
+                        
+                        // 監聽 Service Worker 更新
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            if (newWorker) {
+                                newWorker.addEventListener('statechange', () => {
+                                    // 當新 SW 安裝完成且準備好時，通知用戶更新
+                                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                        showUpdateNotification();
+                                    }
+                                });
+                            }
+                        });
                     })
                     .catch((error) => {
                         console.log('SW registration failed:', error);
                     });
             });
+            
+            // 處理來自 Service Worker 的更新提示
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                // 當 controller 變化時，重新載入頁面以套用新版本
+                window.location.reload();
+            });
         }
+        
+        // 顯示更新通知
+        function showUpdateNotification() {
+            const notification = document.createElement('div');
+            notification.id = 'updateNotification';
+            notification.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: linear-gradient(135deg, #00d4ff, #0099cc);
+                color: white;
+                padding: 15px 25px;
+                border-radius: 25px;
+                font-size: 16px;
+                font-weight: bold;
+                box-shadow: 0 4px 15px rgba(0, 212, 255, 0.4);
+                z-index: 10000;
+                cursor: pointer;
+                animation: slideUp 0.3s ease-out;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            `;
+            notification.innerHTML = '🎮 有新版本可用！點擊更新 🦞';
+            
+            // 點擊更新
+            notification.addEventListener('click', () => {
+                window.location.reload();
+            });
+            
+            document.body.appendChild(notification);
+            
+            // 5 秒後自動隱藏（如果用戶沒興趣）
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.style.animation = 'slideDown 0.3s ease-out';
+                    setTimeout(() => notification.remove(), 300);
+                }
+            }, 5000);
+        }
+        
+        // 新增動畫 keyframes
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideUp {
+                from { transform: translateX(-50%) translateY(100px); opacity: 0; }
+                to { transform: translateX(-50%) translateY(0); opacity: 1; }
+            }
+            @keyframes slideDown {
+                from { transform: translateX(-50%) translateY(0); opacity: 1; }
+                to { transform: translateX(-50%) translateY(100px); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
     </script>
 </body>
 </html>
