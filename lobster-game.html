@@ -749,6 +749,11 @@
                 <span>💰 <span id="statCoinsEnd">0</span></span>
                 <span>💣 <span id="statBombsEnd">0</span></span>
             </div>
+            <div id="bestRecords" aria-label="最佳記錄" style="display: none; margin-top: 10px; padding: 10px; background: rgba(255,215,0,0.15); border-radius: 10px; font-size: 0.9rem;">
+                <div style="color: #ffd700; margin-bottom: 5px;">🏆 最佳記錄</div>
+                <span>⏱️ <span id="bestTimeEnd">0:00</span></span>
+                <span style="margin-left: 10px;">💰 <span id="bestCoinsEnd">0</span></span>
+            </div>
             <button id="restartBtn" aria-label="再玩一次">再玩一次</button>
         </div>
         <div id="pauseOverlay" role="dialog" aria-labelledby="pauseTitle" aria-modal="true">
@@ -842,7 +847,9 @@
             
             // 本地存儲鍵名
             HIGH_SCORE_KEY: 'lobsterGameHighScore',
-            SOUND_ENABLED_KEY: 'lobsterGameSoundEnabled'
+            SOUND_ENABLED_KEY: 'lobsterGameSoundEnabled',
+            BEST_TIME_KEY: 'lobsterGameBestTime',
+            BEST_COINS_KEY: 'lobsterGameBestCoins'
         };
         
         const ITEM_EMOJIS = {
@@ -887,6 +894,10 @@
         const statTimeEnd = document.getElementById('statTimeEnd');
         const statCoinsEnd = document.getElementById('statCoinsEnd');
         const statBombsEnd = document.getElementById('statBombsEnd');
+        // 最佳記錄元素
+        const bestRecordsDiv = document.getElementById('bestRecords');
+        const bestTimeEnd = document.getElementById('bestTimeEnd');
+        const bestCoinsEnd = document.getElementById('bestCoinsEnd');
 
         // 動態獲取遊戲容器尺寸（支援 RWD 響應式設計）
         function getGameDimensions() {
@@ -921,6 +932,8 @@
         const SCORE_ANIMATION_SPEED = 0.15; // 分數滾動速度 (0-1，越大越快)
         let lives = GAME_CONFIG.MAX_LIVES;
         let highScore = parseInt(getStorageItem(GAME_CONFIG.HIGH_SCORE_KEY, '0')) || 0;
+        let bestTime = parseFloat(getStorageItem(GAME_CONFIG.BEST_TIME_KEY, '0')) || 0;
+        let bestCoins = parseInt(getStorageItem(GAME_CONFIG.BEST_COINS_KEY, '0')) || 0;
         
         // 初始化最高分顯示（頁面載入時就顯示 localStorage 的值）
         highScoreDisplay.textContent = '最高分: ' + formatScore(highScore);
@@ -2257,6 +2270,31 @@
             statTimeEnd.textContent = formatTime(gameStats.elapsedTime);
             statCoinsEnd.textContent = gameStats.coinsCollected;
             statBombsEnd.textContent = gameStats.bombsHit;
+            
+            // 檢查並更新最佳記錄
+            let hasNewBest = false;
+            if (gameStats.elapsedTime > bestTime) {
+                bestTime = gameStats.elapsedTime;
+                setStorageItem(GAME_CONFIG.BEST_TIME_KEY, bestTime);
+                hasNewBest = true;
+            }
+            if (gameStats.coinsCollected > bestCoins) {
+                bestCoins = gameStats.coinsCollected;
+                setStorageItem(GAME_CONFIG.BEST_COINS_KEY, bestCoins);
+                hasNewBest = true;
+            }
+            
+            // 顯示最佳記錄
+            if (bestTime > 0 || bestCoins > 0) {
+                bestRecordsDiv.style.display = 'block';
+                bestTimeEnd.textContent = formatTime(bestTime);
+                bestCoinsEnd.textContent = bestCoins;
+                if (hasNewBest) {
+                    bestRecordsDiv.style.background = 'rgba(255,215,0,0.3)';
+                }
+            } else {
+                bestRecordsDiv.style.display = 'none';
+            }
             
             // 顯示遊戲表現評價
             showPerformanceRating();
