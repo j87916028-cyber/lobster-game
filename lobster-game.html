@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#00d4ff">
+    <link rel="manifest" href="manifest.json">
     <title>🦞 龍蝦大戰</title>
     <style>
         * {
@@ -2609,6 +2611,19 @@
         // 當用戶切換分頁時釋放 wake lock（系統會自動釋放，但手動處理更穩健）
         // 注意：此邏輯已整合到上方的 visibilitychange 監聽器中 (line ~1919)
         // 這裡保留函數備用，但不再新增重複的事件監聽
+
+        // ==================== PWA 支援（離線遊戲）====================
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then((registration) => {
+                        console.log('SW registered:', registration.scope);
+                    })
+                    .catch((error) => {
+                        console.log('SW registration failed:', error);
+                    });
+            });
+        }
     </script>
 </body>
 </html>
