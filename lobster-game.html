@@ -1216,11 +1216,12 @@
             popup.style.top = y + 'px';
             gameContainer.appendChild(popup);
             
-            // 動畫結束後返回池中
-            setTimeout(() => {
+            // 使用 animationend 事件確保動畫結束後才回收，比 setTimeout 更精確且避免記憶體洩漏
+            popup.addEventListener('animationend', function handler() {
+                popup.removeEventListener('animationend', handler);
                 popup.remove();
                 returnPopupToPool(popup);
-            }, GAME_CONFIG.SCORE_POPUP_DURATION);
+            });
         }
 
         // 更新生命值顯示
@@ -1343,10 +1344,12 @@
             popup.style.background = powerup.type === 'shield' ? 'rgba(0,191,255,0.8)' : 
                                       powerup.type === '2x' ? 'rgba(255,215,0,0.8)' : 'rgba(255,0,0,0.8)';
             gameContainer.appendChild(popup);
-            setTimeout(() => {
+            // 使用 animationend 事件確保動畫結束後才回收
+            popup.addEventListener('animationend', function handler() {
+                popup.removeEventListener('animationend', handler);
                 popup.remove();
                 returnPopupToPool(popup);
-            }, GAME_CONFIG.SCORE_POPUP_DURATION);
+            });
             
             // 處理不同道具效果
             if (powerup.type === 'shield') {
