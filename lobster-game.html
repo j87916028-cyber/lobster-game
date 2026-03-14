@@ -366,6 +366,10 @@
         #startBtn:hover {
             transform: translate(-50%, -50%) scale(1.1);
         }
+        #startBtn:focus {
+            outline: 3px solid #ffd700;
+            outline-offset: 3px;
+        }
         
         /* 重置最高分按鈕 */
         #resetHighScoreBtn {
@@ -424,6 +428,14 @@
             cursor: pointer;
             color: #1a1a2e;
             font-weight: bold;
+            transition: transform 0.2s;
+        }
+        #restartBtn:hover {
+            transform: scale(1.1);
+        }
+        #restartBtn:focus {
+            outline: 3px solid #ffd700;
+            outline-offset: 3px;
         }
         #pauseOverlay {
             display: none;
@@ -543,6 +555,24 @@
             transform: scale(0.9);
             background: rgba(0, 212, 255, 0.6);
         }
+
+        /* 鍵盤焦點樣式（無障礙支援）*/
+        .touch-btn:focus {
+            outline: 3px solid #ffd700;
+            outline-offset: 3px;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.7);
+        }
+
+        .touch-btn:focus:not(:focus-visible) {
+            outline: none;
+            box-shadow: none;
+        }
+
+        .touch-btn:focus-visible {
+            outline: 3px solid #ffd700;
+            outline-offset: 3px;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.7);
+        }
         
         /* 音效開關按鈕 */
         #soundBtn {
@@ -560,6 +590,10 @@
         }
         #soundBtn:hover {
             transform: scale(1.1);
+        }
+        #soundBtn:focus {
+            outline: 3px solid #ffd700;
+            outline-offset: 2px;
         }
         
         /* 暫停按鈕 */
@@ -591,8 +625,16 @@
             transition: transform 0.2s;
             z-index: 10;
         }
+        #helpBtn:focus {
+            outline: 3px solid #ffd700;
+            outline-offset: 2px;
+        }
         #pauseBtn:hover {
             transform: scale(1.1);
+        }
+        #pauseBtn:focus {
+            outline: 3px solid #ffd700;
+            outline-offset: 2px;
         }
         
         /* 行動裝置適配 */
