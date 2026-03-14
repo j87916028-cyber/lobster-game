@@ -2224,7 +2224,11 @@
             let powerupType = null;
             if (!isBad && Math.random() < GAME_CONFIG.POWERUP_CHANCE) {
                 isPowerup = true;
-                powerupType = POWERUPS[Math.floor(Math.random() * POWERUPS.length)];
+                // 取得可用道具（排除愛心如果已滿血）
+                const availablePowerups = POWERUPS.filter(p => 
+                    p.type !== 'heart' || lives < GAME_CONFIG.MAX_LIVES_CAP
+                );
+                powerupType = availablePowerups[Math.floor(Math.random() * availablePowerups.length)];
                 bubble.textContent = powerupType.emoji;
             } else {
                 bubble.textContent = isBad 
