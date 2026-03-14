@@ -2082,12 +2082,20 @@
             keys.right = false;
         });
 
+        // 檢查使用者是否偏好減少動畫（無障礙支援）
+        function prefersReducedMotion() {
+            return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        }
+
         // 顯示倒數計時（遊戲開始前）
         function showCountdown(callback) {
             // 使用全域變數儲存倒數計時相關元素，以便正確清理
             countdownOverlay = document.createElement('div');
             countdownOverlay.id = 'countdownOverlay';
-            countdownOverlay.style.cssText = `
+            
+            // 無障礙支援：根據使用者偏好選擇動畫效果
+            const reducedMotion = prefersReducedMotion();
+            let overlayStyle = `
                 position: absolute;
                 top: 0;
                 left: 0;
@@ -2101,27 +2109,58 @@
                 font-size: 5rem;
                 font-weight: bold;
                 color: #00d4ff;
-                text-shadow: 0 0 30px #00d4ff;
             `;
+            
+            if (!reducedMotion) {
+                overlayStyle += `
+                text-shadow: 0 0 30px #00d4ff;
+                animation: fadeInOut 1s infinite;
+                `;
+            }
+            countdownOverlay.style.cssText = overlayStyle;
             gameContainer.appendChild(countdownOverlay);
             
             let count = 3;
             countdownOverlay.textContent = count;
             
+            // 無障礙：偏好減少動畫時，直接顯示數字不播放動畫
+            if (!reducedMotion) {
+                // 添加動畫 keyframes（如果尚未添加）
+                if (!document.getElementById('countdownAnimStyle')) {
+                    const style = document.createElement('style');
+                    style.id = 'countdownAnimStyle';
+                    style.textContent = `
+                        @keyframes fadeInOut {
+                            0%, 100% { opacity: 1; transform: scale(1); }
+                            50% { opacity: 0.7; transform: scale(1.1); }
+                        }
+                    `;
+                    document.head.appendChild(style);
+                }
+            }
+            
             countdownInterval = setInterval(() => {
                 count--;
                 if (count > 0) {
                     countdownOverlay.textContent = count;
+                    if (!reducedMotion) {
+                        // 重置動畫
+                        countdownOverlay.style.animation = 'none';
+                        void countdownOverlay.offsetWidth;
+                        countdownOverlay.style.animation = 'fadeInOut 1s infinite';
+                    }
                     playTone(440, 440, 0.15, 0.2); // 倒數音效
                 } else {
                     clearInterval(countdownInterval);
                     countdownInterval = null;
                     countdownOverlay.remove();
                     countdownOverlay = null;
-                    playTone(880, 1760, 0.25, 0.3); // 開始音效
+                    if (!reducedMotion) {
+                        playTone(880, 1760, 0.25, 0.3); // 開始音效
+                    }
                     callback(); // 啟動遊戲
                 }
-            }, 1000);
+            }, reducedMotion ? 1500 : 1000); // 減少動畫時延長倒數時間，讓使用者更容易閱讀
         }
 
         function startGame() {
