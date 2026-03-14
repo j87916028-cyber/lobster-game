@@ -1545,6 +1545,45 @@
             keys.right = false;
         });
 
+        // 顯示倒數計時（遊戲開始前）
+        function showCountdown(callback) {
+            const countdownOverlay = document.createElement('div');
+            countdownOverlay.id = 'countdownOverlay';
+            countdownOverlay.style.cssText = `
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.7);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 100;
+                font-size: 5rem;
+                font-weight: bold;
+                color: #00d4ff;
+                text-shadow: 0 0 30px #00d4ff;
+            `;
+            gameContainer.appendChild(countdownOverlay);
+            
+            let count = 3;
+            countdownOverlay.textContent = count;
+            
+            const countInterval = setInterval(() => {
+                count--;
+                if (count > 0) {
+                    countdownOverlay.textContent = count;
+                    playTone(440, 440, 0.15, 0.2); // 倒數音效
+                } else {
+                    clearInterval(countInterval);
+                    countdownOverlay.remove();
+                    playTone(880, 1760, 0.25, 0.3); // 開始音效
+                    callback(); // 啟動遊戲
+                }
+            }, 1000);
+        }
+
         function startGame() {
             // 防止快速重複點擊
             if (isStarting) return;
@@ -1606,12 +1645,13 @@
             gameOver.style.display = 'none';
             pauseOverlay.style.display = 'none';
             
-            // 使用 requestAnimationFrame 啟動遊戲循環
-            playSound('start'); // 播放開始音效
-            animationFrameId = requestAnimationFrame(gameLoop);
+            // 顯示倒數計時，然後啟動遊戲
+            showCountdown(() => {
+                isStarting = false;
+                animationFrameId = requestAnimationFrame(gameLoop);
+            });
             
-            // 短暫鎖定後解鎖
-            setTimeout(() => { isStarting = false; }, GAME_CONFIG.START_LOCK_DURATION);
+            // 短暫鎖定後解鎖（但倒數期間不解鎖）
         }
 
         function spawnBubble() {
