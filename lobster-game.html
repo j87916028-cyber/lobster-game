@@ -1820,6 +1820,9 @@
                     if (audioContext && audioContext.state === 'running') {
                         audioContext.suspend();
                     }
+                    
+                    // 釋放螢幕喚醒鎖
+                    releaseWakeLock();
                 }
             } else {
                 // 分頁恢復顯示時，只有因為分頁隱藏而暫停時才恢復
@@ -1835,6 +1838,9 @@
                     if (audioContext && audioContext.state === 'suspended') {
                         audioContext.resume();
                     }
+                    
+                    // 恢復時請求螢幕喚醒鎖
+                    requestWakeLock();
                 }
             }
         });
