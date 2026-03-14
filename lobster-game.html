@@ -127,6 +127,33 @@
             z-index: 10;
         }
         
+        #comboIndicator {
+            position: absolute;
+            top: 90px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1.2rem;
+            font-weight: bold;
+            background: linear-gradient(90deg, #ff6b6b, #ffd700, #00d4ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            z-index: 10;
+            text-shadow: 0 0 10px rgba(255,215,0,0.5);
+        }
+        
+        #comboIndicator.show {
+            opacity: 1;
+            animation: comboPulse 0.5s infinite;
+        }
+        
+        @keyframes comboPulse {
+            0%, 100% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.1); }
+        }
+        
         .powerup-badge {
             padding: 5px 10px;
             border-radius: 15px;
@@ -402,6 +429,7 @@
         <div id="lives">❤️❤️❤️</div>
         <div id="powerupIndicator"></div>
         <div id="difficultyIndicator">難度 1</div>
+        <div id="comboIndicator"></div>
         <div id="player">🦞</div>
         <button id="startBtn">開始遊戲</button>
         <div id="gameOver">
@@ -552,6 +580,14 @@
             startTime: 0,
             elapsedTime: 0
         };
+        
+        // 連擊系統
+        let comboCount = 0;
+        let comboTimeout = null;
+        let comboMultiplier = 1;
+        const COMBO_WINDOW = 1500; // 連擊有效時間 (ms)
+        const MAX_COMBO_MULTIPLIER = 5; // 最大連擊倍數
+        const comboIndicator = document.getElementById('comboIndicator');
 
         // ==================== DOM 元素物件池 (效能優化) ====================
         // 重用 DOM 元素，避免頻繁創建/刪除導致的效能損耗
@@ -685,6 +721,10 @@
                         // 接金幣：高音嗶聲
                         playTone(880, 1760, 0.15, 0.3);
                         break;
+                    case 'combo':
+                        // 連擊音效：急促上升
+                        playTone(600, 1200, 0.1, 0.2);
+                        break;
                     case 'bomb':
                         // 碰到炸彈：低音轟聲
                         playTone(200, 50, 0.3, 0.4);
@@ -773,6 +813,38 @@
             return num.toLocaleString('zh-TW');
         }
         
+        // 連擊系統函數
+        function handleCombo() {
+            // 清除之前的計時器
+            if (comboTimeout) clearTimeout(comboTimeout);
+            
+            comboCount++;
+            // 計算連擊倍數 (每3個連擊+1倍，上限5倍)
+            comboMultiplier = Math.min(MAX_COMBO_MULTIPLIER, 1 + Math.floor(comboCount / 3));
+            
+            // 更新連擊顯示
+            if (comboCount >= 2) {
+                comboIndicator.textContent = `🔥 ${comboCount} 連擊! x${comboMultiplier}`;
+                comboIndicator.classList.add('show');
+                // 播放連擊音效
+                playSound('combo');
+            }
+            
+            // 設置連擊超時
+            comboTimeout = setTimeout(() => {
+                resetCombo();
+            }, COMBO_WINDOW);
+        }
+        
+        // 重置連擊
+        function resetCombo() {
+            comboCount = 0;
+            comboMultiplier = 1;
+            comboIndicator.classList.remove('show');
+            if (comboTimeout) clearTimeout(comboTimeout);
+            comboTimeout = null;
+        }
+        
         // 生成愛心字符串（共用函數，避免重複代碼）
         function getHeartsString(count) {
             return '❤️'.repeat(Math.max(0, count));
@@ -793,9 +865,9 @@
         }
 
         // 顯示分數彈出動畫
-        function showScorePopup(x, y, points) {
+        function showScorePopup(x, y, points, customText) {
             const popup = getPopupFromPool('score-popup');
-            popup.textContent = '+' + formatScore(points);
+            popup.textContent = customText || '+' + formatScore(points);
             popup.style.left = x + 'px';
             popup.style.top = y + 'px';
             gameContainer.appendChild(popup);
@@ -849,6 +921,9 @@
             triggerDamageAnimation(); // 受傷時觸發畫面震動動畫
             lives--;
             updateLivesDisplay();
+            
+            // 重置連擊（受到傷害時中斷連擊）
+            resetCombo();
             
             // 更新受到炸彈攻擊統計
             gameStats.bombsHit++;
@@ -1054,7 +1129,10 @@
                         }
                         
                         // 普通金幣
-                        const points = activePowerups['2x'] ? GAME_CONFIG.COIN_2X_POINTS : GAME_CONFIG.COIN_BASE_POINTS;
+                        const basePoints = activePowerups['2x'] ? GAME_CONFIG.COIN_2X_POINTS : GAME_CONFIG.COIN_BASE_POINTS;
+                        // 觸發連擊系統
+                        handleCombo();
+                        const points = basePoints * comboMultiplier;
                         score += points;
                         playSound('coin');
                         scoreDisplay.textContent = '分數: ' + formatScore(score);
@@ -1062,8 +1140,9 @@
                         updateDifficultyDisplay();
                         // 更新收集金幣統計
                         gameStats.coinsCollected++;
-                        // 顯示分數彈出動畫
-                        showScorePopup(bubble.x, bubble.y, points);
+                        // 顯示分數彈出動畫（顯示連擊加成）
+                        const popupText = comboCount >= 2 ? `+${formatScore(points)} (x${comboMultiplier})` : '+' + formatScore(points);
+                        showScorePopup(bubble.x, bubble.y, points, popupText);
                         // 玩家動畫
                         triggerPlayerCatchAnimation();
                         returnBubbleToPool(bubble.element);
@@ -1279,6 +1358,9 @@
             isInvincible = false; // 重置無敵狀態
             invincibleReason = null; // 重置無敵原因
             pausedByVisibility = false; // 重置可見性暫停狀態
+            
+            // 重置連擊系統
+            resetCombo();
             
             // 更新遊戲邊界（支援 RWD）
             updateGameBounds();
