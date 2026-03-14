@@ -69,6 +69,18 @@
             pointer-events: none;
             z-index: 100;
         }
+
+        /* 道具彈出動畫 */
+        .powerup-popup {
+            position: absolute;
+            font-size: 1.2rem;
+            font-weight: bold;
+            padding: 8px 15px;
+            border-radius: 10px;
+            animation: powerupFloat 1s ease-out forwards;
+            pointer-events: none;
+            z-index: 100;
+        }
         
         @keyframes scoreFloat {
             0% { opacity: 1; transform: translateY(0) scale(1); }
@@ -254,14 +266,8 @@
         }
         
         @keyframes powerupPulse {
-            position: absolute;
-            font-size: 1.2rem;
-            font-weight: bold;
-            padding: 8px 15px;
-            border-radius: 10px;
-            animation: powerupFloat 1s ease-out forwards;
-            pointer-events: none;
-            z-index: 100;
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
         }
         
         @keyframes powerupFloat {
