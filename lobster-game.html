@@ -2184,7 +2184,7 @@
             // 使用 transform 初始化玩家位置
             player.style.transform = 'translateX(-50%)';
             player.classList.remove('player-catch');
-            score = 0;
+            // score 已在上面初始化 (line 2146)
             targetScore = 0; // 初始化分數動畫目標值
             scoreDisplay.textContent = '分數: 0';
             updateDifficultyDisplay(); // 初始化難度顯示
