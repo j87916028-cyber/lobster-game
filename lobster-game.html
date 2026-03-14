@@ -721,50 +721,50 @@
 </head>
 <body>
     <h1>🦞 龍蝦大戰</h1>
-    <div id="gameContainer">
-        <div id="score">分數: 0</div>
-        <button id="soundBtn" title="音效開關">🔊</button>
-        <button id="pauseBtn" title="暫停 (ESC)">⏸️</button>
-        <button id="helpBtn" title="說明 (H)">❓</button>
-        <div id="lives">❤️❤️❤️</div>
-        <div id="powerupIndicator"></div>
-        <div id="difficultyIndicator">難度 1</div>
-        <div id="fpsDisplay">FPS: --</div>
-        <div id="liveStats">
+    <div id="gameContainer" role="application" aria-label="遊戲區域">
+        <div id="score" role="status" aria-live="polite" aria-label="目前分數">分數: 0</div>
+        <button id="soundBtn" title="音效開關" aria-label="音效開關">🔊</button>
+        <button id="pauseBtn" title="暫停 (ESC)" aria-label="暫停遊戲">⏸️</button>
+        <button id="helpBtn" title="說明 (H)" aria-label="顯示遊戲說明">❓</button>
+        <div id="lives" role="status" aria-live="polite" aria-label="剩餘生命">❤️❤️❤️</div>
+        <div id="powerupIndicator" role="status" aria-live="polite" aria-label="道具狀態"></div>
+        <div id="difficultyIndicator" role="status" aria-label="目前難度等級">難度 1</div>
+        <div id="fpsDisplay" aria-hidden="true">FPS: --</div>
+        <div id="liveStats" role="status" aria-live="polite" aria-label="遊戲統計">
             <span>⏱️ <span id="liveTime">0:00</span></span>
             <span>💰 <span id="liveCoins">0</span></span>
         </div>
-        <div id="highScoreGap"></div>
-        <div id="comboIndicator"></div>
-        <div id="player">🦞</div>
-        <button id="startBtn">開始遊戲</button>
-        <button id="resetHighScoreBtn" title="重置最高分">🗑️</button>
-        <div id="gameOver">
-            <h2>遊戲結束!</h2>
-            <div id="performanceRating"></div>
-            <div id="highScore">最高分: 0</div>
-            <div id="finalScore">分數: 0</div>
-            <div id="gameStatsEnd">
+        <div id="highScoreGap" role="status" aria-label="與最高分差距"></div>
+        <div id="comboIndicator" role="status" aria-live="polite" aria-label="連擊倍數"></div>
+        <div id="player" role="img" aria-label="玩家角色龍蝦">🦞</div>
+        <button id="startBtn" aria-label="開始遊戲">開始遊戲</button>
+        <button id="resetHighScoreBtn" title="重置最高分" aria-label="重置最高分記錄">🗑️</button>
+        <div id="gameOver" role="alert" aria-labelledby="gameOverTitle">
+            <h2 id="gameOverTitle">遊戲結束!</h2>
+            <div id="performanceRating" aria-label="表現評價"></div>
+            <div id="highScore" aria-label="最高分">最高分: 0</div>
+            <div id="finalScore" aria-label="本次遊戲分數">分數: 0</div>
+            <div id="gameStatsEnd" aria-label="遊戲統計">
                 <span>⏱️ <span id="statTimeEnd">0:00</span></span>
                 <span>💰 <span id="statCoinsEnd">0</span></span>
                 <span>💣 <span id="statBombsEnd">0</span></span>
             </div>
-            <button id="restartBtn">再玩一次</button>
+            <button id="restartBtn" aria-label="再玩一次">再玩一次</button>
         </div>
-        <div id="pauseOverlay">
-            <h2>暫停</h2>
-            <div id="pauseScore">分數: 0</div>
-            <div id="pauseLives">❤️❤️❤️</div>
-            <div id="gameStats">
+        <div id="pauseOverlay" role="dialog" aria-labelledby="pauseTitle" aria-modal="true">
+            <h2 id="pauseTitle">暫停</h2>
+            <div id="pauseScore" aria-label="目前分數">分數: 0</div>
+            <div id="pauseLives" aria-label="剩餘生命">❤️❤️❤️</div>
+            <div id="gameStats" aria-label="遊戲統計">
                 <span>⏱️ <span id="statTime">0:00</span></span>
                 <span>💰 <span id="statCoins">0</span></span>
                 <span>💣 <span id="statBombs">0</span></span>
             </div>
-            <button id="resumeBtn">繼續遊戲</button>
-            <button id="menuBtn">返回選單</button>
+            <button id="resumeBtn" aria-label="繼續遊戲">繼續遊戲</button>
+            <button id="menuBtn" aria-label="返回選單">返回選單</button>
         </div>
-        <div id="helpOverlay">
-            <h2>⌨️ 操作說明</h2>
+        <div id="helpOverlay" role="dialog" aria-labelledby="helpTitle" aria-modal="true">
+            <h2 id="helpTitle">⌨️ 操作說明</h2>
             <div class="help-content">
                 <div><kbd>←</kbd> <kbd>→</kbd> 或 <kbd>A</kbd> <kbd>D</kbd> - 移動龍蝦</div>
                 <div><kbd>Enter</kbd> - 開始遊戲</div>
@@ -1347,6 +1347,7 @@
                     score += Math.ceil(diff * SCORE_ANIMATION_SPEED);
                 }
                 scoreDisplay.textContent = '分數: ' + formatScore(score);
+                scoreDisplay.setAttribute('aria-label', `目前分數 ${score}`);
             }
         }
         
@@ -1362,6 +1363,7 @@
             // 更新連擊顯示
             if (comboCount >= 2) {
                 comboIndicator.textContent = `🔥 ${comboCount} 連擊! x${comboMultiplier}`;
+                comboIndicator.setAttribute('aria-label', `連擊 ${comboCount} 倍`);
                 comboIndicator.classList.add('show');
                 // 播放連擊音效
                 playSound('combo');
@@ -1420,6 +1422,7 @@
         // 更新生命值顯示
         function updateLivesDisplay() {
             livesDisplay.textContent = getHeartsString(lives);
+            livesDisplay.setAttribute('aria-label', `剩餘生命 ${lives} 點`);
             
             // 生命值減少時觸發動畫
             if (lives < GAME_CONFIG.MAX_LIVES) {
@@ -1430,10 +1433,11 @@
 
         // 更新難度等級顯示（使用緩存的 DOM 元素）
         function updateDifficultyDisplay() {
-            difficultyIndicator.textContent = '難度 ' + (getDifficultyLevel() + 1);
+            const level = getDifficultyLevel();
+            difficultyIndicator.textContent = '難度 ' + (level + 1);
+            difficultyIndicator.setAttribute('aria-label', `目前難度等級 ${level + 1}`);
             
             // 難度提升時的視覺效果
-            const level = getDifficultyLevel();
             if (level > 0) {
                 difficultyIndicator.style.color = level >= 5 ? '#ff6b6b' : level >= 3 ? '#ffd700' : '#00d4ff';
             }
@@ -2192,14 +2196,17 @@
                 highScore = score;
                 setStorageItem(GAME_CONFIG.HIGH_SCORE_KEY, highScore);
                 highScoreDisplay.textContent = '🎉 新紀錄!: ' + formatScore(highScore);
+                highScoreDisplay.setAttribute('aria-label', `新紀錄！最高分 ${highScore} 分`);
                 // 添加慶祝動畫
                 highScoreDisplay.classList.add('new-record');
                 setTimeout(() => highScoreDisplay.classList.remove('new-record'), 500);
             } else {
                 highScoreDisplay.textContent = '最高分: ' + formatScore(highScore);
+                highScoreDisplay.setAttribute('aria-label', `最高分 ${highScore} 分`);
             }
             
             finalScore.textContent = '分數: ' + formatScore(score);
+            finalScore.setAttribute('aria-label', `遊戲結束，本次得分 ${score} 分`);
             
             // 更新遊戲結束畫面的統計數據
             statTimeEnd.textContent = formatTime(gameStats.elapsedTime);
