@@ -744,6 +744,10 @@
         // 無敵時間計時器（修復：儲存計時器以便清除）
         let invincibleTimeout = null;
 
+        // 倒數計時相關變數（用於防止記憶體洩漏）
+        let countdownInterval = null;
+        let countdownOverlay = null;
+
         // ==================== 統一遊戲清理函數 ====================
         // 統一處理遊戲結束/重啟時的清理工作，避免重複代碼
         function cleanupGame(resetState = true) {
@@ -765,6 +769,16 @@
             if (invincibleTimeout) {
                 clearTimeout(invincibleTimeout);
                 invincibleTimeout = null;
+            }
+            
+            // 清除倒數計時（防止記憶體洩漏）
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+            }
+            if (countdownOverlay) {
+                countdownOverlay.remove();
+                countdownOverlay = null;
             }
             
             // 清理所有氣泡（從 DOM 移除並返回池中）
@@ -1580,7 +1594,8 @@
 
         // 顯示倒數計時（遊戲開始前）
         function showCountdown(callback) {
-            const countdownOverlay = document.createElement('div');
+            // 使用全域變數儲存倒數計時相關元素，以便正確清理
+            countdownOverlay = document.createElement('div');
             countdownOverlay.id = 'countdownOverlay';
             countdownOverlay.style.cssText = `
                 position: absolute;
@@ -1603,14 +1618,16 @@
             let count = 3;
             countdownOverlay.textContent = count;
             
-            const countInterval = setInterval(() => {
+            countdownInterval = setInterval(() => {
                 count--;
                 if (count > 0) {
                     countdownOverlay.textContent = count;
                     playTone(440, 440, 0.15, 0.2); // 倒數音效
                 } else {
-                    clearInterval(countInterval);
+                    clearInterval(countdownInterval);
+                    countdownInterval = null;
                     countdownOverlay.remove();
+                    countdownOverlay = null;
                     playTone(880, 1760, 0.25, 0.3); // 開始音效
                     callback(); // 啟動遊戲
                 }
