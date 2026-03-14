@@ -722,6 +722,7 @@
         let PLAYER_TOP_BOUND = GAME_CONFIG.CONTAINER_HEIGHT - GAME_CONFIG.PLAYER_BOTTOM - GAME_CONFIG.PLAYER_HEIGHT;
         let PLAYER_BOTTOM_BOUND = GAME_CONFIG.CONTAINER_HEIGHT - GAME_CONFIG.PLAYER_BOTTOM;
         let cachedGameHeight = GAME_CONFIG.CONTAINER_HEIGHT; // 緩存遊戲高度（效能優化）
+        let cachedGameWidth = GAME_CONFIG.CONTAINER_WIDTH; // 緩存遊戲寬度（效能優化：避免 spawnBubble 中重複調用 getGameDimensions）
 
         // 更新遊戲邊界（調用時機：遊戲開始、窗口大小變化）
         function updateGameBounds() {
@@ -731,6 +732,7 @@
             PLAYER_TOP_BOUND = dims.height - GAME_CONFIG.PLAYER_BOTTOM - GAME_CONFIG.PLAYER_HEIGHT;
             PLAYER_BOTTOM_BOUND = dims.height - GAME_CONFIG.PLAYER_BOTTOM;
             cachedGameHeight = dims.height; // 緩存高度，避免每幀調用 getBoundingClientRect
+            cachedGameWidth = dims.width; // 緩存寬度，避免 spawnBubble 中重複調用 getGameDimensions
         }
 
         // 難度系統參數（使用 GAME_CONFIG 中的值）
@@ -1280,7 +1282,8 @@
             
             // 更新遊戲邊界（支援 RWD）
             updateGameBounds();
-            playerX = PLAYER_RIGHT_BOUND / 2; // 置中
+            // 使用緩存的寬度初始化玩家位置（置中）
+            playerX = (cachedGameWidth - GAME_CONFIG.PLAYER_WIDTH) / 2;
             keys.left = false;
             keys.right = false;
             spawnTimer = 0;
@@ -1305,10 +1308,9 @@
         function spawnBubble() {
             if (!gameRunning) return;
             
-            // 使用物件池取得 DOM 元素（效能優化），使用動態寬度
-            const dims = getGameDimensions();
+            // 使用物件池取得 DOM 元素（效能優化），使用緩存的寬度避免重複 DOM 佈局計算
             const bubble = getBubbleFromPool();
-            const x = Math.random() * (dims.width - GAME_CONFIG.BUBBLE_SIZE);
+            const x = Math.random() * (cachedGameWidth - GAME_CONFIG.BUBBLE_SIZE);
             bubble.style.left = x + 'px';
             // 初始位置使用 transform（效能更好）
             bubble.style.transform = `translateY(${GAME_CONFIG.BUBBLE_START_Y}px)`;
