@@ -634,6 +634,65 @@
         // 無敵時間計時器（修復：儲存計時器以便清除）
         let invincibleTimeout = null;
 
+        // ==================== 統一遊戲清理函數 ====================
+        // 統一處理遊戲結束/重啟時的清理工作，避免重複代碼
+        function cleanupGame(resetState = true) {
+            // 取消動畫框架防止記憶體洩漏
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            
+            // 清除所有道具計時器
+            Object.values(powerupTimers).forEach(t => clearTimeout(t));
+            powerupTimers = {};
+            
+            // 清除連擊計時器和無敵計時器
+            if (comboTimeout) {
+                clearTimeout(comboTimeout);
+                comboTimeout = null;
+            }
+            if (invincibleTimeout) {
+                clearTimeout(invincibleTimeout);
+                invincibleTimeout = null;
+            }
+            
+            // 清理所有氣泡（從 DOM 移除並返回池中）
+            bubbles.forEach(b => {
+                b.element.remove(); // 從 DOM 中移除
+                returnBubbleToPool(b.element);
+            });
+            bubbles = [];
+            
+            // 清理所有彈出元素
+            document.querySelectorAll('.score-popup, .powerup-popup').forEach(p => {
+                p.remove();
+                returnPopupToPool(p);
+            });
+            
+            // 清除道具指示器殘留
+            document.querySelectorAll('.powerup-badge').forEach(b => b.remove());
+            
+            // 重置生成計時器
+            spawnTimer = 0;
+            
+            if (resetState) {
+                // 重置遊戲狀態
+                isInvincible = false;
+                invincibleReason = null;
+                pausedByVisibility = false;
+                resetCombo();
+                
+                // 重置道具狀態
+                activePowerups = { shield: false, '2x': false };
+                updatePowerupIndicator();
+                player.classList.remove('player-invincible', 'player-catch');
+                
+                // 重置玩家位置
+                player.style.transform = 'translateX(-50%)';
+            }
+        }
+
         // ==================== DOM 元素物件池 (效能優化) ====================
         // 重用 DOM 元素，避免頻繁創建/刪除導致的效能損耗
         const bubblePool = [];
@@ -1386,40 +1445,16 @@
         });
 
         function startGame() {
-            // 防止快速重複點擊，並確保之前的動畫框架已正確取消
+            // 防止快速重複點擊
             if (isStarting) return;
             
-            // 確保之前的動畫框架已取消（防止多個遊戲循環同時運行）
-            if (animationFrameId) {
-                cancelAnimationFrame(animationFrameId);
-                animationFrameId = null;
-            }
-
             // 初始化 FPS 計算
             frameCount = 0;
             fpsLastTime = performance.now();
             fpsDisplay.textContent = 'FPS: --';
             
-            // 清理舊的氣泡（防止残餘）
-            bubbles.forEach(b => returnBubbleToPool(b.element));
-            bubbles = [];
-            
-            // 清理舊的彈出元素
-            document.querySelectorAll('.score-popup, .powerup-popup').forEach(p => {
-                returnPopupToPool(p);
-            });
-            // 清除道具指示器殘留
-            document.querySelectorAll('.powerup-badge').forEach(b => b.remove());
-            
-            // 清除連擊計時器和無敵計時器（修復：確保遊戲重啟時計時器正確重置）
-            if (comboTimeout) {
-                clearTimeout(comboTimeout);
-                comboTimeout = null;
-            }
-            if (invincibleTimeout) {
-                clearTimeout(invincibleTimeout);
-                invincibleTimeout = null;
-            }
+            // 使用統一清理函數（重置遊戲狀態）
+            cleanupGame(true);
             
             isStarting = true;
             
@@ -1521,28 +1556,8 @@
             isPaused = false;
             playSound('gameover'); // 播放結束音效
             
-            // 取消動畫框架防止記憶體洩漏
-            if (animationFrameId) {
-                cancelAnimationFrame(animationFrameId);
-                animationFrameId = null;
-            }
-            
-            // 清除所有道具計時器，防止遊戲結束後計時器繼續運行
-            Object.values(powerupTimers).forEach(t => clearTimeout(t));
-            powerupTimers = {};
-            
-            // 清除連擊計時器和無敵計時器（修復：防止遊戲結束後計時器繼續運行）
-            if (comboTimeout) {
-                clearTimeout(comboTimeout);
-                comboTimeout = null;
-            }
-            if (invincibleTimeout) {
-                clearTimeout(invincibleTimeout);
-                invincibleTimeout = null;
-            }
-            
-            // 重置無敵狀態
-            isInvincible = false;
+            // 使用統一清理函數（不重置遊戲狀態，只清理資源）
+            cleanupGame(false);
             
             // 隱藏暫停畫面
             pauseOverlay.style.display = 'none';
@@ -1550,7 +1565,7 @@
             // 更新最高分
             if (score > highScore) {
                 highScore = score;
-                localStorage.setItem('lobsterGameHighScore', highScore);
+                localStorage.setItem(GAME_CONFIG.HIGH_SCORE_KEY, highScore);
                 highScoreDisplay.textContent = '🎉 新紀錄!: ' + formatScore(highScore);
             } else {
                 highScoreDisplay.textContent = '最高分: ' + formatScore(highScore);
@@ -1558,13 +1573,6 @@
             
             finalScore.textContent = '分數: ' + formatScore(score);
             gameOver.style.display = 'flex';
-            
-            // 清理所有氣泡（返回物件池）
-            bubbles.forEach(b => returnBubbleToPool(b.element));
-            bubbles = [];
-            
-            // 重置生成計時器，避免重新開始時立即生成氣泡
-            spawnTimer = 0;
             
             // 解鎖開始按鈕
             isStarting = false;
@@ -1581,36 +1589,16 @@
             // 停止遊戲並返回選單
             gameRunning = false;
             isPaused = false;
-            pausedByVisibility = false; // 重置可見性暫停狀態
             
-            // 取消動畫框架
-            if (animationFrameId) {
-                cancelAnimationFrame(animationFrameId);
-                animationFrameId = null;
-            }
-            
-            // 清除所有道具計時器
-            Object.values(powerupTimers).forEach(t => clearTimeout(t));
-            powerupTimers = {};
+            // 使用統一清理函數（重置遊戲狀態）
+            cleanupGame(true);
             
             // 隱藏所有遊戲 UI
             pauseOverlay.style.display = 'none';
             gameOver.style.display = 'none';
             
-            // 清理氣泡
-            bubbles.forEach(b => returnBubbleToPool(b.element));
-            bubbles = [];
-            
-            // 重置玩家位置
-            player.style.transform = 'translateX(-50%)';
-            player.classList.remove('player-catch', 'player-invincible');
-            isInvincible = false;
-            
             // 顯示開始按鈕
             startBtn.style.display = '';
-            
-            // 解鎖開始
-            isStarting = false;
             
             // 更新分數顯示
             scoreDisplay.textContent = '分數: 0';
