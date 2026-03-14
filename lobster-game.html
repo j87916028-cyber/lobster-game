@@ -1694,7 +1694,7 @@
                 return;
             }
             
-            if (!gameRunning) return;
+            if (!gameRunning || isPaused) return;
             if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
                 keys.left = true;
             } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
@@ -1742,6 +1742,9 @@
                 updateStatsDisplay(); // 更新遊戲統計顯示
                 // 暫停時釋放螢幕喚醒鎖
                 releaseWakeLock();
+                // 暫停時清除按鍵狀態，防止恢復後玩家自動移動
+                keys.left = false;
+                keys.right = false;
             } else {
                 lastTime = performance.now(); // 重置 deltaTime
                 // 恢復時重新啟動動畫循環
