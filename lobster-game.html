@@ -220,6 +220,39 @@
             box-shadow: 0 0 10px #ffd700;
         }
         
+        /* 新紀錄慶祝動畫 */
+        .new-record {
+            animation: recordCelebrate 0.5s ease-out;
+        }
+        
+        @keyframes recordCelebrate {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1); }
+        }
+        
+        /* 遊戲結束畫面 */
+        #gameOver {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 100;
+        }
+        
+        #gameOver h2 {
+            font-size: 3rem;
+            color: #ff6b6b;
+            text-shadow: 0 0 20px #ff6b6b;
+            margin-bottom: 20px;
+        }
+        
         @keyframes powerupPulse {
             0% { transform: scale(1); }
             100% { transform: scale(1.1); }
@@ -1711,6 +1744,9 @@
                 highScore = score;
                 setStorageItem(GAME_CONFIG.HIGH_SCORE_KEY, highScore);
                 highScoreDisplay.textContent = '🎉 新紀錄!: ' + formatScore(highScore);
+                // 添加慶祝動畫
+                highScoreDisplay.classList.add('new-record');
+                setTimeout(() => highScoreDisplay.classList.remove('new-record'), 500);
             } else {
                 highScoreDisplay.textContent = '最高分: ' + formatScore(highScore);
             }
