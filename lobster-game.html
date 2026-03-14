@@ -1479,8 +1479,8 @@
                 
                 // 使用 deltaTime 保持速度一致
                 bubble.y += bubble.speed * (deltaTime / 16);
-                // 使用 transform 代替 top（效能更好，使用 GPU 加速）
-                bubble.element.style.transform = `translateY(${bubble.y}px)`;
+                // 統一使用 transform 定位（完全避免 Layout 迴流，使用 GPU 加速）
+                bubble.element.style.transform = `translate(${bubble.x}px, ${bubble.y}px)`;
 
                 // 簡化的碰撞檢測（使用預先計算的數值，避免 getBoundingClientRect）
                 const bubbleBottom = bubble.y + GAME_CONFIG.BUBBLE_SIZE;
@@ -1906,9 +1906,8 @@
             // 使用物件池取得 DOM 元素（效能優化），使用緩存的寬度避免重複 DOM 佈局計算
             const bubble = getBubbleFromPool();
             const x = Math.random() * (cachedGameWidth - GAME_CONFIG.BUBBLE_SIZE);
-            bubble.style.left = x + 'px';
-            // 初始位置使用 transform（效能更好）
-            bubble.style.transform = `translateY(${GAME_CONFIG.BUBBLE_START_Y}px)`;
+            // 統一使用 transform 定位（效能更好，完全避免 Layout 迴流，使用 GPU 加速）
+            bubble.style.transform = `translate(${x}px, ${GAME_CONFIG.BUBBLE_START_Y}px)`;
             // 確保元素可見
             bubble.style.display = '';
             
