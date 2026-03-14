@@ -1926,7 +1926,9 @@
         document.addEventListener('visibilitychange', () => {
             if (!gameRunning) return;
             
-            if (document.hidden) {
+            const isHidden = document.visibilityState === 'hidden';
+            
+            if (isHidden) {
                 // 分頁隱藏時暫停遊戲（如果尚未暫停）
                 if (!isPaused) {
                     isPaused = true;
@@ -2343,15 +2345,8 @@
         }
         
         // 當用戶切換分頁時釋放 wake lock（系統會自動釋放，但手動處理更穩健）
-        document.addEventListener('visibilitychange', async () => {
-            if (document.visibilityState === 'visible' && gameRunning && !isPaused) {
-                // 切換回來時重新請求 wake lock
-                await requestWakeLock();
-            } else {
-                // 切換離開時釋放 wake lock
-                await releaseWakeLock();
-            }
-        });
+        // 注意：此邏輯已整合到上方的 visibilitychange 監聽器中 (line ~1919)
+        // 這裡保留函數備用，但不再新增重複的事件監聽
     </script>
 </body>
 </html>
