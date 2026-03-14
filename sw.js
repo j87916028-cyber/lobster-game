@@ -1,7 +1,11 @@
 // 龍蝦大戰 Service Worker - 離線支援
-const CACHE_NAME = 'lobster-game-v1';
+const CACHE_NAME = 'lobster-game-v2';
 const urlsToCache = [
+  './',
   './lobster-game.html',
+  './lobster-adventure.html',
+  './music-master.html',
+  './music-theory.html',
   './manifest.json'
 ];
 
@@ -41,14 +45,63 @@ self.addEventListener('activate', (event) => {
 
 // 請求事件 - 優先使用緩存，失敗時回退到網絡
 self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+
+  // 導航請求（HTML 頁面）- 網絡優先，回退緩存
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          // 複製響應並緩存
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(request, responseClone);
+          });
+          return response;
+        })
+        .catch(() => {
+          // 網絡失敗時返回緩存的首頁
+          return caches.match('./lobster-game.html');
+        })
+    );
+    return;
+  }
+
+  // 靜態資源（JS、CSS、圖片、字體）- 緩存優先
+  if (request.destination === 'script' || 
+      request.destination === 'style' || 
+      request.destination === 'image' ||
+      request.destination === 'font') {
+    event.respondWith(
+      caches.match(request)
+        .then((response) => {
+          if (response) {
+            return response;
+          }
+          return fetch(request).then((networkResponse) => {
+            // 緩存新的靜態資源
+            if (networkResponse && networkResponse.status === 200) {
+              const responseClone = networkResponse.clone();
+              caches.open(CACHE_NAME).then((cache) => {
+                cache.put(request, responseClone);
+              });
+            }
+            return networkResponse;
+          });
+        })
+    );
+    return;
+  }
+
+  // 其他請求 - 默認策略
   event.respondWith(
-    caches.match(event.request)
+    caches.match(request)
       .then((response) => {
-        // 返回緩存或從網絡獲取
         if (response) {
           return response;
         }
-        return fetch(event.request).then((response) => {
+        return fetch(request).then((response) => {
           // 不緩存非正常響應
           if (!response || response.status !== 200 || response.type !== 'basic') {
             return response;
@@ -57,7 +110,7 @@ self.addEventListener('fetch', (event) => {
           const responseToCache = response.clone();
           caches.open(CACHE_NAME)
             .then((cache) => {
-              cache.put(event.request, responseToCache);
+              cache.put(request, responseToCache);
             });
           return response;
         });
