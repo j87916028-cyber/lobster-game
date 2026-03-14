@@ -537,6 +537,7 @@
         
         let gameRunning = false;
         let isPaused = false;
+        let pausedByVisibility = false; // 追蹤是否因分頁隱藏而暫停
         let bubbles = [];
         let lastTime = 0;
         let spawnTimer = 0;
@@ -1178,7 +1179,6 @@
         });
 
         // ==================== 頁面可見性處理 (節省資源) ====================
-        // 當分頁隱藏時自動暫停遊戲，返回時處理
         document.addEventListener('visibilitychange', () => {
             if (!gameRunning) return;
             
@@ -1186,6 +1186,7 @@
                 // 分頁隱藏時暫停遊戲（如果尚未暫停）
                 if (!isPaused) {
                     isPaused = true;
+                    pausedByVisibility = true;
                     pauseOverlay.style.display = 'flex';
                     pauseScore.textContent = '分數: ' + score;
                     pauseLives.textContent = getHeartsString(lives);
@@ -1197,9 +1198,11 @@
                     }
                 }
             } else {
-                // 分頁恢復顯示時，正確恢復遊戲（重置暫停狀態並隱藏遮罩）
-                if (isPaused && gameRunning) {
+                // 分頁恢復顯示時，只有因為分頁隱藏而暫停時才恢復
+                // 如果是用戶手動暫停的，保持暫停狀態
+                if (pausedByVisibility && gameRunning) {
                     isPaused = false;
+                    pausedByVisibility = false;
                     pauseOverlay.style.display = 'none';
                     lastTime = performance.now();
                     animationFrameId = requestAnimationFrame(gameLoop);
@@ -1268,6 +1271,7 @@
             player.classList.remove('player-invincible');
             isInvincible = false; // 重置無敵狀態
             invincibleReason = null; // 重置無敵原因
+            pausedByVisibility = false; // 重置可見性暫停狀態
             
             // 更新遊戲邊界（支援 RWD）
             updateGameBounds();
@@ -1390,6 +1394,7 @@
             // 停止遊戲並返回選單
             gameRunning = false;
             isPaused = false;
+            pausedByVisibility = false; // 重置可見性暫停狀態
             
             // 取消動畫框架
             if (animationFrameId) {
