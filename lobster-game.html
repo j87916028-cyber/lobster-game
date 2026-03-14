@@ -1223,8 +1223,21 @@
         }
 
         // 觸控控制（統一使用 keys 系統，與鍵盤一致）
+        // 防呆機制：防止同時觸發觸控和滑鼠事件
+        let isTouching = false;
+        let touchTimeout = null;
+        
         function handleTouchStart(direction, e) {
             e.preventDefault();
+            // 防止觸控和滑鼠事件同時觸發
+            if (e.type === 'touchstart') {
+                isTouching = true;
+                // 短暫延遲後重置標誌，確保滑鼠事件不會被誤觸發
+                if (touchTimeout) clearTimeout(touchTimeout);
+            } else if (e.type === 'mousedown' && isTouching) {
+                // 如果正在觸控中，忽略滑鼠事件
+                return;
+            }
             if (!gameRunning) return;
             if (direction === 'left') {
                 keys.left = true;
@@ -1234,6 +1247,11 @@
         }
 
         function handleTouchEnd(direction) {
+            // 重置觸控標誌，允許後續的滑鼠事件
+            if (direction === 'left' || direction === 'right') {
+                if (touchTimeout) clearTimeout(touchTimeout);
+                touchTimeout = setTimeout(() => { isTouching = false; }, 100);
+            }
             if (direction === 'left') {
                 keys.left = false;
             } else {
