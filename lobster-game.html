@@ -882,7 +882,7 @@
         const resetHighScoreBtn = document.getElementById('resetHighScoreBtn');
         // 說明彈窗元素
         const helpOverlay = document.getElementById('helpOverlay');
-        const helpBtn = document.querySelector('.help-close');
+        const helpCloseBtn = document.querySelector('.help-close');
         // 遊戲結束畫面的統計數據元素
         const statTimeEnd = document.getElementById('statTimeEnd');
         const statCoinsEnd = document.getElementById('statCoinsEnd');
@@ -1849,8 +1849,8 @@
         }
 
         // 關閉說明按鈕事件
-        if (helpBtn) {
-            helpBtn.addEventListener('click', () => {
+        if (helpCloseBtn) {
+            helpCloseBtn.addEventListener('click', () => {
                 helpOverlay.style.display = 'none';
                 // 恢復遊戲（如果之前是因為顯示說明而暫停）
                 if (gameRunning && isPaused) {
@@ -2321,6 +2321,7 @@
             // 隱藏所有遊戲 UI
             pauseOverlay.style.display = 'none';
             gameOver.style.display = 'none';
+            helpOverlay.style.display = 'none'; // 確保說明視窗也關閉
             
             // 顯示開始按鈕
             startBtn.style.display = '';
