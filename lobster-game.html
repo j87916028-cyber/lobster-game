@@ -142,6 +142,39 @@
             opacity: 0.7;
         }
         
+        /* 距離最高分差距顯示 */
+        #highScoreGap {
+            position: absolute;
+            top: 45px;
+            right: 20px;
+            font-size: 0.8rem;
+            background: rgba(0,0,0,0.5);
+            padding: 5px 10px;
+            border-radius: 10px;
+            z-index: 10;
+            font-family: monospace;
+            opacity: 0.7;
+            transition: color 0.3s;
+        }
+        
+        #highScoreGap.behind {
+            color: #ff6b6b;
+        }
+        
+        #highScoreGap.ahead {
+            color: #00ff88;
+        }
+        
+        #highScoreGap.record {
+            color: #ffd700;
+            animation: recordPulse 0.5s infinite alternate;
+        }
+        
+        @keyframes recordPulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.1); }
+        }
+        
         #comboIndicator {
             position: absolute;
             top: 90px;
@@ -464,6 +497,7 @@
         <div id="powerupIndicator"></div>
         <div id="difficultyIndicator">難度 1</div>
         <div id="fpsDisplay">FPS: --</div>
+        <div id="highScoreGap"></div>
         <div id="comboIndicator"></div>
         <div id="player">🦞</div>
         <button id="startBtn">開始遊戲</button>
@@ -634,6 +668,7 @@
         let frameCount = 0;
         let fpsLastTime = 0;
         const fpsDisplay = document.getElementById('fpsDisplay');
+        const highScoreGapDisplay = document.getElementById('highScoreGap');
         let audioContext = null; // Web Audio API
         
         // 遊戲統計數據
@@ -1027,6 +1062,30 @@
             }
         }
 
+        // 更新最高分差距顯示
+        function updateHighScoreGapDisplay() {
+            if (!gameRunning || highScore === 0) {
+                highScoreGapDisplay.textContent = '';
+                highScoreGapDisplay.className = '';
+                return;
+            }
+            
+            const diff = score - highScore;
+            if (diff > 0) {
+                // 創新紀錄
+                highScoreGapDisplay.textContent = '🏆 +' + formatScore(diff);
+                highScoreGapDisplay.className = 'record';
+            } else if (diff < 0) {
+                // 落後
+                highScoreGapDisplay.textContent = '📍 ' + formatScore(diff);
+                highScoreGapDisplay.className = 'behind';
+            } else {
+                // 平手
+                highScoreGapDisplay.textContent = '⭐ 並列';
+                highScoreGapDisplay.className = 'ahead';
+            }
+        }
+
         // 玩家受傷時的動畫
         function triggerDamageAnimation() {
             gameContainer.style.animation = 'none';
@@ -1273,6 +1332,8 @@
                         scoreDisplay.textContent = '分數: ' + formatScore(score);
                         // 更新難度顯示
                         updateDifficultyDisplay();
+                        // 更新最高分差距顯示
+                        updateHighScoreGapDisplay();
                         // 更新收集金幣統計
                         gameStats.coinsCollected++;
                         // 顯示分數彈出動畫（顯示連擊加成）
@@ -1473,6 +1534,9 @@
             frameCount = 0;
             fpsLastTime = performance.now();
             fpsDisplay.textContent = 'FPS: --';
+            
+            // 初始化最高分差距顯示
+            updateHighScoreGapDisplay();
             
             // 使用統一清理函數（重置遊戲狀態）
             cleanupGame(true);
