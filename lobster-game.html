@@ -929,9 +929,12 @@
             });
             bubbles = [];
             
-            // 清理所有彈出元素
+            // 清理所有彈出元素（使用 replaceWith 移除，防止 animationend 回調記憶體洩漏）
+            // 替換為空的 div 以移除事件監聽器，然後從 DOM 移除並返回池中
             document.querySelectorAll('.score-popup, .powerup-popup').forEach(p => {
-                p.remove();
+                const temp = document.createElement('div');
+                p.replaceWith(temp);
+                temp.remove();
                 returnPopupToPool(p);
             });
             
