@@ -823,6 +823,11 @@
 
         // 將氣泡元素返回池中
         function returnBubbleToPool(element) {
+            // 先將元素從 DOM 中移除（防止 DOM 節點累積導致效能下降）
+            if (element.parentNode) {
+                element.parentNode.removeChild(element);
+            }
+            
             // 清除元素內容和樣式
             element.textContent = '';
             element.style.left = '';
@@ -851,6 +856,11 @@
         
         // 將彈出動畫元素返回池中
         function returnPopupToPool(element) {
+            // 先將元素從 DOM 中移除（防止 DOM 節點累積導致效能下降）
+            if (element.parentNode) {
+                element.parentNode.removeChild(element);
+            }
+            
             // 清除元素內容和樣式
             element.textContent = '';
             element.style.left = '';
