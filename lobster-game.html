@@ -2363,8 +2363,8 @@
                 else totalScore += coinsPerSecond * 10;
             }
             
-            // 扣分：被炸彈擊中
-            totalScore -= bombsHit * 5;
+            // 扣分：被炸彈擊中（最低為 0，避免負分）
+            totalScore = Math.max(0, totalScore - bombsHit * 5);
             
             // 根據總分評定等級
             if (totalScore >= 80 || (score > highScore && score > 0)) {
