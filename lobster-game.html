@@ -2160,6 +2160,12 @@
             // 釋放螢幕喚醒鎖
             releaseWakeLock();
             
+            // 取消動畫框架，防止遊戲結束後繼續消耗資源
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            
             // 使用統一清理函數（不重置遊戲狀態，只清理資源）
             cleanupGame(false);
             
