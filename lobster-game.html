@@ -314,6 +314,33 @@
             transform: translate(-50%, -50%) scale(1.1);
         }
         
+        /* 重置最高分按鈕 */
+        #resetHighScoreBtn {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, 50%);
+            font-size: 1.2rem;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid #555;
+            border-radius: 10px;
+            cursor: pointer;
+            padding: 8px 15px;
+            transition: all 0.2s;
+            z-index: 5;
+            opacity: 0.6;
+        }
+        
+        #resetHighScoreBtn:hover {
+            background: rgba(255,0,0,0.3);
+            border-color: #ff6b6b;
+            opacity: 1;
+        }
+        
+        #resetHighScoreBtn.hidden {
+            display: none;
+        }
+        
         #finalScore {
             font-size: 2rem;
             margin: 20px 0;
@@ -597,6 +624,7 @@
         <div id="comboIndicator"></div>
         <div id="player">🦞</div>
         <button id="startBtn">開始遊戲</button>
+        <button id="resetHighScoreBtn" title="重置最高分">🗑️</button>
         <div id="gameOver">
             <h2>遊戲結束!</h2>
             <div id="highScore">最高分: 0</div>
@@ -736,6 +764,7 @@
         const statCoins = document.getElementById('statCoins');
         const statBombs = document.getElementById('statBombs');
         const menuBtn = document.getElementById('menuBtn');
+        const resetHighScoreBtn = document.getElementById('resetHighScoreBtn');
         // 說明彈窗元素
         const helpOverlay = document.getElementById('helpOverlay');
         const helpBtn = document.querySelector('.help-close');
@@ -1856,6 +1885,7 @@
             scoreDisplay.textContent = '分數: 0';
             updateDifficultyDisplay(); // 初始化難度顯示
             startBtn.style.display = 'none';
+            resetHighScoreBtn.style.display = 'none';
             gameOver.style.display = 'none';
             pauseOverlay.style.display = 'none';
             
@@ -1953,6 +1983,16 @@
         startBtn.addEventListener('click', startGame);
         restartBtn.addEventListener('click', startGame);
 
+        // 重置最高分按鈕
+        resetHighScoreBtn.addEventListener('click', () => {
+            if (confirm('確定要重置最高分嗎？這個動作無法復原。')) {
+                highScore = 0;
+                setStorageItem(GAME_CONFIG.HIGH_SCORE_KEY, 0);
+                highScoreDisplay.textContent = '最高分: 0';
+                updateHighScoreGapDisplay();
+            }
+        });
+
         // 暫停/繼續按鈕
         resumeBtn.addEventListener('click', togglePause);
         
@@ -1971,6 +2011,7 @@
             
             // 顯示開始按鈕
             startBtn.style.display = '';
+            resetHighScoreBtn.style.display = '';
             
             // 更新分數顯示
             scoreDisplay.textContent = '分數: 0';
