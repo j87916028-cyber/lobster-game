@@ -403,6 +403,24 @@
             transform: scale(1.1);
         }
         
+        /* 暫停按鈕 */
+        #pauseBtn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 1.5rem;
+            background: rgba(0,0,0,0.5);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            padding: 8px 15px;
+            transition: transform 0.2s;
+            z-index: 10;
+        }
+        #pauseBtn:hover {
+            transform: scale(1.1);
+        }
+        
         /* 行動裝置適配 */
         @media (max-width: 850px) {
             #gameContainer {
@@ -427,6 +445,7 @@
     <div id="gameContainer">
         <div id="score">分數: 0</div>
         <button id="soundBtn" title="音效開關">🔊</button>
+        <button id="pauseBtn" title="暫停 (ESC)">⏸️</button>
         <div id="lives">❤️❤️❤️</div>
         <div id="powerupIndicator"></div>
         <div id="difficultyIndicator">難度 1</div>
@@ -543,6 +562,7 @@
         const btnPause = document.getElementById('btnPause');
         const livesDisplay = document.getElementById('lives');
         const soundBtn = document.getElementById('soundBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
         const pauseScore = document.getElementById('pauseScore');
         const pauseLives = document.getElementById('pauseLives');
         const statTime = document.getElementById('statTime');
@@ -1544,6 +1564,9 @@
             soundBtn.textContent = soundEnabled ? '🔊' : '🔇';
             localStorage.setItem(GAME_CONFIG.SOUND_ENABLED_KEY, soundEnabled);
         });
+        
+        // 暫停按鈕
+        pauseBtn.addEventListener('click', togglePause);
     </script>
 </body>
 </html>
