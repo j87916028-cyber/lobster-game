@@ -1263,6 +1263,20 @@
         const keys = { left: false, right: false };
         const MOVE_SPEED = GAME_CONFIG.PLAYER_MOVE_SPEED; // 像素/毫秒
 
+        // ==================== 工具函數 ====================
+        // 防抖函數（效能優化：避免快速觸發的事件導致效能問題）
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
         // 遊戲邊界（動態計算，支援 RWD）
         let PLAYER_LEFT_BOUND = 0;
         let PLAYER_RIGHT_BOUND = GAME_CONFIG.CONTAINER_WIDTH - GAME_CONFIG.PLAYER_WIDTH;
@@ -1972,14 +1986,15 @@
             }
         });
 
-        // 窗口大小變化時更新遊戲邊界（支援 RWD）
-        window.addEventListener('resize', () => {
+        // 窗口大小變化時更新遊戲邊界（支援 RWD）- 使用防抖優化效能
+        const debouncedResizeHandler = debounce(() => {
             if (gameRunning) {
                 updateGameBounds();
                 // 確保玩家不會跑出邊界
                 playerX = Math.max(PLAYER_LEFT_BOUND, Math.min(PLAYER_RIGHT_BOUND, playerX));
             }
-        });
+        }, 150); // 150ms 防抖延遲
+        window.addEventListener('resize', debouncedResizeHandler);
 
         // ==================== 視窗焦點處理 ====================
         // 當視窗失去焦點時重置按鍵狀態，防止鍵盤卡住
