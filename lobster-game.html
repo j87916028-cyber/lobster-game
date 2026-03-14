@@ -1556,6 +1556,44 @@
             gameContainer.style.animation = `damageShake ${GAME_CONFIG.DAMAGE_SHAKE_DURATION}ms ease-out`;
         }
 
+        // 觸覺震動反饋（增強行動裝置遊戲體驗）
+        // 使用 navigator.vibrate() 提供震動感，支援大多數 Android 和部分 iOS 裝置
+        function triggerVibration(type) {
+            // 檢查裝置是否支援震動 API
+            if (!navigator.vibrate) return;
+            
+            try {
+                switch (type) {
+                    case 'coin':
+                        // 接到金幣：輕微短震 (15ms)
+                        navigator.vibrate(15);
+                        break;
+                    case 'combo':
+                        // 連擊：雙次輕微震動
+                        navigator.vibrate([10, 50, 10]);
+                        break;
+                    case 'bomb':
+                        // 炸彈攻擊：強烈長震 (200ms)
+                        navigator.vibrate(200);
+                        break;
+                    case 'powerup':
+                        // 取得道具：中等震動 (50ms)
+                        navigator.vibrate(50);
+                        break;
+                    case 'heart':
+                        // 取得愛心：愉快的雙次震動
+                        navigator.vibrate([30, 30, 30]);
+                        break;
+                    case 'gameover':
+                        // 遊戲結束：結束震動模式
+                        navigator.vibrate([100, 50, 100]);
+                        break;
+                }
+            } catch (e) {
+                // 震動失敗時靜默忽略（某些裝置可能不支援）
+            }
+        }
+
         // 碰到炸彈時的處理（扣血而非直接結束）
         let isInvincible = false; // 無敵狀態標誌
         let invincibleReason = null; // 無敵原因: 'damage' | 'shield' | null
@@ -1566,6 +1604,7 @@
             
             playSound('bomb');
             triggerDamageAnimation(); // 受傷時觸發畫面震動動畫
+            triggerVibration('bomb');  // 受傷時觸發觸覺震動反饋
             lives--;
             updateLivesDisplay();
             
@@ -1610,8 +1649,10 @@
             // 根據道具類型播放不同音效
             if (powerup.type === 'heart') {
                 playSound('heart');
+                triggerVibration('heart');  // 取得愛心震動
             } else {
                 playSound('powerup');
+                triggerVibration('powerup');  // 取得道具震動
             }
             
             // 顯示道具彈出動畫（使用物件池）
@@ -1802,6 +1843,12 @@
                         score += points;
                         targetScore = score; // 設定動畫目標值
                         playSound('coin');
+                        // 觸覺震動反饋（連擊時更強烈）
+                        if (comboCount >= 3) {
+                            triggerVibration('combo');
+                        } else {
+                            triggerVibration('coin');
+                        }
                         scoreDisplay.textContent = '分數: ' + formatScore(score);
                         // 更新難度顯示
                         updateDifficultyDisplay();
@@ -2335,6 +2382,7 @@
             gameRunning = false;
             isPaused = false;
             playSound('gameover'); // 播放結束音效
+            triggerVibration('gameover'); // 遊戲結束觸覺震動
             
             // 釋放螢幕喚醒鎖
             releaseWakeLock();
