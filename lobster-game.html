@@ -1497,20 +1497,28 @@
         }
 
         // 觸控控制（統一使用 keys 系統，與鍵盤一致）
-        // 防呆機制：防止同時觸發觸控和滑鼠事件
-        let isTouching = false;
-        let touchTimeout = null;
+        // 防呆機制：防止同時觸發觸控和滑鼠事件（改進：分開追蹤左右按鍵的觸控狀態）
+        let isTouchingLeft = false;
+        let isTouchingRight = false;
+        let touchTimeoutLeft = null;
+        let touchTimeoutRight = null;
         
         function handleTouchStart(direction, e) {
             e.preventDefault();
             // 防止觸控和滑鼠事件同時觸發
             if (e.type === 'touchstart') {
-                isTouching = true;
-                // 短暫延遲後重置標誌，確保滑鼠事件不會被誤觸發
-                if (touchTimeout) clearTimeout(touchTimeout);
-            } else if (e.type === 'mousedown' && isTouching) {
-                // 如果正在觸控中，忽略滑鼠事件
-                return;
+                if (direction === 'left') {
+                    isTouchingLeft = true;
+                    if (touchTimeoutLeft) clearTimeout(touchTimeoutLeft);
+                } else {
+                    isTouchingRight = true;
+                    if (touchTimeoutRight) clearTimeout(touchTimeoutRight);
+                }
+            } else if (e.type === 'mousedown') {
+                // 如果該方向正在觸控中，忽略滑鼠事件
+                if (direction === 'left' && isTouchingLeft) return;
+                if (direction === 'right' && isTouchingRight) return;
+                e.preventDefault(); // 防止文字選取
             }
             if (!gameRunning) return;
             if (direction === 'left') {
@@ -1522,13 +1530,13 @@
 
         function handleTouchEnd(direction) {
             // 重置觸控標誌，允許後續的滑鼠事件
-            if (direction === 'left' || direction === 'right') {
-                if (touchTimeout) clearTimeout(touchTimeout);
-                touchTimeout = setTimeout(() => { isTouching = false; }, 100);
-            }
             if (direction === 'left') {
+                if (touchTimeoutLeft) clearTimeout(touchTimeoutLeft);
+                touchTimeoutLeft = setTimeout(() => { isTouchingLeft = false; }, 100);
                 keys.left = false;
-            } else {
+            } else if (direction === 'right') {
+                if (touchTimeoutRight) clearTimeout(touchTimeoutRight);
+                touchTimeoutRight = setTimeout(() => { isTouchingRight = false; }, 100);
                 keys.right = false;
             }
         }
