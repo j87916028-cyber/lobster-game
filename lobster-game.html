@@ -1809,7 +1809,20 @@
             } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
                 keys.right = true;
             } else if (e.key === 'Escape' || e.key === 'p' || e.key === 'P') {
-                togglePause();
+                // 改進：當說明彈窗打開時，ESC 先關閉說明彈窗
+                const isHelpVisible = helpOverlay.style.display === 'flex';
+                if (isHelpVisible) {
+                    helpOverlay.style.display = 'none';
+                    // 如果之前是因為顯示說明而暫停，恢復遊戲
+                    if (gameRunning && isPaused) {
+                        isPaused = false;
+                        pauseOverlay.style.display = 'none';
+                        lastTime = performance.now();
+                        animationFrameId = requestAnimationFrame(gameLoop);
+                    }
+                } else {
+                    togglePause();
+                }
             } else if (e.key === 'm' || e.key === 'M') {
                 // M 鍵切換靜音
                 soundEnabled = !soundEnabled;
