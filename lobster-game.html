@@ -1599,6 +1599,11 @@
             isPaused = !isPaused;
             pauseOverlay.style.display = isPaused ? 'flex' : 'none';
             
+            // 更新暫停按鈕圖標（暫停時顯示 ▶️，恢復時顯示 ⏸️）
+            const pauseIcon = isPaused ? '▶️' : '⏸️';
+            btnPause.textContent = pauseIcon;
+            pauseBtn.textContent = pauseIcon;
+            
             // 暫停時更新顯示的分數和生命值
             if (isPaused) {
                 pauseScore.textContent = '分數: ' + formatScore(score);
