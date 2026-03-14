@@ -990,6 +990,7 @@
         let PLAYER_BOTTOM_BOUND = GAME_CONFIG.CONTAINER_HEIGHT - GAME_CONFIG.PLAYER_BOTTOM;
         let cachedGameHeight = GAME_CONFIG.CONTAINER_HEIGHT; // 緩存遊戲高度（效能優化）
         let cachedGameWidth = GAME_CONFIG.CONTAINER_WIDTH; // 緩存遊戲寬度（效能優化：避免 spawnBubble 中重複調用 getGameDimensions）
+        let PLAYER_CENTER_OFFSET = PLAYER_RIGHT_BOUND / 2; // 預先計算的玩家中心偏移量（效能優化）
 
         // 更新遊戲邊界（調用時機：遊戲開始、窗口大小變化）
         function updateGameBounds() {
@@ -1000,6 +1001,7 @@
             PLAYER_BOTTOM_BOUND = dims.height - GAME_CONFIG.PLAYER_BOTTOM;
             cachedGameHeight = dims.height; // 緩存高度，避免每幀調用 getBoundingClientRect
             cachedGameWidth = dims.width; // 緩存寬度，避免 spawnBubble 中重複調用 getGameDimensions
+            PLAYER_CENTER_OFFSET = PLAYER_RIGHT_BOUND / 2; // 更新預先計算的中心偏移量
         }
 
         // 難度系統參數（使用 GAME_CONFIG 中的值）
@@ -1328,7 +1330,7 @@
                 playerX = Math.min(PLAYER_RIGHT_BOUND, playerX + MOVE_SPEED * deltaTime);
             }
             // 使用 transform 代替 left，利用 GPU 加速避免重排
-            const playerOffsetX = playerX - PLAYER_RIGHT_BOUND / 2;
+            const playerOffsetX = playerX - PLAYER_CENTER_OFFSET;
             player.style.transform = `translateX(calc(-50% + ${playerOffsetX}px))`;
 
             // 更新氣泡位置
