@@ -631,6 +631,9 @@
         const MAX_COMBO_MULTIPLIER = 5; // 最大連擊倍數
         const comboIndicator = document.getElementById('comboIndicator');
 
+        // 無敵時間計時器（修復：儲存計時器以便清除）
+        let invincibleTimeout = null;
+
         // ==================== DOM 元素物件池 (效能優化) ====================
         // 重用 DOM 元素，避免頻繁創建/刪除導致的效能損耗
         const bubblePool = [];
@@ -981,8 +984,9 @@
                 invincibleReason = null;
                 endGame();
             } else {
-                // 無敵時間 1 秒，遊戲繼續進行
-                setTimeout(() => {
+                // 無敵時間 1 秒，遊戲繼續進行（修復：儲存計時器以便清除）
+                if (invincibleTimeout) clearTimeout(invincibleTimeout);
+                invincibleTimeout = setTimeout(() => {
                     if (lives > 0) {
                         player.classList.remove('player-invincible');
                         isInvincible = false;
@@ -1407,6 +1411,16 @@
             // 清除道具指示器殘留
             document.querySelectorAll('.powerup-badge').forEach(b => b.remove());
             
+            // 清除連擊計時器和無敵計時器（修復：確保遊戲重啟時計時器正確重置）
+            if (comboTimeout) {
+                clearTimeout(comboTimeout);
+                comboTimeout = null;
+            }
+            if (invincibleTimeout) {
+                clearTimeout(invincibleTimeout);
+                invincibleTimeout = null;
+            }
+            
             isStarting = true;
             
             gameRunning = true;
@@ -1516,6 +1530,16 @@
             // 清除所有道具計時器，防止遊戲結束後計時器繼續運行
             Object.values(powerupTimers).forEach(t => clearTimeout(t));
             powerupTimers = {};
+            
+            // 清除連擊計時器和無敵計時器（修復：防止遊戲結束後計時器繼續運行）
+            if (comboTimeout) {
+                clearTimeout(comboTimeout);
+                comboTimeout = null;
+            }
+            if (invincibleTimeout) {
+                clearTimeout(invincibleTimeout);
+                invincibleTimeout = null;
+            }
             
             // 重置無敵狀態
             isInvincible = false;
