@@ -930,6 +930,7 @@
         let score = 0;
         let targetScore = 0; // 分數動畫目標值
         const SCORE_ANIMATION_SPEED = 0.15; // 分數滾動速度 (0-1，越大越快)
+        const MAX_SCORE_INCREMENT = 50; // 分數動畫單次最大增量（防止使用者離開分頁後回來動畫等待過久）
         let lives = GAME_CONFIG.MAX_LIVES;
         let highScore = parseInt(getStorageItem(GAME_CONFIG.HIGH_SCORE_KEY, '0')) || 0;
         let bestTime = parseFloat(getStorageItem(GAME_CONFIG.BEST_TIME_KEY, '0')) || 0;
@@ -1380,7 +1381,10 @@
                 if (Math.abs(diff) <= 1) {
                     score = targetScore; // 差異很小時直接設定
                 } else {
-                    score += Math.ceil(diff * SCORE_ANIMATION_SPEED);
+                    // 使用百分比增量，但限制最大增量防止動畫等待過久
+                    let increment = Math.ceil(diff * SCORE_ANIMATION_SPEED);
+                    increment = Math.max(-MAX_SCORE_INCREMENT, Math.min(MAX_SCORE_INCREMENT, increment));
+                    score += increment;
                 }
                 scoreDisplay.textContent = '分數: ' + formatScore(score);
                 scoreDisplay.setAttribute('aria-label', `目前分數 ${score}`);
