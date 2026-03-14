@@ -254,12 +254,6 @@
         }
         
         @keyframes powerupPulse {
-            0% { transform: scale(1); }
-            100% { transform: scale(1.1); }
-        }
-        
-        /* 道具彈出動畫 */
-        .powerup-popup {
             position: absolute;
             font-size: 1.2rem;
             font-weight: bold;
@@ -319,22 +313,7 @@
         #startBtn:hover {
             transform: translate(-50%, -50%) scale(1.1);
         }
-        #gameOver {
-            display: none;
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.8);
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-        #gameOver h2 {
-            font-size: 3rem;
-            color: #ff6b6b;
-        }
+        
         #finalScore {
             font-size: 2rem;
             margin: 20px 0;
