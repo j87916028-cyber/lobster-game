@@ -928,6 +928,7 @@
             bubbles.forEach(b => {
                 b.element.remove(); // 從 DOM 中移除
                 returnBubbleToPool(b.element);
+                returnBubbleDataToPool(b); // 將氣泡資料返回池中（效能優化）
             });
             bubbles = [];
             
@@ -971,6 +972,34 @@
         // 重用 DOM 元素，避免頻繁創建/刪除導致的效能損耗
         const bubblePool = [];
         const POOL_MAX_SIZE = 30; // 池的最大大小
+        
+        // 氣泡資料物件池（效能優化：避免每次生成氣泡都創建新的 JS 物件）
+        const bubbleDataPool = [];
+        const BUBBLE_DATA_POOL_MAX_SIZE = 30;
+
+        // 從池中取得氣泡資料对象，或創建新的
+        function getBubbleDataFromPool() {
+            if (bubbleDataPool.length > 0) {
+                return bubbleDataPool.pop();
+            }
+            return {};
+        }
+
+        // 將氣泡資料对象返回池中
+        function returnBubbleDataToPool(bubbleData) {
+            // 清除所有屬性
+            bubbleData.element = null;
+            bubbleData.x = 0;
+            bubbleData.y = 0;
+            bubbleData.speed = 0;
+            bubbleData.isBad = false;
+            bubbleData.isPowerup = false;
+            bubbleData.powerupType = null;
+            
+            if (bubbleDataPool.length < BUBBLE_DATA_POOL_MAX_SIZE) {
+                bubbleDataPool.push(bubbleData);
+            }
+        }
         
         // 彈出動畫元素物件池（分數彈出、道具彈出）
         const popupPool = [];
@@ -1563,6 +1592,7 @@
                     if (bubble.isBad) {
                         handleDamage(); // 改為扣血而非直接結束
                         returnBubbleToPool(bubble.element);
+                        returnBubbleDataToPool(bubble);
                         bubbles.splice(i, 1);
                         continue; // 繼續檢查其他氣泡的碰撞
                     } else {
@@ -1570,6 +1600,7 @@
                         if (bubble.isPowerup) {
                             activatePowerup(bubble.powerupType, bubble.x, bubble.y);
                             returnBubbleToPool(bubble.element);
+                            returnBubbleDataToPool(bubble);
                             bubbles.splice(i, 1);
                             continue;
                         }
@@ -1595,6 +1626,7 @@
                         // 玩家動畫
                         triggerPlayerCatchAnimation();
                         returnBubbleToPool(bubble.element);
+                        returnBubbleDataToPool(bubble);
                         bubbles.splice(i, 1);
                     }
                 }
@@ -1602,6 +1634,7 @@
                 // 超出範圍（使用緩存的游戏高度）
                 if (bubble.y > gameHeight + GAME_CONFIG.BUBBLE_SIZE) {
                     returnBubbleToPool(bubble.element);
+                    returnBubbleDataToPool(bubble);
                     bubbles.splice(i, 1);
                 }
             }
@@ -2012,15 +2045,17 @@
             }
             
             gameContainer.appendChild(bubble);
-            bubbles.push({ 
-                element: bubble, 
-                x: x,
-                y: GAME_CONFIG.BUBBLE_START_Y, 
-                speed: getCurrentBubbleSpeed(),
-                isBad: isBad,
-                isPowerup: isPowerup,
-                powerupType: powerupType
-            });
+            
+            // 使用氣泡資料物件池（效能優化：避免每次創建新的 JS 物件）
+            const bubbleData = getBubbleDataFromPool();
+            bubbleData.element = bubble;
+            bubbleData.x = x;
+            bubbleData.y = GAME_CONFIG.BUBBLE_START_Y;
+            bubbleData.speed = getCurrentBubbleSpeed();
+            bubbleData.isBad = isBad;
+            bubbleData.isPowerup = isPowerup;
+            bubbleData.powerupType = powerupType;
+            bubbles.push(bubbleData);
         }
 
         function endGame() {
