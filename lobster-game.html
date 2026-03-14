@@ -835,6 +835,8 @@
 
         let playerX = 0; // 初始化為 0，startGame 時會正確設置
         let score = 0;
+        let targetScore = 0; // 分數動畫目標值
+        const SCORE_ANIMATION_SPEED = 0.15; // 分數滾動速度 (0-1，越大越快)
         let lives = GAME_CONFIG.MAX_LIVES;
         let highScore = parseInt(getStorageItem(GAME_CONFIG.HIGH_SCORE_KEY, '0')) || 0;
         
@@ -950,6 +952,10 @@
                 invincibleReason = null;
                 pausedByVisibility = false;
                 resetCombo();
+                
+                // 重置分數動畫
+                score = 0;
+                targetScore = 0;
                 
                 // 重置道具狀態
                 activePowerups = { shield: false, '2x': false };
@@ -1194,6 +1200,20 @@
         // 格式化分數顯示（千分位）
         function formatScore(num) {
             return num.toLocaleString('zh-TW');
+        }
+        
+        // 分數滾動動畫函數（讓分數逐步增加，增加視覺效果）
+        function updateScoreAnimation() {
+            if (score !== targetScore) {
+                // 計算下一個分數值（逐步接近目標值）
+                const diff = targetScore - score;
+                if (Math.abs(diff) <= 1) {
+                    score = targetScore; // 差異很小時直接設定
+                } else {
+                    score += Math.ceil(diff * SCORE_ANIMATION_SPEED);
+                }
+                scoreDisplay.textContent = '分數: ' + formatScore(score);
+            }
         }
         
         // 連擊系統函數
@@ -1497,6 +1517,9 @@
             // 更新氣泡位置
             updateBubbles(deltaTime);
 
+            // 更新分數滾動動畫
+            updateScoreAnimation();
+
             // 生成新氣泡（使用動態難度間隔）
             spawnTimer += deltaTime;
             const currentSpawnInterval = getCurrentSpawnInterval();
@@ -1557,6 +1580,7 @@
                         handleCombo();
                         const points = basePoints * comboMultiplier;
                         score += points;
+                        targetScore = score; // 設定動畫目標值
                         playSound('coin');
                         scoreDisplay.textContent = '分數: ' + formatScore(score);
                         // 更新難度顯示
@@ -1933,6 +1957,8 @@
             // 使用 transform 初始化玩家位置
             player.style.transform = 'translateX(-50%)';
             player.classList.remove('player-catch');
+            score = 0;
+            targetScore = 0; // 初始化分數動畫目標值
             scoreDisplay.textContent = '分數: 0';
             updateDifficultyDisplay(); // 初始化難度顯示
             startBtn.style.display = 'none';
