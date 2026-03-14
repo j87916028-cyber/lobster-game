@@ -570,7 +570,7 @@
             <button id="menuBtn">返回選單</button>
         </div>
     </div>
-    <p class="instructions">← → 方向鍵移動龍蝦，接住掉落的金幣！💰 按 ESC 暫停</p>
+    <p class="instructions">← → 方向鍵移動龍蝦，接住掉落的金幣！💰 按 ESC/P 暫停 | M 靜音切換</p>
     
     <!-- 行動裝置觸控按鈕 -->
     <div class="touch-controls">
@@ -1444,8 +1444,13 @@
                 keys.left = true;
             } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
                 keys.right = true;
-            } else if (e.key === 'Escape') {
+            } else if (e.key === 'Escape' || e.key === 'p' || e.key === 'P') {
                 togglePause();
+            } else if (e.key === 'm' || e.key === 'M') {
+                // M 鍵切換靜音
+                soundEnabled = !soundEnabled;
+                soundBtn.textContent = soundEnabled ? '🔊' : '🔇';
+                setStorageItem(GAME_CONFIG.SOUND_ENABLED_KEY, soundEnabled);
             } else if (e.key === ' ') {
                 // 空白鍵也可用於暫停
                 togglePause();
