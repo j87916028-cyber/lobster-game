@@ -311,6 +311,18 @@
             color: #ffd700;
             margin-bottom: 20px;
         }
+        #gameStatsEnd {
+            display: flex;
+            gap: 15px;
+            font-size: 1rem;
+            margin-bottom: 20px;
+            background: rgba(255,255,255,0.1);
+            padding: 10px 20px;
+            border-radius: 10px;
+        }
+        #gameStatsEnd span {
+            color: #00d4ff;
+        }
         #restartBtn {
             padding: 15px 30px;
             font-size: 1.2rem;
@@ -505,6 +517,11 @@
             <h2>遊戲結束!</h2>
             <div id="highScore">最高分: 0</div>
             <div id="finalScore">分數: 0</div>
+            <div id="gameStatsEnd">
+                <span>⏱️ <span id="statTimeEnd">0:00</span></span>
+                <span>💰 <span id="statCoinsEnd">0</span></span>
+                <span>💣 <span id="statBombsEnd">0</span></span>
+            </div>
             <button id="restartBtn">再玩一次</button>
         </div>
         <div id="pauseOverlay">
@@ -618,6 +635,10 @@
         const statCoins = document.getElementById('statCoins');
         const statBombs = document.getElementById('statBombs');
         const menuBtn = document.getElementById('menuBtn');
+        // 遊戲結束畫面的統計數據元素
+        const statTimeEnd = document.getElementById('statTimeEnd');
+        const statCoinsEnd = document.getElementById('statCoinsEnd');
+        const statBombsEnd = document.getElementById('statBombsEnd');
 
         // 動態獲取遊戲容器尺寸（支援 RWD 響應式設計）
         function getGameDimensions() {
@@ -1655,6 +1676,12 @@
             }
             
             finalScore.textContent = '分數: ' + formatScore(score);
+            
+            // 更新遊戲結束畫面的統計數據
+            statTimeEnd.textContent = formatTime(gameStats.elapsedTime);
+            statCoinsEnd.textContent = gameStats.coinsCollected;
+            statBombsEnd.textContent = gameStats.bombsHit;
+            
             gameOver.style.display = 'flex';
             
             // 解鎖開始按鈕
