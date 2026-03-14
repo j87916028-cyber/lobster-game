@@ -631,7 +631,7 @@
                 const value = localStorage.getItem(key);
                 return value !== null ? value : defaultValue;
             } catch (e) {
-                console.warn('localStorage 讀取失敗:', e.message);
+                // 私人瀏覽模式下靜默失敗
                 return defaultValue;
             }
         }
@@ -641,7 +641,7 @@
                 localStorage.setItem(key, value);
                 return true;
             } catch (e) {
-                console.warn('localStorage 寫入失敗:', e.message);
+                // 私人瀏覽模式下靜默失敗
                 return false;
             }
         }
@@ -907,8 +907,7 @@
                         break;
                 }
             } catch (e) {
-                // 音效失敗時靜默忽略
-                console.log('音效播放失敗:', e);
+                // 音效失敗時靜默忽略（避免 console.log 影響效能）
             }
         }
 
@@ -1176,16 +1175,15 @@
                 if (powerupTimers.shield) clearTimeout(powerupTimers.shield);
                 powerupTimers.shield = setTimeout(() => {
                     activePowerups.shield = false;
-                    // 移除無敵效果（無論是否受傷，都應該在護盾結束後移除無敵狀態）
+                    // 只移除護盾造成的無敵，不影響受傷無敵狀態
                     if (invincibleReason === 'shield') {
                         isInvincible = false;
                         invincibleReason = null;
                         player.classList.remove('player-invincible');
-                    } else if (invincibleReason !== 'damage') {
-                        // 如果既不是護盾也不是受傷導致的無敵，則清除
-                        isInvincible = false;
-                        invincibleReason = null;
-                        player.classList.remove('player-invincible');
+                    }
+                    // 如果同時處於受傷無敵狀態，保留無敵效果
+                    else if (invincibleReason === 'damage') {
+                        // 保持受傷無敵狀態，什麼都不做
                     }
                     updatePowerupIndicator();
                 }, powerup.duration);
