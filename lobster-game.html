@@ -1950,6 +1950,29 @@
             togglePause();
         });
         
+        // 雙擊遊戲區域暫停/恢復（觸控裝置常用操作）
+        let lastTapTime = 0;
+        gameContainer.addEventListener('touchend', (e) => {
+            const currentTime = Date.now();
+            const tapLength = currentTime - lastTapTime;
+            if (tapLength < 300 && tapLength > 0) {
+                // 雙擊檢測成功
+                if (gameRunning && !isStarting) {
+                    e.preventDefault();
+                    togglePause();
+                }
+            }
+            lastTapTime = currentTime;
+        });
+        
+        // PC 上雙擊滑鼠暫停/恢復
+        gameContainer.addEventListener('dblclick', (e) => {
+            if (gameRunning && !isStarting) {
+                e.preventDefault();
+                togglePause();
+            }
+        });
+        
         // 說明按鈕點擊事件
         const helpBtnElement = document.getElementById('helpBtn');
         if (helpBtnElement) {
