@@ -1905,7 +1905,7 @@
             }
             // 使用 transform 代替 left，利用 GPU 加速避免重排
             const playerOffsetX = playerX - PLAYER_CENTER_OFFSET;
-            player.style.transform = `translateX(calc(-50% + ${playerOffsetX}px))`;
+            player.style.transform = `translate3d(calc(-50% + ${playerOffsetX}px), 0, 0)`;
 
             // 更新氣泡位置
             updateBubbles(cappedDeltaTime);
@@ -1943,7 +1943,7 @@
                 // 使用 deltaTime 保持速度一致
                 bubble.y += bubble.speed * (deltaTime / 16);
                 // 統一使用 transform 定位（完全避免 Layout 迴流，使用 GPU 加速）
-                bubble.element.style.transform = `translate(${bubble.x}px, ${bubble.y}px)`;
+                bubble.element.style.transform = `translate3d(${bubble.x}px, ${bubble.y}px, 0)`;
 
                 // 圓形碰撞檢測（比矩形檢測更精確，更適合圓形物體），使用預先計算的 BUBBLE_RADIUS
                 const bubbleCenterX = bubble.x + GAME_CONFIG.BUBBLE_RADIUS;
@@ -2513,7 +2513,7 @@
             const bubble = getBubbleFromPool();
             const x = Math.random() * (cachedGameWidth - GAME_CONFIG.BUBBLE_SIZE);
             // 統一使用 transform 定位（效能更好，完全避免 Layout 迴流，使用 GPU 加速）
-            bubble.style.transform = `translate(${x}px, ${GAME_CONFIG.BUBBLE_START_Y}px)`;
+            bubble.style.transform = `translate3d(${x}px, ${GAME_CONFIG.BUBBLE_START_Y}px, 0)`;
             // 確保元素可見
             bubble.style.display = '';
             
