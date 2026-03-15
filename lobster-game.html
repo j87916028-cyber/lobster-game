@@ -886,6 +886,11 @@
             BUBBLE_SIZE: 40,
             BUBBLE_START_Y: -40,
             
+            // 碰撞檢測半徑（預先計算以提升效能）
+            PLAYER_RADIUS: 30,          // PLAYER_WIDTH / 2
+            BUBBLE_RADIUS: 20,          // BUBBLE_SIZE / 2
+            COLLISION_DISTANCE: 50,     // PLAYER_RADIUS + BUBBLE_RADIUS
+            
             // 生命值
             MAX_LIVES: 3,
             MAX_LIVES_CAP: 5,            // 吃到愛心道具的上限
@@ -1920,12 +1925,10 @@
             // 效能優化：使用緩存的游戏高度，避免每幀調用 getBoundingClientRect
             const gameHeight = cachedGameHeight;
             
-            // 預先計算玩家中心點和半徑（圓形碰撞檢測效能優化）
+            // 效能優化：玩家中心點只計算 X 座標（Y 座標固定），並使用預先計算的碰撞半徑常數
             const playerCenterX = playerX + GAME_CONFIG.PLAYER_WIDTH / 2;
             const playerCenterY = PLAYER_TOP_BOUND + GAME_CONFIG.PLAYER_HEIGHT / 2;
-            const playerRadius = GAME_CONFIG.PLAYER_WIDTH / 2;
-            const bubbleRadius = GAME_CONFIG.BUBBLE_SIZE / 2;
-            const collisionDistance = playerRadius + bubbleRadius; // 碰撞半徑之和
+            const collisionDistance = GAME_CONFIG.COLLISION_DISTANCE; // 使用預先計算的碰撞半徑
 
             for (let i = bubbles.length - 1; i >= 0; i--) {
                 const bubble = bubbles[i];
@@ -1935,9 +1938,9 @@
                 // 統一使用 transform 定位（完全避免 Layout 迴流，使用 GPU 加速）
                 bubble.element.style.transform = `translate(${bubble.x}px, ${bubble.y}px)`;
 
-                // 圓形碰撞檢測（比矩形檢測更精確，更適合圓形物體）
-                const bubbleCenterX = bubble.x + bubbleRadius;
-                const bubbleCenterY = bubble.y + bubbleRadius;
+                // 圓形碰撞檢測（比矩形檢測更精確，更適合圓形物體），使用預先計算的 BUBBLE_RADIUS
+                const bubbleCenterX = bubble.x + GAME_CONFIG.BUBBLE_RADIUS;
+                const bubbleCenterY = bubble.y + GAME_CONFIG.BUBBLE_RADIUS;
                 // 計算兩圓心之間的距離平方（避免開方運算以提升效能）
                 const dx = bubbleCenterX - playerCenterX;
                 const dy = bubbleCenterY - playerCenterY;
