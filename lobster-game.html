@@ -440,6 +440,30 @@
             outline: 3px solid #ffd700;
             outline-offset: 3px;
         }
+        .share-btn {
+            margin-top: 15px;
+            padding: 12px 25px;
+            font-size: 1rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            color: white;
+            font-weight: bold;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .share-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+        }
+        .share-btn:focus {
+            outline: 3px solid #ffd700;
+            outline-offset: 3px;
+        }
+        .share-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
         #pauseOverlay {
             display: none;
             position: absolute;
@@ -800,6 +824,7 @@
                 <span style="margin-left: 10px;">💰 <span id="bestCoinsEnd">0</span></span>
             </div>
             <button id="restartBtn" aria-label="再玩一次">再玩一次</button>
+            <button id="shareBtn" class="share-btn" aria-label="分享成績">📤 分享成績</button>
         </div>
         <div id="pauseOverlay" role="dialog" aria-labelledby="pauseTitle" aria-modal="true" aria-live="polite">
             <h2 id="pauseTitle">暫停</h2>
@@ -933,6 +958,7 @@
         const statBombs = document.getElementById('statBombs');
         const menuBtn = document.getElementById('menuBtn');
         const resetHighScoreBtn = document.getElementById('resetHighScoreBtn');
+        const shareBtn = document.getElementById('shareBtn');
         // 說明彈窗元素
         const helpOverlay = document.getElementById('helpOverlay');
         const helpCloseBtn = document.querySelector('.help-close');
@@ -2608,6 +2634,53 @@
                 updateHighScoreGapDisplay();
             }
         });
+
+        // 分享成績按鈕（使用 Web Share API）
+        shareBtn.addEventListener('click', async () => {
+            const shareData = {
+                title: '🦞 龍蝦大戰',
+                text: `我在「龍蝦大戰」獲得 ${score} 分！🏆 最高分: ${highScore} | 時間: ${formatTime(gameStats.elapsedTime)} | 金幣: ${gameStats.coinsCollected} 💰`,
+                url: window.location.href
+            };
+            
+            // 檢查是否支持 Web Share API
+            if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+                try {
+                    await navigator.share(shareData);
+                } catch (err) {
+                    if (err.name !== 'AbortError') {
+                        console.warn('分享失敗:', err);
+                    }
+                }
+            } else if (navigator.share) {
+                // 支援 Web Share 但不完全支援 canShare 的舊版瀏覽器
+                try {
+                    await navigator.share(shareData);
+                } catch (err) {
+                    if (err.name !== 'AbortError') {
+                        // 回退到剪貼簿
+                        copyToClipboard(shareData.text + ' ' + shareData.url);
+                    }
+                }
+            } else {
+                // 不支援 Web Share API，回退到剪貼簿
+                copyToClipboard(shareData.text + ' ' + shareData.url);
+            }
+        });
+
+        // 複製到剪貼簿輔助函數
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                // 顯示複製成功提示
+                const originalText = shareBtn.textContent;
+                shareBtn.textContent = '✅ 已複製！';
+                setTimeout(() => {
+                    shareBtn.textContent = originalText;
+                }, 2000);
+            }).catch(err => {
+                console.warn('複製失敗:', err);
+            });
+        }
 
         // 暫停/繼續按鈕
         resumeBtn.addEventListener('click', togglePause);
