@@ -3146,10 +3146,16 @@
             volumeContainer.classList.remove('show');
         });
         
+        // 音量滑桿控制（使用 debounce 減少 localStorage 寫入頻率）
+        const debouncedVolumeSave = debounce((value) => {
+            setStorageItem(GAME_CONFIG.VOLUME_KEY, value);
+        }, 500);
+        
         volumeSlider.addEventListener('input', (e) => {
             gameVolume = parseInt(e.target.value);
-            setStorageItem(GAME_CONFIG.VOLUME_KEY, gameVolume);
             updateVolumeIcon();
+            // 使用 debounced 儲存，避免每次滑動都寫入 localStorage
+            debouncedVolumeSave(gameVolume);
         });
         
         // 暫停按鈕
