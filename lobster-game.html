@@ -1929,9 +1929,6 @@
             // 遊戲結束時停止處理氣泡，防止遊戲結束後還能得分
             if (!gameRunning) return;
             
-            // 效能優化：使用緩存的游戏高度，避免每幀調用 getBoundingClientRect
-            const gameHeight = cachedGameHeight;
-            
             // 效能優化：玩家中心點只計算 X 座標（Y 座標固定），並使用預先計算的碰撞半徑常數
             const playerCenterX = playerX + GAME_CONFIG.PLAYER_WIDTH / 2;
             const playerCenterY = PLAYER_TOP_BOUND + GAME_CONFIG.PLAYER_HEIGHT / 2;
@@ -2351,6 +2348,15 @@
 
         // 顯示倒數計時（遊戲開始前）
         function showCountdown(callback) {
+            // 防止重複創建倒計時 overlay（如果已有先清理）
+            if (countdownOverlay && countdownOverlay.parentNode) {
+                countdownOverlay.remove();
+            }
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+            }
+            
             // 使用全域變數儲存倒數計時相關元素，以便正確清理
             countdownOverlay = document.createElement('div');
             countdownOverlay.id = 'countdownOverlay';
