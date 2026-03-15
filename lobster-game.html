@@ -3137,7 +3137,10 @@
             
             // 使用物件池取得 DOM 元素（效能優化），使用緩存的寬度避免重複 DOM 佈局計算
             const bubble = getBubbleFromPool();
-            const x = Math.random() * (cachedGameWidth - GAME_CONFIG.BUBBLE_SIZE);
+            // 效能優化：產生一個隨機值用於位置，另一個用於類型判斷，減少 Math.random() 調用次數
+            const randomForPosition = Math.random();
+            const randomForType = Math.random();
+            const x = randomForPosition * (cachedGameWidth - GAME_CONFIG.BUBBLE_SIZE);
             // 統一使用 transform 定位（效能更好，完全避免 Layout 迴流，使用 GPU 加速）
             bubble.style.transform = `translate3d(${x}px, ${GAME_CONFIG.BUBBLE_START_Y}px, 0)`;
             // 確保元素可見
@@ -3147,14 +3150,17 @@
             const difficultyLevel = getDifficultyLevel();
             // 根據難度增加壞東西機率
             const badChance = Math.min(GAME_CONFIG.BAD_CHANCE_MAX, GAME_CONFIG.BAD_CHANCE_BASE + (difficultyLevel * GAME_CONFIG.BAD_CHANCE_INCREASE));
-            const isBad = Math.random() < badChance;
+            const isBad = randomForType < badChance;
             
             // 道具機率生成（不在壞東西中）
             let isPowerup = false;
             let powerupType = null;
-            if (!isBad && Math.random() < GAME_CONFIG.POWERUP_CHANCE) {
+            // 使用剩餘隨機值計算道具機率，進一步減少 Math.random() 調用
+            const remainingRandom = randomForType - badChance;
+            if (!isBad && remainingRandom > 0 && remainingRandom < GAME_CONFIG.POWERUP_CHANCE) {
                 isPowerup = true;
                 // 取得可用道具（排除愛心如果已滿血，使用緩存優化效能）
+                // 這裡仍需要一次隨機選擇道具陣列
                 powerupType = availablePowerupsCache[Math.floor(Math.random() * availablePowerupsCache.length)];
                 bubble.textContent = powerupType.emoji;
                 // 道具也計入可收集的物品（用於命中率計算）
@@ -3162,10 +3168,9 @@
             } else if (!isBad) {
                 // 非壞東西即為好東西（金幣/寶石），計入命中率統計
                 gameStats.coinsSpawned++;
+                bubble.textContent = ITEM_EMOJIS.GOOD[Math.floor(randomForPosition * ITEM_EMOJIS.GOOD.length)];
             } else {
-                bubble.textContent = isBad 
-                    ? ITEM_EMOJIS.BAD[Math.floor(Math.random() * ITEM_EMOJIS.BAD.length)]
-                    : ITEM_EMOJIS.GOOD[Math.floor(Math.random() * ITEM_EMOJIS.GOOD.length)];
+                bubble.textContent = ITEM_EMOJIS.BAD[Math.floor(randomForPosition * ITEM_EMOJIS.BAD.length)];
             }
             
             gameContainer.appendChild(bubble);
