@@ -2519,10 +2519,17 @@
         btnRight.addEventListener('mouseup', () => handleTouchEnd('right'));
         btnRight.addEventListener('mouseleave', () => handleTouchEnd('right'));
 
-        // 暫停按鈕
-        btnPause.addEventListener('click', togglePause);
+        // 暫停按鈕（使用標誌位防止 touchstart 和 click 重複觸發）
+        let pauseHandlerTimeout = null;
+        btnPause.addEventListener('click', () => {
+            if (pauseHandlerTimeout) return;
+            pauseHandlerTimeout = setTimeout(() => { pauseHandlerTimeout = null; }, 100);
+            togglePause();
+        });
         btnPause.addEventListener('touchstart', (e) => {
-            e.preventDefault();
+            e.preventDefault(); // 防止觸發 click 事件
+            if (pauseHandlerTimeout) return;
+            pauseHandlerTimeout = setTimeout(() => { pauseHandlerTimeout = null; }, 100);
             togglePause();
         });
         
@@ -2591,12 +2598,19 @@
             }
         }, { passive: true });
         
-        // 說明按鈕點擊事件
+        // 說明按鈕點擊事件（使用標誌位防止 touchstart 和 click 重複觸發）
         const helpBtnElement = document.getElementById('helpBtn');
+        let helpHandlerTimeout = null;
         if (helpBtnElement) {
-            helpBtnElement.addEventListener('click', toggleHelp);
+            helpBtnElement.addEventListener('click', () => {
+                if (helpHandlerTimeout) return;
+                helpHandlerTimeout = setTimeout(() => { helpHandlerTimeout = null; }, 100);
+                toggleHelp();
+            });
             helpBtnElement.addEventListener('touchstart', (e) => {
-                e.preventDefault();
+                e.preventDefault(); // 防止觸發 click 事件
+                if (helpHandlerTimeout) return;
+                helpHandlerTimeout = setTimeout(() => { helpHandlerTimeout = null; }, 100);
                 toggleHelp();
             });
         }
