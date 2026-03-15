@@ -2586,6 +2586,14 @@
             keys.right = false;
         });
 
+        // ==================== 頁面卸載處理 ====================
+        // 當用戶關閉/刷新頁面時，確保遊戲狀態已保存
+        window.addEventListener('beforeunload', () => {
+            if (gameRunning && !isPaused) {
+                saveGameState();
+            }
+        });
+
         // 檢查使用者是否偏好減少動畫（無障礙支援）
         function prefersReducedMotion() {
             return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
