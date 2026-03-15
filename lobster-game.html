@@ -42,6 +42,7 @@
             border: 3px solid #00d4ff;
             overflow: hidden;
             contain: layout style paint; /* 完整隔離：layout+style+paint 避免遊戲元素影響外部渲染 */
+            will-change: transform, animation; /* GPU 加速提示：優化受傷動畫等動態效果 */
         }
         #player {
             position: absolute;
@@ -107,6 +108,7 @@
         
         .player-catch {
             animation: playerCatch 0.2s ease-out;
+            will-change: transform; /* GPU 加速提示 */
         }
         
         /* 受傷震動動畫 */
@@ -118,6 +120,10 @@
             80% { transform: translateX(10px); }
         }
         
+        .damage-shake {
+            will-change: transform; /* GPU 加速提示 */
+        }
+        
         /* 無敵時間閃爍效果 */
         @keyframes invincible {
             0%, 100% { opacity: 1; text-shadow: 0 0 5px gold; }
@@ -126,6 +132,7 @@
         
         .player-invincible {
             animation: invincible 0.25s infinite;
+            will-change: opacity; /* GPU 加速提示 */
         }
         
         /* 道具效果指示器 */
@@ -214,6 +221,7 @@
         #highScoreGap.record {
             color: #ffd700;
             animation: recordPulse 0.5s infinite alternate;
+            will-change: transform; /* GPU 加速提示 */
         }
         
         @keyframes recordPulse {
@@ -236,11 +244,13 @@
             transition: opacity 0.3s, transform 0.3s;
             z-index: 10;
             text-shadow: 0 0 10px rgba(255,215,0,0.5);
+            will-change: opacity, transform; /* GPU 加速提示 */
         }
         
         #comboIndicator.show {
             opacity: 1;
             animation: comboPulse 0.5s infinite;
+            will-change: transform; /* GPU 加速提示 */
         }
         
         @keyframes comboPulse {
@@ -254,6 +264,7 @@
             font-size: 0.9rem;
             font-weight: bold;
             animation: powerupPulse 0.5s infinite alternate;
+            will-change: transform; /* GPU 加速提示 */
         }
         
         .powerup-shield {
@@ -350,6 +361,7 @@
         }
         .life-lost {
             animation: lifeLost 0.5s ease-out;
+            will-change: transform, opacity; /* GPU 加速提示 */
         }
         @keyframes lifeLost {
             0% { transform: scale(1); opacity: 1; }
