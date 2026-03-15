@@ -2501,6 +2501,8 @@
                         if (audioContext && audioContext.state === 'suspended') {
                             audioContext.resume();
                         }
+                        // 關閉說明時重新請求 wakeLock（確保螢幕保持亮著）
+                        requestWakeLock().catch(() => {});
                     }
                 } else {
                     togglePause();
@@ -2610,6 +2612,8 @@
                 if (audioContext && audioContext.state === 'suspended') {
                     audioContext.resume();
                 }
+                // 關閉說明時重新請求 wakeLock（確保螢幕保持亮著）
+                requestWakeLock().catch(() => {});
             }
         }
 
@@ -2628,6 +2632,8 @@
                     if (audioContext && audioContext.state === 'suspended') {
                         audioContext.resume();
                     }
+                    // 關閉說明時重新請求 wakeLock（確保螢幕保持亮著）
+                    requestWakeLock().catch(() => {});
                 }
             });
         }
