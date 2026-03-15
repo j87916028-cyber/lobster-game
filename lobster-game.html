@@ -2555,12 +2555,10 @@
             
             if (isHidden) {
                 // 分頁隱藏時暫停遊戲（如果尚未暫停）
+                // 優化：不顯示 pause overlay，因為用戶看不見，且恢復時會直接繼續遊戲
                 if (!isPaused) {
                     isPaused = true;
                     pausedByVisibility = true;
-                    pauseOverlay.style.display = 'flex';
-                    pauseScore.textContent = '分數: ' + score;
-                    pauseLives.textContent = getHeartsString(lives);
                     
                     // 取消動畫框架
                     if (animationFrameId) {
@@ -2582,7 +2580,6 @@
                 if (pausedByVisibility && gameRunning) {
                     isPaused = false;
                     pausedByVisibility = false;
-                    pauseOverlay.style.display = 'none';
                     lastTime = performance.now();
                     animationFrameId = requestAnimationFrame(gameLoop);
                     
