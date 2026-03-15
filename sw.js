@@ -1,5 +1,52 @@
 // 龍蝦大戰 Service Worker - 離線支援
-const CACHE_NAME = 'lobster-game-v4';
+// 版本號：使用時間戳記自動生成，確保每次部署都有唯一版本
+const CACHE_VERSION = 'v' + Date.now();
+const CACHE_NAME = 'lobster-game-' + CACHE_VERSION;
+
+// 離線頁面 HTML（當完全沒有緩存時顯示）
+function getOfflinePage() {
+  return `<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🦞 離線狀態 - 龍蝦大戰</title>
+  <style>
+    body {
+      font-family: 'Comic Sans MS', cursive, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      text-align: center;
+      padding: 20px;
+    }
+    h1 { font-size: 2.5rem; margin-bottom: 20px; }
+    p { font-size: 1.2rem; margin-bottom: 30px; opacity: 0.8; }
+    .lobster { font-size: 5rem; margin-bottom: 20px; }
+    button {
+      background: #00d4ff;
+      border: none;
+      padding: 15px 30px;
+      font-size: 1.2rem;
+      border-radius: 25px;
+      color: #1a1a2e;
+      cursor: pointer;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="lobster">🦞</div>
+  <h1>網路已離線</h1>
+  <p>龍蝦大戰需要網路連線才能載入。<br>請檢查您的網路設定後再試一次。</p>
+  <button onclick="window.location.reload()">重新載入</button>
+</body>
+</html>`;
+}
 const urlsToCache = [
   './',
   './lobster-game.html',
@@ -103,11 +150,16 @@ self.addEventListener('fetch', (event) => {
             if (cachedResponse) {
               return cachedResponse;
             }
-            // 請求的頁面沒有緩存，回退到首頁，沒有首頁緩存則返回錯誤提示
+            // 請求的頁面沒有緩存，回退到首頁，沒有首頁緩存則返回離線提示頁面
             return caches.match('./lobster-game.html').then(response => {
-              return response || new Response('Offline - Please check your connection', {
+              if (response) {
+                return response;
+              }
+              // 完全離線且沒有任何緩存時，返回自定義的離線頁面
+              return new Response(getOfflinePage(), {
                 status: 503,
-                statusText: 'Service Unavailable'
+                statusText: 'Service Unavailable',
+                headers: { 'Content-Type': 'text/html; charset=utf-8' }
               });
             });
           });
@@ -116,11 +168,12 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 靜態資源（JS、CSS、圖片、字體）- 緩存優先，失敗時網絡回退
+  // 靜態資源（JS、CSS、圖片、字體、媒體）- 緩存優先，失敗時網絡回退
   if (request.destination === 'script' || 
       request.destination === 'style' || 
       request.destination === 'image' ||
-      request.destination === 'font') {
+      request.destination === 'font' ||
+      request.destination === 'media') {
     event.respondWith(
       caches.match(request)
         .then((response) => {
