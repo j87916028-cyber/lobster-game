@@ -1850,8 +1850,8 @@
         }
 
         // 計算當前氣泡速度
-        function getCurrentBubbleSpeed() {
-            const level = getDifficultyLevel();
+        function getCurrentBubbleSpeed(difficultyLevelOverride) {
+            const level = difficultyLevelOverride !== undefined ? difficultyLevelOverride : getDifficultyLevel();
             let speed = Math.min(MAX_BUBBLE_SPEED, INITIAL_BUBBLE_SPEED + (level * GAME_CONFIG.SPEED_INCREASE_PER_LEVEL) + (Math.random() * 2));
             // FPS 自適應：低 FPS 時降低氣泡速度
             if (fpsAdaptiveLevel < 0) {
@@ -3069,8 +3069,10 @@
             // 確保元素可見
             bubble.style.display = '';
             
+            // 效能優化：緩存難度等級，避免重複計算（getDifficultyLevel 在 badChance 和 getCurrentBubbleSpeed 中都被調用）
+            const difficultyLevel = getDifficultyLevel();
             // 根據難度增加壞東西機率
-            const badChance = Math.min(GAME_CONFIG.BAD_CHANCE_MAX, GAME_CONFIG.BAD_CHANCE_BASE + (getDifficultyLevel() * GAME_CONFIG.BAD_CHANCE_INCREASE));
+            const badChance = Math.min(GAME_CONFIG.BAD_CHANCE_MAX, GAME_CONFIG.BAD_CHANCE_BASE + (difficultyLevel * GAME_CONFIG.BAD_CHANCE_INCREASE));
             const isBad = Math.random() < badChance;
             
             // 道具機率生成（不在壞東西中）
@@ -3099,7 +3101,7 @@
             bubbleData.element = bubble;
             bubbleData.x = x;
             bubbleData.y = GAME_CONFIG.BUBBLE_START_Y;
-            bubbleData.speed = getCurrentBubbleSpeed();
+            bubbleData.speed = getCurrentBubbleSpeed(difficultyLevel);
             bubbleData.isBad = isBad;
             bubbleData.isPowerup = isPowerup;
             bubbleData.powerupType = powerupType;
