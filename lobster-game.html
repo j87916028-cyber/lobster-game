@@ -2295,6 +2295,20 @@
                 return;
             }
             
+            // M 鍵切換靜音 - 在遊戲控制之前處理，確保暫停時也能使用
+            if (e.key === 'm' || e.key === 'M') {
+                soundEnabled = !soundEnabled;
+                soundBtn.textContent = soundEnabled ? '🔊' : '🔇';
+                setStorageItem(GAME_CONFIG.SOUND_ENABLED_KEY, soundEnabled);
+                return;
+            }
+            
+            // H 鍵顯示說明 - 應該隨時可用
+            if (e.key === 'h' || e.key === 'H') {
+                toggleHelp();
+                return;
+            }
+            
             if (!gameRunning || isPaused) return;
             if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
                 keys.left = true;
@@ -2316,14 +2330,6 @@
                 } else {
                     togglePause();
                 }
-            } else if (e.key === 'm' || e.key === 'M') {
-                // M 鍵切換靜音
-                soundEnabled = !soundEnabled;
-                soundBtn.textContent = soundEnabled ? '🔊' : '🔇';
-                setStorageItem(GAME_CONFIG.SOUND_ENABLED_KEY, soundEnabled);
-            } else if (e.key === 'h' || e.key === 'H') {
-                // H 鍵顯示說明
-                toggleHelp();
             } else if (e.key === ' ') {
                 // 空白鍵也可用於暫停
                 togglePause();
