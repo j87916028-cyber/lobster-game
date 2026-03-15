@@ -74,6 +74,7 @@
             animation: scoreFloat 0.8s ease-out forwards;
             pointer-events: none;
             z-index: 100;
+            will-change: transform, opacity; /* 效能優化：提示瀏覽器提前創建 GPU 圖層 */
         }
 
         /* 道具彈出動畫 */
@@ -86,6 +87,7 @@
             animation: powerupFloat 1s ease-out forwards;
             pointer-events: none;
             z-index: 100;
+            will-change: transform, opacity; /* 效能優化：提示瀏覽器提前創建 GPU 圖層 */
         }
         
         @keyframes scoreFloat {
