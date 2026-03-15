@@ -1244,7 +1244,8 @@
             
             // 恢復玩家位置
             updateGameBounds();
-            playerX = Math.max(PLAYER_LEFT_BOUND, Math.min(PLAYER_RIGHT_BOUND, savedState.playerX || playerX));
+            // 修復：使用 ?? 替代 ||，避免 playerX=0 被視為 falsy 值而忽略保存的位置
+            playerX = Math.max(PLAYER_LEFT_BOUND, Math.min(PLAYER_RIGHT_BOUND, savedState.playerX ?? playerX));
             
             updateAvailablePowerupsCache();
             updateLivesDisplay();
