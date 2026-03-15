@@ -710,6 +710,20 @@
             outline-offset: 2px;
         }
         
+        /* 音量滑桿禁用狀態 */
+        #volumeSlider:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        #volumeSlider:disabled::-webkit-slider-thumb {
+            background: #666;
+            cursor: not-allowed;
+        }
+        #volumeSlider:disabled::-moz-range-thumb {
+            background: #666;
+            cursor: not-allowed;
+        }
+        
         /* 暫停按鈕 */
         #pauseBtn {
             position: absolute;
@@ -3395,15 +3409,20 @@
         let gameVolume = parseInt(getStorageItem(GAME_CONFIG.VOLUME_KEY, '30'));
         volumeSlider.value = gameVolume;
         
-        // 更新音量圖示
+        // 更新音量圖示和滑桿狀態
         function updateVolumeIcon() {
-            // 如果聲音被關閉，統一顯示靜音圖標
+            // 如果聲音被關閉，統一顯示靜音圖標並禁用滑桿
             if (!soundEnabled || gameVolume === 0) {
                 volumeContainer.querySelector('span:first-child').textContent = '🔇';
-            } else if (gameVolume < 50) {
-                volumeContainer.querySelector('span:first-child').textContent = '🔈';
+                volumeSlider.disabled = true;
             } else {
-                volumeContainer.querySelector('span:first-child').textContent = '🔊';
+                // 啟用音量滑桿
+                volumeSlider.disabled = false;
+                if (gameVolume < 50) {
+                    volumeContainer.querySelector('span:first-child').textContent = '🔈';
+                } else {
+                    volumeContainer.querySelector('span:first-child').textContent = '🔊';
+                }
             }
         }
         updateVolumeIcon();
@@ -3413,7 +3432,7 @@
             soundEnabled = !soundEnabled;
             soundBtn.textContent = soundEnabled ? '🔊' : '🔇';
             setStorageItem(GAME_CONFIG.SOUND_ENABLED_KEY, soundEnabled);
-            // 同步更新音量圖標（保持 UI 一致性）
+            // 同步更新音量圖標和滑桿狀態
             updateVolumeIcon();
         });
         
