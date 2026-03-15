@@ -1856,9 +1856,12 @@
             // 效能優化：使用緩存的游戏高度，避免每幀調用 getBoundingClientRect
             const gameHeight = cachedGameHeight;
             
-            // 使用預先計算的固定邊界值（效能優化）
-            const playerLeft = playerX;
-            const playerRight = playerX + GAME_CONFIG.PLAYER_WIDTH;
+            // 預先計算玩家中心點和半徑（圓形碰撞檢測效能優化）
+            const playerCenterX = playerX + GAME_CONFIG.PLAYER_WIDTH / 2;
+            const playerCenterY = PLAYER_TOP_BOUND + GAME_CONFIG.PLAYER_HEIGHT / 2;
+            const playerRadius = GAME_CONFIG.PLAYER_WIDTH / 2;
+            const bubbleRadius = GAME_CONFIG.BUBBLE_SIZE / 2;
+            const collisionDistance = playerRadius + bubbleRadius; // 碰撞半徑之和
 
             for (let i = bubbles.length - 1; i >= 0; i--) {
                 const bubble = bubbles[i];
@@ -1868,14 +1871,15 @@
                 // 統一使用 transform 定位（完全避免 Layout 迴流，使用 GPU 加速）
                 bubble.element.style.transform = `translate(${bubble.x}px, ${bubble.y}px)`;
 
-                // 簡化的碰撞檢測（使用預先計算的數值，避免 getBoundingClientRect）
-                const bubbleBottom = bubble.y + GAME_CONFIG.BUBBLE_SIZE;
-                const bubbleRight = bubble.x + GAME_CONFIG.BUBBLE_SIZE;
+                // 圓形碰撞檢測（比矩形檢測更精確，更適合圓形物體）
+                const bubbleCenterX = bubble.x + bubbleRadius;
+                const bubbleCenterY = bubble.y + bubbleRadius;
+                // 計算兩圓心之間的距離平方（避免開方運算以提升效能）
+                const dx = bubbleCenterX - playerCenterX;
+                const dy = bubbleCenterY - playerCenterY;
+                const distanceSquared = dx * dx + dy * dy;
 
-                if (bubbleBottom > PLAYER_TOP_BOUND &&
-                    bubble.y < PLAYER_BOTTOM_BOUND &&
-                    bubbleRight > playerLeft &&
-                    bubble.x < playerRight) {
+                if (distanceSquared < collisionDistance * collisionDistance) {
                     
                     if (bubble.isBad) {
                         handleDamage(); // 改為扣血而非直接結束
