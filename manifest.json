@@ -23,6 +23,5 @@
     }
   ],
   "categories": ["games", "entertainment"],
-  "permissions": ["periodic-sync"],
   "prefer_related_applications": false
 }
