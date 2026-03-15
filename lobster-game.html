@@ -1018,6 +1018,40 @@
             }
         }
 
+        // ==================== 遊戲狀態儲存 (未使用但保留擴充性) ====================
+        // 自動儲存計時器
+        let autoSaveInterval = null;
+        
+        // 儲存當前遊戲狀態到 localStorage
+        function saveGameState() {
+            const gameState = {
+                score: score,
+                lives: lives,
+                playerX: playerX,
+                elapsedTime: gameStats.elapsedTime,
+                coinsCollected: gameStats.coinsCollected,
+                bombsHit: gameStats.bombsHit,
+                activePowerups: activePowerups,
+                isInvincible: isInvincible,
+                difficultyLevel: getDifficultyLevel()
+            };
+            setStorageItem('lobsterGameState', JSON.stringify(gameState));
+        }
+        
+        // 開始自動儲存（每 10 秒儲存一次）
+        function startAutoSave() {
+            stopAutoSave(); // 先停止現有的自動儲存
+            autoSaveInterval = setInterval(saveGameState, 10000);
+        }
+        
+        // 停止自動儲存
+        function stopAutoSave() {
+            if (autoSaveInterval) {
+                clearInterval(autoSaveInterval);
+                autoSaveInterval = null;
+            }
+        }
+
         let playerX = 0; // 初始化為 0，startGame 時會正確設置
         let score = 0;
         let targetScore = 0; // 分數動畫目標值
