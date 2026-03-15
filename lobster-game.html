@@ -1448,12 +1448,18 @@
             });
             bubbles = [];
             
-            // 清理所有彈出元素（使用 replaceWith 移除，防止 animationend 回調記憶體洩漏）
-            // 替換為空的 div 以移除事件監聽器，然後從 DOM 移除並返回池中
+            // 清理所有彈出元素（先移除事件監聽器，防止回收後殘留回調觸發）
+            // 然後從 DOM 移除並返回乾淨的元素到池中
             document.querySelectorAll('.score-popup, .powerup-popup').forEach(p => {
-                const temp = document.createElement('div');
-                p.replaceWith(temp);
-                temp.remove();
+                // 先移除 animationend 事件監聽器（使用儲存的 handler 參考）
+                if (p._animationEndHandler) {
+                    p.removeEventListener('animationend', p._animationEndHandler);
+                    p._animationEndHandler = null;
+                }
+                // 從 DOM 移除
+                p.remove();
+                // 返回池前，手動清除內容（returnPopupToPool 也會做，但先做確保乾淨）
+                p.textContent = '';
                 returnPopupToPool(p);
             });
             
@@ -1582,6 +1588,8 @@
             element.style.top = '';
             element.style.background = '';
             element.style.display = '';
+            // 清除自定義屬性（確保回收的元素是乾淨的）
+            element._animationEndHandler = null;
             
             if (popupPool.length < POPUP_POOL_MAX_SIZE) {
                 popupPool.push(element);
@@ -1872,11 +1880,14 @@
             gameContainer.appendChild(popup);
             
             // 使用 animationend 事件確保動畫結束後才回收，比 setTimeout 更精確且避免記憶體洩漏
-            popup.addEventListener('animationend', function handler() {
+            // 儲存 handler 參考以便後續移除
+            const handler = function() {
                 popup.removeEventListener('animationend', handler);
                 popup.remove();
                 returnPopupToPool(popup);
-            });
+            };
+            popup._animationEndHandler = handler; // 儲存參考以便 cleanup 時移除
+            popup.addEventListener('animationend', handler);
         }
 
         // 更新生命值顯示
@@ -2043,11 +2054,14 @@
                                       powerup.type === '2x' ? 'rgba(255,215,0,0.8)' : 'rgba(255,0,0,0.8)';
             gameContainer.appendChild(popup);
             // 使用 animationend 事件確保動畫結束後才回收
-            popup.addEventListener('animationend', function handler() {
+            // 儲存 handler 參考以便後續移除
+            const handler = function() {
                 popup.removeEventListener('animationend', handler);
                 popup.remove();
                 returnPopupToPool(popup);
-            });
+            };
+            popup._animationEndHandler = handler; // 儲存參考以便 cleanup 時移除
+            popup.addEventListener('animationend', handler);
             
             // 處理不同道具效果
             if (powerup.type === 'shield') {
