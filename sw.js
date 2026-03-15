@@ -71,12 +71,14 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// 定期更新緩存（後台更新）
-self.addEventListener('periodicsync', (event) => {
-  if (event.tag === 'update-cache') {
-    event.waitUntil(updateCache());
-  }
-});
+// 定期更新緩存（後台更新）- Periodic Background Sync 並非所有瀏覽器都支援
+if ('periodicsync' in self) {
+  self.addEventListener('periodicsync', (event) => {
+    if (event.tag === 'update-cache') {
+      event.waitUntil(updateCache());
+    }
+  });
+}
 
 async function updateCache() {
   try {
