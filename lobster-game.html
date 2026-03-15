@@ -3348,6 +3348,27 @@
         startBtn.addEventListener('click', startGame);
         restartBtn.addEventListener('click', startGame);
 
+        // 處理 PWA Shortcuts 快速啟動參數
+        (function handleShortcutParams() {
+            const params = new URLSearchParams(window.location.search);
+            const action = params.get('action');
+            
+            if (action === 'play') {
+                // 移除參數並開始遊戲
+                window.history.replaceState({}, '', window.location.pathname);
+                // 延遲確保其他初始化完成
+                setTimeout(() => startGame(), 100);
+            } else if (action === 'help') {
+                // 移除參數並顯示說明
+                window.history.replaceState({}, '', window.location.pathname);
+                setTimeout(() => {
+                    helpOverlay.style.display = 'flex';
+                    isPaused = true;
+                    pausedByHelp = true;
+                }, 100);
+            }
+        })();
+
         // 重置最高分按鈕
         resetHighScoreBtn.addEventListener('click', () => {
             if (confirm('確定要重置最高分嗎？這個動作無法復原。')) {
