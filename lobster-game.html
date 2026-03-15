@@ -1010,6 +1010,7 @@
         let gameRunning = false;
         let isPaused = false;
         let pausedByVisibility = false; // 追蹤是否因分頁隱藏而暫停
+        let pausedByHelp = false; // 追蹤是否因顯示說明而暫停
         let bubbles = [];
         let lastTime = 0;
         let spawnTimer = 0;
@@ -1070,6 +1071,9 @@
                 cancelAnimationFrame(animationFrameId);
                 animationFrameId = null;
             }
+            
+            // 重置暫停狀態
+            pausedByHelp = false;
             
             // 暫停 AudioContext 以節省資源
             if (audioContext && audioContext.state === 'running') {
@@ -1941,8 +1945,9 @@
                 if (isHelpVisible) {
                     helpOverlay.style.display = 'none';
                     // 如果之前是因為顯示說明而暫停，恢復遊戲
-                    if (gameRunning && isPaused) {
+                    if (gameRunning && isPaused && pausedByHelp) {
                         isPaused = false;
+                        pausedByHelp = false;
                         pauseOverlay.style.display = 'none';
                         lastTime = performance.now();
                         animationFrameId = requestAnimationFrame(gameLoop);
@@ -2016,6 +2021,7 @@
             // 顯示說明時暫停遊戲（如果遊戲正在運行）
             if (!isHelpVisible && gameRunning && !isPaused) {
                 isPaused = true;
+                pausedByHelp = true; // 標記為因說明而暫停
                 pauseOverlay.style.display = 'flex';
                 pauseScore.textContent = '分數: ' + formatScore(score);
                 pauseLives.textContent = getHeartsString(lives);
@@ -2024,6 +2030,13 @@
                     cancelAnimationFrame(animationFrameId);
                     animationFrameId = null;
                 }
+            } else if (isHelpVisible && pausedByHelp) {
+                // 關閉說明時，如果之前是因說明而暫停，恢復遊戲
+                isPaused = false;
+                pausedByHelp = false;
+                pauseOverlay.style.display = 'none';
+                lastTime = performance.now();
+                animationFrameId = requestAnimationFrame(gameLoop);
             }
         }
 
@@ -2032,8 +2045,9 @@
             helpCloseBtn.addEventListener('click', () => {
                 helpOverlay.style.display = 'none';
                 // 恢復遊戲（如果之前是因為顯示說明而暫停）
-                if (gameRunning && isPaused) {
+                if (gameRunning && isPaused && pausedByHelp) {
                     isPaused = false;
+                    pausedByHelp = false;
                     pauseOverlay.style.display = 'none';
                     lastTime = performance.now();
                     animationFrameId = requestAnimationFrame(gameLoop);
