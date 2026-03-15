@@ -2779,6 +2779,9 @@
             invincibleReason = null; // 重置無敵原因
             pausedByVisibility = false; // 重置可見性暫停狀態
             
+            // 預先初始化 AudioContext（避免首次播放音效時的延遲）
+            initAudio();
+            
             // 確保 AudioContext 處於運行狀態（用戶交互後才能播放聲音）
             if (audioContext && audioContext.state === 'suspended') {
                 audioContext.resume();
