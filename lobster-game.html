@@ -2653,9 +2653,19 @@
             if ('wakeLock' in navigator && wakeLock === null) {
                 try {
                     wakeLock = await navigator.wakeLock.request('screen');
-                    // 當 wake lock 被自動釋放時（例如系統資源不足），重置狀態
-                    wakeLock.addEventListener('release', () => {
+                    // 當 wake lock 被自動釋放時（例如系統資源不足、用戶按下電源鍵等），
+                    // 嘗試重新取得（遊戲仍在執行時）
+                    wakeLock.addEventListener('release', async () => {
                         wakeLock = null;
+                        // 只有遊戲仍在執行時才重新請求 wake lock
+                        if (gameRunning && !isPaused) {
+                            // 使用 setTimeout 延遲重試，避免立即重試失敗
+                            setTimeout(async () => {
+                                if (gameRunning && !isPaused) {
+                                    await requestWakeLock();
+                                }
+                            }, 1000);
+                        }
                     });
                 } catch (err) {
                     // 不支援或無法取得 wake lock 時靜默失敗
