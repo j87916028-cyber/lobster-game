@@ -1460,8 +1460,8 @@
                 returnPopupToPool(p);
             });
             
-            // 清除道具指示器殘留
-            document.querySelectorAll('.powerup-badge').forEach(b => b.remove());
+            // 清除道具指示器殘留（效能優化：使用 powerupIndicator 替代 document.querySelectorAll）
+            powerupIndicator.replaceChildren();
             
             // 重置生成計時器
             spawnTimer = 0;
