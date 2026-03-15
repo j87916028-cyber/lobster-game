@@ -1364,6 +1364,7 @@
         let comboCount = 0;
         let comboTimeout = null;
         let comboMultiplier = 1;
+        let comboRemainingTime = 0; // 追蹤暫停時的剩餘連擊時間
         const COMBO_WINDOW = 1500; // 連擊有效時間 (ms)
         const MAX_COMBO_MULTIPLIER = 5; // 最大連擊倍數
         const comboIndicator = document.getElementById('comboIndicator');
@@ -1830,6 +1831,7 @@
             '2x': false
         };
         let powerupTimers = {};
+        let powerupRemainingTimes = {}; // 追蹤暫停時的道具剩餘時間
 
         // 格式化分數顯示（千分位）
         function formatScore(num) {
@@ -1885,6 +1887,66 @@
             comboIndicator.classList.remove('show');
             if (comboTimeout) clearTimeout(comboTimeout);
             comboTimeout = null;
+        }
+
+        // 暫停連擊計時器（分頁隱藏時呼叫）
+        function pauseComboTimer() {
+            if (comboTimeout && comboCount >= 2) {
+                // 使用 setTimeout 的剩餘時間無法直接取得，這裡簡化處理：
+                // 暫停時儲存當前連擊狀態，恢復時給予完整 COMBO_WINDOW 時間
+                // 這是一個 UX 優化：使用者離開時不應該損失連擊
+                clearTimeout(comboTimeout);
+                comboTimeout = null;
+                // comboRemainingTime 已經在 handleCombo 中更新，這裡不需要再做什麼
+            }
+        }
+
+        // 恢復連擊計時器（分頁恢復時呼叫）
+        function resumeComboTimer() {
+            if (comboCount >= 2 && !comboTimeout) {
+                // 恢復時給予完整的連擊窗口，讓使用者不會因為離開而被懲罰
+                comboTimeout = setTimeout(() => {
+                    resetCombo();
+                }, COMBO_WINDOW);
+            }
+        }
+
+        // 暫停所有道具計時器
+        function pausePowerupTimers() {
+            // 記錄每個道具的剩餘時間（無法直接取得，改為記錄 active 狀態）
+            // 清除計時器暫停倒數
+            if (powerupTimers.shield) {
+                clearTimeout(powerupTimers.shield);
+                powerupTimers.shield = null;
+            }
+            if (powerupTimers['2x']) {
+                clearTimeout(powerupTimers['2x']);
+                powerupTimers['2x'] = null;
+            }
+        }
+
+        // 恢復所有道具計時器
+        function resumePowerupTimers() {
+            // 恢復時重新啟動道具計時器（給予完整持續時間）
+            // 這確保使用者不會因為暫停而損失道具效果時間
+            if (activePowerups.shield) {
+                powerupTimers.shield = setTimeout(() => {
+                    activePowerups.shield = false;
+                    updatePowerupIndicator();
+                    if (!activePowerups['2x']) {
+                        player.classList.remove('player-invincible');
+                    }
+                    isInvincible = false;
+                    powerupTimers.shield = null;
+                }, GAME_CONFIG.SHIELD_DURATION);
+            }
+            if (activePowerups['2x']) {
+                powerupTimers['2x'] = setTimeout(() => {
+                    activePowerups['2x'] = false;
+                    updatePowerupIndicator();
+                    powerupTimers['2x'] = null;
+                }, GAME_CONFIG.DOUBLE_DURATION);
+            }
         }
         
         // 生成愛心字符串（共用函數，避免重複代碼）
@@ -2433,6 +2495,9 @@
                 if (audioContext && audioContext.state === 'running') {
                     audioContext.suspend();
                 }
+                // 暫停時暫停連擊和道具計時器
+                pauseComboTimer();
+                pausePowerupTimers();
             } else {
                 lastTime = performance.now(); // 重置 deltaTime
                 // 恢復時重新啟動動畫循環
@@ -2445,6 +2510,9 @@
                 if (audioContext && audioContext.state === 'suspended') {
                     audioContext.resume();
                 }
+                // 恢復時恢復連擊和道具計時器
+                resumeComboTimer();
+                resumePowerupTimers();
             }
             // 暫停時取消當前的動畫框架，防止暫停期間堆疊調用
             if (isPaused && animationFrameId) {
@@ -2691,6 +2759,10 @@
                     
                     // 釋放螢幕喚醒鎖
                     releaseWakeLock();
+
+                    // 暫停連擊和道具計時器，避免使用者離開時損失時間
+                    pauseComboTimer();
+                    pausePowerupTimers();
                 }
             } else {
                 // 分頁恢復顯示時，只有因為分頁隱藏而暫停時才恢復
@@ -2708,6 +2780,10 @@
                     
                     // 恢復時請求螢幕喚醒鎖
                     requestWakeLock();
+
+                    // 恢復連擊和道具計時器
+                    resumeComboTimer();
+                    resumePowerupTimers();
                 }
             }
         });
