@@ -2045,12 +2045,26 @@
                 // 暫停時清除按鍵狀態，防止恢復後玩家自動移動
                 keys.left = false;
                 keys.right = false;
+                // 暫停時立即儲存遊戲狀態
+                saveGameState();
+                // 暫停時停止自動儲存
+                stopAutoSave();
+                // 暫停時暫停 AudioContext 以節省資源
+                if (audioContext && audioContext.state === 'running') {
+                    audioContext.suspend();
+                }
             } else {
                 lastTime = performance.now(); // 重置 deltaTime
                 // 恢復時重新啟動動畫循環
                 animationFrameId = requestAnimationFrame(gameLoop);
                 // 恢復時請求螢幕喚醒鎖
                 requestWakeLock();
+                // 恢復時重新啟動自動儲存
+                startAutoSave();
+                // 恢復時恢復 AudioContext
+                if (audioContext && audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
             }
             // 暫停時取消當前的動畫框架，防止暫停期間堆疊調用
             if (isPaused && animationFrameId) {
@@ -2076,6 +2090,10 @@
                     cancelAnimationFrame(animationFrameId);
                     animationFrameId = null;
                 }
+                // 顯示說明時暫停 AudioContext 以節省資源
+                if (audioContext && audioContext.state === 'running') {
+                    audioContext.suspend();
+                }
             } else if (isHelpVisible && pausedByHelp) {
                 // 關閉說明時，如果之前是因說明而暫停，恢復遊戲
                 isPaused = false;
@@ -2083,6 +2101,10 @@
                 pauseOverlay.style.display = 'none';
                 lastTime = performance.now();
                 animationFrameId = requestAnimationFrame(gameLoop);
+                // 關閉說明時恢復 AudioContext
+                if (audioContext && audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
             }
         }
 
@@ -2097,6 +2119,10 @@
                     pauseOverlay.style.display = 'none';
                     lastTime = performance.now();
                     animationFrameId = requestAnimationFrame(gameLoop);
+                    // 關閉說明時恢復 AudioContext
+                    if (audioContext && audioContext.state === 'suspended') {
+                        audioContext.resume();
+                    }
                 }
             });
         }
