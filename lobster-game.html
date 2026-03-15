@@ -2187,7 +2187,8 @@
                 if (direction === 'right' && isTouchingRight) return;
                 e.preventDefault(); // 防止文字選取
             }
-            if (!gameRunning) return;
+            // 遊戲未運行或暫停時不處理觸控移動
+            if (!gameRunning || isPaused) return;
             if (direction === 'left') {
                 keys.left = true;
             } else {
