@@ -191,7 +191,10 @@
         <button class="level-btn" onclick="setLevel(4)">🎹 和弦認識</button>
     </div>
     
-    <div class="score-display">分數: <span id="score">0</span> | 連續答對: <span id="streakCount">0</span>🔥</div>
+    <div class="score-display">
+        分數: <span id="score">0</span> | 連續答對: <span id="streakCount">0</span>🔥
+        <span style="margin-left: 15px; font-size: 0.85em; opacity: 0.8;">最高分: <span id="highScore">0</span> | 最佳連擊: <span id="bestStreak">0</span>🏆</span>
+    </div>
     <div class="progress-bar"><div class="progress-fill" id="progress" style="width: 0%"></div></div>
     
     <div id="gameArea">
@@ -227,6 +230,63 @@
         let questionsAnswered = 0;
         let correctAnswers = 0;
         
+        // ==================== LocalStorage 持久化功能 ====================
+        const STORAGE_KEYS = {
+            HIGH_SCORE: 'musicTheoryHighScore',
+            BEST_STREAK: 'musicTheoryBestStreak'
+        };
+        
+        // 讀取最高分
+        function getHighScore() {
+            try {
+                return parseInt(localStorage.getItem(STORAGE_KEYS.HIGH_SCORE)) || 0;
+            } catch (e) {
+                return 0;
+            }
+        }
+        
+        // 讀取最佳連擊
+        function getBestStreak() {
+            try {
+                return parseInt(localStorage.getItem(STORAGE_KEYS.BEST_STREAK)) || 0;
+            } catch (e) {
+                return 0;
+            }
+        }
+        
+        // 保存最高分
+        function saveHighScore(newScore) {
+            try {
+                const currentHigh = getHighScore();
+                if (newScore > currentHigh) {
+                    localStorage.setItem(STORAGE_KEYS.HIGH_SCORE, newScore);
+                    return true; // 表示創建了新紀錄
+                }
+            } catch (e) {}
+            return false;
+        }
+        
+        // 保存最佳連擊
+        function saveBestStreak(newStreak) {
+            try {
+                const currentBest = getBestStreak();
+                if (newStreak > currentBest) {
+                    localStorage.setItem(STORAGE_KEYS.BEST_STREAK, newStreak);
+                    return true;
+                }
+            } catch (e) {}
+            return false;
+        }
+        
+        // 更新最高分顯示
+        function updateHighScoreDisplay() {
+            const highScoreEl = document.getElementById('highScore');
+            const bestStreakEl = document.getElementById('bestStreak');
+            if (highScoreEl) highScoreEl.textContent = getHighScore();
+            if (bestStreakEl) bestStreakEl.textContent = getBestStreak();
+        }
+        
+        // ==================== 遊戲邏輯 ====================
         function playNote(note) {
             const ctx = getAudioContext();
             const osc = ctx.createOscillator();
@@ -384,10 +444,24 @@
                 streak++;
                 correctAnswers++;
                 
+                // 保存最高分和最佳連擊
+                const isNewHighScore = saveHighScore(score);
+                const isNewBestStreak = saveBestStreak(streak);
+                
+                // 更新顯示
+                updateHighScoreDisplay();
+                
+                // 新紀錄提示
+                if (isNewHighScore) {
+                    feedback.textContent += ' 🎉 新紀錄！';
+                }
+                
                 // 顯示連擊
                 if (streak >= 3) {
                     const popup = document.getElementById('streakPopup');
-                    popup.textContent = `🔥 ${streak}連擊！`;
+                    popup.textContent = isNewBestStreak 
+                        ? `🔥 ${streak}連擊！新紀錄！🏆` 
+                        : `🔥 ${streak}連擊！`;
                     popup.classList.add('show');
                     setTimeout(() => popup.classList.remove('show'), 1000);
                 }
@@ -411,6 +485,7 @@
         
         // 初始化
         setLevel(1);
+        updateHighScoreDisplay(); // 載入並顯示最高分記錄
     </script>
 </body>
 </html>
