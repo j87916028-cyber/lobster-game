@@ -1142,6 +1142,121 @@
             }
         }
 
+        // 檢查是否有保存的遊戲狀態
+        function hasSavedGameState() {
+            const savedState = getStorageItem('lobsterGameState', null);
+            return savedState !== null;
+        }
+
+        // 載入保存的遊戲狀態
+        function loadGameState() {
+            const savedState = getStorageItem('lobsterGameState', null);
+            if (!savedState) return null;
+            
+            try {
+                return JSON.parse(savedState);
+            } catch (e) {
+                console.warn('無法解析保存的遊戲狀態:', e);
+                return null;
+            }
+        }
+
+        // 清除保存的遊戲狀態
+        function clearSavedGameState() {
+            setStorageItem('lobsterGameState', null);
+            localStorage.removeItem('lobsterGameState');
+        }
+
+        // 恢復保存的遊戲狀態
+        function restoreGame(savedState) {
+            // 防止快速重複點擊
+            if (isStarting) return;
+            
+            // 初始化 FPS 計算
+            frameCount = 0;
+            fpsLastTime = performance.now();
+            fpsDisplay.textContent = 'FPS: --';
+            
+            // 使用統一清理函數（重置遊戲狀態）
+            cleanupGame(true);
+            
+            isStarting = true;
+            
+            gameRunning = true;
+            isPaused = false;
+            
+            // 恢復遊戲狀態
+            score = savedState.score;
+            targetScore = score;
+            lives = savedState.lives;
+            gameStats = {
+                coinsCollected: savedState.coinsCollected || 0,
+                bombsHit: savedState.bombsHit || 0,
+                startTime: Date.now() - (savedState.elapsedTime * 1000), // 調整開始時間以繼續計時
+                elapsedTime: savedState.elapsedTime || 0
+            };
+            
+            // 恢復道具狀態
+            activePowerups = savedState.activePowerups || { shield: false, '2x': false };
+            isInvincible = savedState.isInvincible || false;
+            
+            // 恢復玩家位置
+            updateGameBounds();
+            playerX = Math.max(PLAYER_LEFT_BOUND, Math.min(PLAYER_RIGHT_BOUND, savedState.playerX || playerX));
+            
+            updateAvailablePowerupsCache();
+            updateLivesDisplay();
+            updatePowerupIndicator();
+            
+            // 如果有無敵狀態，恢復無敵顯示
+            if (isInvincible) {
+                player.classList.add('player-invincible');
+            }
+            
+            pausedByVisibility = false;
+            
+            // 確保 AudioContext 處於運行狀態
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            
+            // 重置連擊系統
+            resetCombo();
+            
+            keys.left = false;
+            keys.right = false;
+            spawnTimer = 0;
+            lastTime = performance.now();
+            player.style.transform = 'translateX(-50%)';
+            player.classList.remove('player-catch');
+            
+            // 更新顯示
+            scoreDisplay.textContent = '分數: ' + formatScore(score);
+            updateDifficultyDisplay(); // 難度會從遊戲狀態中恢復
+            updateHighScoreGapDisplay();
+            
+            // 顯示遊戲統計
+            liveTimeDisplay.textContent = formatTime(gameStats.elapsedTime);
+            liveCoinsDisplay.textContent = gameStats.coinsCollected;
+            
+            startBtn.style.display = 'none';
+            resetHighScoreBtn.style.display = 'none';
+            gameOver.style.display = 'none';
+            pauseOverlay.style.display = 'none';
+            
+            // 顯示短暫的恢復通知
+            showCountdown(async () => {
+                isStarting = false;
+                animationFrameId = requestAnimationFrame(gameLoop);
+                
+                // 請求螢幕喚醒鎖
+                await requestWakeLock();
+                
+                // 啟動自動儲存
+                startAutoSave();
+            }, 500, '繼續遊戲...'); // 較短的倒數時間
+        }
+
         let playerX = 0; // 初始化為 0，startGame 時會正確設置
         let score = 0;
         let targetScore = 0; // 分數動畫目標值
@@ -2429,7 +2544,7 @@
         }
 
         // 顯示倒數計時（遊戲開始前）
-        function showCountdown(callback) {
+        function showCountdown(callback, duration = 1000, customMessage = null) {
             // 防止重複創建倒計時 overlay（如果已有先清理）
             if (countdownOverlay && countdownOverlay.parentNode) {
                 countdownOverlay.remove();
@@ -2471,7 +2586,13 @@
             gameContainer.appendChild(countdownOverlay);
             
             let count = 3;
-            countdownOverlay.textContent = count;
+            // 如果有自訂訊息，顯示訊息而非倒數
+            if (customMessage) {
+                countdownOverlay.textContent = customMessage;
+                count = 1; // 設定為 1 以便快速結束
+            } else {
+                countdownOverlay.textContent = count;
+            }
             
             // 無障礙：偏好減少動畫時，直接顯示數字不播放動畫
             if (!reducedMotion) {
@@ -2510,12 +2631,30 @@
                     }
                     callback(); // 啟動遊戲
                 }
-            }, reducedMotion ? 1500 : 1000); // 減少動畫時延長倒數時間，讓使用者更容易閱讀
+            }, duration); // 使用傳入的倒數時間參數
         }
 
-        function startGame() {
+        function startGame(forceNewGame = false) {
             // 防止快速重複點擊
             if (isStarting) return;
+            
+            // 檢查是否有保存的遊戲狀態，詢問使用者是否要繼續
+            if (!forceNewGame && hasSavedGameState()) {
+                const savedState = loadGameState();
+                if (savedState && savedState.score > 0) {
+                    // 顯示詢問對話框
+                    const continueGame = confirm(`發現保存的遊戲進度！\n\n分數: ${savedState.score}\n時間: ${formatTime(savedState.elapsedTime)}\n難度: ${savedState.difficultyLevel + 1}\n\n是否繼續遊戲？\n（選擇「取消」將開始新遊戲）`);
+                    
+                    if (continueGame) {
+                        // 繼續保存的遊戲
+                        restoreGame(savedState);
+                        return;
+                    } else {
+                        // 清除保存的遊戲，開始新遊戲
+                        clearSavedGameState();
+                    }
+                }
+            }
             
             // 初始化 FPS 計算
             frameCount = 0;
@@ -2654,6 +2793,9 @@
             
             // 使用統一清理函數（不重置遊戲狀態，只清理資源）
             cleanupGame(false);
+            
+            // 清除保存的遊戲狀態（遊戲結束後不再繼續）
+            clearSavedGameState();
             
             // 隱藏暫停畫面
             pauseOverlay.style.display = 'none';
