@@ -1114,6 +1114,23 @@
         
         // 儲存當前遊戲狀態到 localStorage
         function saveGameState() {
+            // 計算每個道具的剩餘時間（用於恢復遊戲時重建計時器）
+            const powerupRemainingTime = {};
+            if (powerupTimers.shield) {
+                // 透過 setTimeout 的 ID 無法取得剩餘時間，這裡簡化處理：
+                // 恢復遊戲時使用預設持續時間，犧牲精確性換取穩定性
+                powerupRemainingTime.shield = GAME_CONFIG.SHIELD_DURATION;
+            }
+            if (powerupTimers['2x']) {
+                powerupRemainingTime['2x'] = GAME_CONFIG.DOUBLE_DURATION;
+            }
+            
+            // 保存無敵狀態剩餘時間
+            let invincibleRemainingTime = null;
+            if (isInvincible && invincibleTimeout) {
+                invincibleRemainingTime = GAME_CONFIG.INVINCIBLE_DURATION;
+            }
+            
             const gameState = {
                 score: score,
                 lives: lives,
@@ -1123,7 +1140,9 @@
                 bombsHit: gameStats.bombsHit,
                 activePowerups: activePowerups,
                 isInvincible: isInvincible,
-                difficultyLevel: getDifficultyLevel()
+                difficultyLevel: getDifficultyLevel(),
+                powerupRemainingTime: powerupRemainingTime,
+                invincibleRemainingTime: invincibleRemainingTime
             };
             setStorageItem('lobsterGameState', JSON.stringify(gameState));
         }
@@ -1200,6 +1219,21 @@
             activePowerups = savedState.activePowerups || { shield: false, '2x': false };
             isInvincible = savedState.isInvincible || false;
             
+            // 恢復道具計時器（如果有保存的道具剩餘時間）
+            const savedPowerupTime = savedState.powerupRemainingTime || {};
+            if (activePowerups.shield && savedPowerupTime.shield) {
+                powerupTimers.shield = setTimeout(() => {
+                    activePowerups.shield = false;
+                    updatePowerupIndicator();
+                }, savedPowerupTime.shield);
+            }
+            if (activePowerups['2x'] && savedPowerupTime['2x']) {
+                powerupTimers['2x'] = setTimeout(() => {
+                    activePowerups['2x'] = false;
+                    updatePowerupIndicator();
+                }, savedPowerupTime['2x']);
+            }
+            
             // 恢復玩家位置
             updateGameBounds();
             playerX = Math.max(PLAYER_LEFT_BOUND, Math.min(PLAYER_RIGHT_BOUND, savedState.playerX || playerX));
@@ -1211,6 +1245,13 @@
             // 如果有無敵狀態，恢復無敵顯示
             if (isInvincible) {
                 player.classList.add('player-invincible');
+                // 恢復無敵計時器
+                const savedInvincibleTime = savedState.invincibleRemainingTime || GAME_CONFIG.INVINCIBLE_DURATION;
+                invincibleTimeout = setTimeout(() => {
+                    isInvincible = false;
+                    player.classList.remove('player-invincible');
+                    invincibleTimeout = null;
+                }, savedInvincibleTime);
             }
             
             pausedByVisibility = false;
