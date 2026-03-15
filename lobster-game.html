@@ -1231,12 +1231,13 @@
 
         // ==================== DOM 元素物件池 (效能優化) ====================
         // 重用 DOM 元素，避免頻繁創建/刪除導致的效能損耗
+        // 增加池大小以支援更高難度遊戲（最高難度生成間隔僅 300ms）
         const bubblePool = [];
-        const POOL_MAX_SIZE = 30; // 池的最大大小
+        const POOL_MAX_SIZE = 50; // 池的最大大小 (從 30 增加到 50)
         
         // 氣泡資料物件池（效能優化：避免每次生成氣泡都創建新的 JS 物件）
         const bubbleDataPool = [];
-        const BUBBLE_DATA_POOL_MAX_SIZE = 30;
+        const BUBBLE_DATA_POOL_MAX_SIZE = 50; // 從 30 增加到 50
 
         // 從池中取得氣泡資料对象，或創建新的
         function getBubbleDataFromPool() {
@@ -1264,7 +1265,7 @@
         
         // 彈出動畫元素物件池（分數彈出、道具彈出）
         const popupPool = [];
-        const POPUP_POOL_MAX_SIZE = 15; // 彈出池的最大大小
+        const POPUP_POOL_MAX_SIZE = 30; // 彈出池的最大大小 (從 15 增加到 30)
 
         // 從池中取得氣泡元素，或創建新的
         function getBubbleFromPool() {
