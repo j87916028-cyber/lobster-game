@@ -649,6 +649,54 @@
             outline-offset: 2px;
         }
         
+        /* 音量滑桿 */
+        #volumeContainer {
+            position: absolute;
+            top: 20px;
+            left: 70px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        #volumeContainer.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        #volumeSlider {
+            width: 80px;
+            height: 6px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: rgba(255,255,255,0.3);
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        #volumeSlider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #00d4ff;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        #volumeSlider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            background: #00d4ff;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+        }
+        #volumeSlider:focus {
+            outline: 2px solid #ffd700;
+            outline-offset: 2px;
+        }
+        
         /* 暫停按鈕 */
         #pauseBtn {
             position: absolute;
@@ -824,6 +872,11 @@
     <div id="gameContainer" role="application" aria-label="遊戲區域">
         <div id="score" role="status" aria-live="polite" aria-label="目前分數">分數: 0</div>
         <button id="soundBtn" title="音效開關" aria-label="音效開關">🔊</button>
+        <div id="volumeContainer">
+            <span style="font-size: 1rem;">🔈</span>
+            <input type="range" id="volumeSlider" min="0" max="100" value="30" aria-label="音量調整">
+            <span style="font-size: 1rem;">🔊</span>
+        </div>
         <button id="pauseBtn" title="暫停 (ESC)" aria-label="暫停遊戲">⏸️</button>
         <button id="helpBtn" title="說明 (H)" aria-label="顯示遊戲說明">❓</button>
         <div id="lives" role="status" aria-live="polite" aria-label="剩餘生命">❤️❤️❤️</div>
@@ -956,6 +1009,7 @@
             // 本地存儲鍵名
             HIGH_SCORE_KEY: 'lobsterGameHighScore',
             SOUND_ENABLED_KEY: 'lobsterGameSoundEnabled',
+            VOLUME_KEY: 'lobsterGameVolume',
             BEST_TIME_KEY: 'lobsterGameBestTime',
             BEST_COINS_KEY: 'lobsterGameBestCoins'
         };
@@ -1392,6 +1446,9 @@
             if (!ctx) return; // AudioContext 不可用
             if (ctx.state === 'suspended') ctx.resume();
             
+            // 使用設定的音量比例（gameVolume 是 0-100，轉換為 0-1）
+            const effectiveVolume = volume * (gameVolume / 100);
+            
             const oscillator = ctx.createOscillator();
             const gainNode = ctx.createGain();
             
@@ -1402,7 +1459,7 @@
             if (endFreq !== startFreq) {
                 oscillator.frequency.exponentialRampToValueAtTime(endFreq, ctx.currentTime + duration);
             }
-            gainNode.gain.setValueAtTime(volume, ctx.currentTime);
+            gainNode.gain.setValueAtTime(effectiveVolume, ctx.currentTime);
             gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
             
             // 播放完畢後顯式斷開連接，避免記憶體洩漏
@@ -1421,6 +1478,9 @@
             if (!ctx) return; // AudioContext 不可用
             if (ctx.state === 'suspended') ctx.resume();
             
+            // 使用設定的音量比例（gameVolume 是 0-100，轉換為 0-1）
+            const effectiveVolume = volume * (gameVolume / 100);
+            
             notes.forEach((freq, i) => {
                 const oscillator = ctx.createOscillator();
                 const gainNode = ctx.createGain();
@@ -1430,7 +1490,7 @@
                 
                 const startTime = ctx.currentTime + (i * duration / notes.length);
                 oscillator.frequency.setValueAtTime(freq, startTime);
-                gainNode.gain.setValueAtTime(volume, startTime);
+                gainNode.gain.setValueAtTime(effectiveVolume, startTime);
                 gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + (duration / notes.length));
                 
                 // 播放完畢後顯式斷開連接，避免記憶體洩漏
@@ -2812,10 +2872,42 @@
         });
         
         // 音效開關
+        const volumeSlider = document.getElementById('volumeSlider');
+        const volumeContainer = document.getElementById('volumeContainer');
+        let gameVolume = parseInt(getStorageItem(GAME_CONFIG.VOLUME_KEY, '30'));
+        volumeSlider.value = gameVolume;
+        
+        // 更新音量圖示
+        function updateVolumeIcon() {
+            if (gameVolume === 0) {
+                volumeContainer.querySelector('span:first-child').textContent = '🔇';
+            } else if (gameVolume < 50) {
+                volumeContainer.querySelector('span:first-child').textContent = '🔈';
+            } else {
+                volumeContainer.querySelector('span:first-child').textContent = '🔊';
+            }
+        }
+        updateVolumeIcon();
+        
+        // 點擊音效按鈕切換音量滑桿顯示
         soundBtn.addEventListener('click', () => {
             soundEnabled = !soundEnabled;
             soundBtn.textContent = soundEnabled ? '🔊' : '🔇';
             setStorageItem(GAME_CONFIG.SOUND_ENABLED_KEY, soundEnabled);
+        });
+        
+        // 音量滑桿控制
+        soundBtn.addEventListener('mouseenter', () => {
+            volumeContainer.classList.add('show');
+        });
+        volumeContainer.addEventListener('mouseleave', () => {
+            volumeContainer.classList.remove('show');
+        });
+        
+        volumeSlider.addEventListener('input', (e) => {
+            gameVolume = parseInt(e.target.value);
+            setStorageItem(GAME_CONFIG.VOLUME_KEY, gameVolume);
+            updateVolumeIcon();
         });
         
         // 暫停按鈕
