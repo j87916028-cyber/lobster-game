@@ -58,6 +58,9 @@
             height: 40px;
             font-size: 30px;
             will-change: transform; /* 硬體加速提示 */
+            touch-action: none; /* 防止觸控設備上的意外滾動/縮放 */
+            user-select: none; /* 防止選取文字 */
+            -webkit-user-select: none;
         }
         @keyframes fall {
             0% { top: -40px; opacity: 1; }
@@ -74,6 +77,8 @@
             animation: scoreFloat 0.8s ease-out forwards;
             pointer-events: none;
             z-index: 100;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         /* 道具彈出動畫 */
@@ -86,6 +91,8 @@
             animation: powerupFloat 1s ease-out forwards;
             pointer-events: none;
             z-index: 100;
+            user-select: none;
+            -webkit-user-select: none;
         }
         
         @keyframes scoreFloat {
