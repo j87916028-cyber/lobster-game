@@ -3024,7 +3024,8 @@
         
         // 更新音量圖示
         function updateVolumeIcon() {
-            if (gameVolume === 0) {
+            // 如果聲音被關閉，統一顯示靜音圖標
+            if (!soundEnabled || gameVolume === 0) {
                 volumeContainer.querySelector('span:first-child').textContent = '🔇';
             } else if (gameVolume < 50) {
                 volumeContainer.querySelector('span:first-child').textContent = '🔈';
@@ -3034,11 +3035,13 @@
         }
         updateVolumeIcon();
         
-        // 點擊音效按鈕切換音量滑桿顯示
+        // 點擊音效按鈕切換聲音開關
         soundBtn.addEventListener('click', () => {
             soundEnabled = !soundEnabled;
             soundBtn.textContent = soundEnabled ? '🔊' : '🔇';
             setStorageItem(GAME_CONFIG.SOUND_ENABLED_KEY, soundEnabled);
+            // 同步更新音量圖標（保持 UI 一致性）
+            updateVolumeIcon();
         });
         
         // 音量滑桿控制
