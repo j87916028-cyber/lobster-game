@@ -2087,7 +2087,8 @@
 
         // 更新道具指示器顯示（使用緩存的 DOM 元素）
         function updatePowerupIndicator() {
-            powerupIndicator.innerHTML = '';
+            // 使用 replaceChildren() 替代 innerHTML = ''，效能更好
+            powerupIndicator.replaceChildren();
             
             if (activePowerups.shield) {
                 const badge = document.createElement('div');
