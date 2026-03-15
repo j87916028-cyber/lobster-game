@@ -926,7 +926,7 @@
             <h2 id="helpTitle">⌨️ 操作說明</h2>
             <div class="help-content">
                 <div><kbd>←</kbd> <kbd>→</kbd> 或 <kbd>A</kbd> <kbd>D</kbd> - 移動龍蝦</div>
-                <div><kbd>Enter</kbd> - 開始遊戲</div>
+                <div><kbd>Enter</kbd> - 開始/繼續/重新開始</div>
                 <div><kbd>ESC</kbd> <kbd>P</kbd> <kbd>Space</kbd> - 暫停/繼續</div>
                 <div><kbd>M</kbd> - 靜音切換</div>
                 <div><kbd>H</kbd> - 顯示說明</div>
@@ -2212,12 +2212,15 @@
                 e.preventDefault();
             }
             
-            // Enter 鍵開始/重新開始遊戲
+            // Enter 鍵開始/重新開始/繼續遊戲
             if (e.key === 'Enter') {
                 if (!gameRunning) {
                     startGame();
                 } else if (gameOver.style.display === 'flex') {
                     startGame();
+                } else if (isPaused && pauseOverlay.style.display === 'flex') {
+                    // 暫停時按 Enter 可以恢復遊戲
+                    togglePause();
                 }
                 return;
             }
