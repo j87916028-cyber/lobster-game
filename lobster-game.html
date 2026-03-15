@@ -2381,6 +2381,10 @@
                         pauseOverlay.style.display = 'none';
                         lastTime = performance.now();
                         animationFrameId = requestAnimationFrame(gameLoop);
+                        // 關閉說明時恢復 AudioContext（與 toggleHelp 函數一致）
+                        if (audioContext && audioContext.state === 'suspended') {
+                            audioContext.resume();
+                        }
                     }
                 } else {
                     togglePause();
