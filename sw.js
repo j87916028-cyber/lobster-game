@@ -3,9 +3,17 @@
 const CACHE_VERSION = 'v' + Date.now();
 const CACHE_NAME = 'lobster-game-' + CACHE_VERSION;
 
+// 離線頁面 HTML 緩存（效能優化：避免每次請求時重新生成 HTML 字串）
+let cachedOfflinePage = null;
+
 // 離線頁面 HTML（當完全沒有緩存時顯示）
 function getOfflinePage() {
-  return `<!DOCTYPE html>
+  // 如果已經緩存，直接返回
+  if (cachedOfflinePage) {
+    return cachedOfflinePage;
+  }
+
+  cachedOfflinePage = `<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
