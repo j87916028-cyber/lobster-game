@@ -1544,6 +1544,30 @@
         const popupPool = [];
         const POPUP_POOL_MAX_SIZE = 50; // 彈出池的最大大小 (從 30 增加到 50，高連擊時避免 DOM 重建)
 
+        // 預先填充物件池（效能優化：遊戲開始前預先創建 DOM 元素，避免遊戲中動態創建導致卡頓）
+        function prefillObjectPools() {
+            const targetPoolSize = 20; // 預先填充的數量
+            const targetPopupPoolSize = 10; // 彈出動畫池目標大小
+            
+            // 預先填充氣泡池
+            while (bubblePool.length < targetPoolSize) {
+                const element = document.createElement('div');
+                element.className = 'bubble';
+                bubblePool.push(element);
+            }
+            
+            // 預先填充氣泡資料池
+            while (bubbleDataPool.length < targetPoolSize) {
+                bubbleDataPool.push({});
+            }
+            
+            // 預先填充彈出動畫池
+            while (popupPool.length < targetPopupPoolSize) {
+                const element = document.createElement('div');
+                popupPool.push(element);
+            }
+        }
+
         // 從池中取得氣泡元素，或創建新的
         function getBubbleFromPool() {
             if (bubblePool.length > 0) {
@@ -2947,6 +2971,9 @@
             
             // 使用統一清理函數（重置遊戲狀態）
             cleanupGame(true);
+            
+            // 預先填充物件池（效能優化：避免遊戲一開始頻繁創建 DOM 元素）
+            prefillObjectPools();
             
             isStarting = true;
             
