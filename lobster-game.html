@@ -2549,6 +2549,48 @@
             }
         });
         
+        // ==================== 觸控滑動手勢支援（改進：更直觀的觸控操作）====================
+        let touchStartX = 0;
+        let touchStartY = 0;
+        const SWIPE_THRESHOLD = 30; // 最小滑動距離
+
+        // 遊戲區域觸摸開始 - 記錄起始位置
+        gameContainer.addEventListener('touchstart', (e) => {
+            // 忽略只有一個手指且目標是按鈕的觸控
+            if (e.target.closest('.touch-btn')) return;
+            
+            if (e.touches.length === 1) {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+            }
+        }, { passive: true });
+
+        // 遊戲區域觸摸結束 - 計算滑動方向
+        gameContainer.addEventListener('touchend', (e) => {
+            // 忽略目標是按鈕的觸控
+            if (e.target.closest('.touch-btn')) return;
+            
+            // 如果遊戲未運行或正在開始中，不處理滑動
+            if (!gameRunning || isStarting || isPaused) return;
+            
+            const touch = e.changedTouches[0];
+            const deltaX = touch.clientX - touchStartX;
+            const deltaY = touch.clientY - touchStartY;
+            
+            // 判斷是否為滑動操作（水平移動大於垂直移動，且超過閾值）
+            if (Math.abs(deltaX) > SWIPE_THRESHOLD && Math.abs(deltaX) > Math.abs(deltaY)) {
+                if (deltaX > 0) {
+                    // 向右滑動
+                    keys.right = true;
+                    setTimeout(() => { keys.right = false; }, 150);
+                } else {
+                    // 向左滑動
+                    keys.left = true;
+                    setTimeout(() => { keys.left = false; }, 150);
+                }
+            }
+        }, { passive: true });
+        
         // 說明按鈕點擊事件
         const helpBtnElement = document.getElementById('helpBtn');
         if (helpBtnElement) {
