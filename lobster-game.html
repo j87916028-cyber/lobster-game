@@ -821,6 +821,7 @@
                 <div><kbd>ESC</kbd> <kbd>P</kbd> <kbd>Space</kbd> - 暫停/繼續</div>
                 <div><kbd>M</kbd> - 靜音切換</div>
                 <div><kbd>H</kbd> - 顯示說明</div>
+                <div class="touch-hint" style="margin-top: 10px; color: #00d4ff;">📱 觸控裝置：使用螢幕下方的按鈕移動</div>
                 <hr style="margin: 15px 0; border-color: #444;">
                 <div>💰 接住金幣和寶石得分</div>
                 <div>🛡️ 護盾 - 無敵 5 秒</div>
@@ -950,6 +951,25 @@
             return { width: rect.width, height: rect.height };
         }
 
+        // 檢測觸控能力並顯示/隱藏觸控按鈕（支援觸控筆電和行動裝置）
+        function updateTouchControlsVisibility() {
+            const touchControls = document.querySelector('.touch-controls');
+            if (!touchControls) return;
+            
+            // 檢測是否為觸控裝置（多種方法檢測）
+            const isTouchDevice = (
+                'ontouchstart' in window || 
+                navigator.maxTouchPoints > 0 || 
+                navigator.msMaxTouchPoints > 0
+            );
+            
+            // 如果是觸控裝置，顯示觸控按鈕
+            if (isTouchDevice) {
+                touchControls.style.display = 'flex';
+            }
+            // 否則依賴 CSS media query 控制（保留原本行為）
+        }
+
         // 安全處理 localStorage（私人瀏覽模式可能會拋出錯誤）
         function getStorageItem(key, defaultValue = null) {
             try {
@@ -983,6 +1003,9 @@
         
         // 初始化最高分顯示（頁面載入時就顯示 localStorage 的值）
         highScoreDisplay.textContent = '最高分: ' + formatScore(highScore);
+        
+        // 初始化觸控控制項顯示（檢測觸控裝置）
+        updateTouchControlsVisibility();
         
         let gameRunning = false;
         let isPaused = false;
