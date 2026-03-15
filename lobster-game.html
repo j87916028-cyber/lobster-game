@@ -1307,6 +1307,12 @@
             gainNode.gain.setValueAtTime(volume, ctx.currentTime);
             gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
             
+            // 播放完畢後顯式斷開連接，避免記憶體洩漏
+            oscillator.onended = () => {
+                oscillator.disconnect();
+                gainNode.disconnect();
+            };
+            
             oscillator.start(ctx.currentTime);
             oscillator.stop(ctx.currentTime + duration);
         }
@@ -1328,6 +1334,12 @@
                 oscillator.frequency.setValueAtTime(freq, startTime);
                 gainNode.gain.setValueAtTime(volume, startTime);
                 gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + (duration / notes.length));
+                
+                // 播放完畢後顯式斷開連接，避免記憶體洩漏
+                oscillator.onended = () => {
+                    oscillator.disconnect();
+                    gainNode.disconnect();
+                };
                 
                 oscillator.start(startTime);
                 oscillator.stop(startTime + (duration / notes.length));
