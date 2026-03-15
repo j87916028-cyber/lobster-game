@@ -2892,6 +2892,7 @@
                 font-size: 5rem;
                 font-weight: bold;
                 color: #00d4ff;
+                cursor: pointer;
             `;
             
             if (!reducedMotion) {
@@ -2902,6 +2903,38 @@
             }
             countdownOverlay.style.cssText = overlayStyle;
             gameContainer.appendChild(countdownOverlay);
+            
+            // 新增：點擊倒數畫面可跳過（提升使用者體驗）
+            const skipCountdown = () => {
+                if (countdownInterval) {
+                    clearInterval(countdownInterval);
+                    countdownInterval = null;
+                }
+                if (countdownOverlay && countdownOverlay.parentNode) {
+                    countdownOverlay.remove();
+                    countdownOverlay = null;
+                }
+                playTone(880, 1760, 0.25, 0.3); // 開始音效
+                callback(); // 立即啟動遊戲
+            };
+            countdownOverlay.addEventListener('click', skipCountdown);
+            countdownOverlay.addEventListener('touchend', (e) => {
+                e.preventDefault(); // 防止觸發遊戲內的觸控移動
+                skipCountdown();
+            });
+            
+            // 添加「點擊跳過」提示文字
+            const skipHint = document.createElement('div');
+            skipHint.textContent = '點擊跳過';
+            skipHint.style.cssText = `
+                position: absolute;
+                bottom: 20px;
+                font-size: 0.9rem;
+                color: rgba(255,255,255,0.6);
+                font-weight: normal;
+                animation: pulse 1.5s infinite;
+            `;
+            countdownOverlay.appendChild(skipHint);
             
             let count = 3;
             // 如果有自訂訊息，顯示訊息而非倒數
@@ -2922,6 +2955,10 @@
                         @keyframes fadeInOut {
                             0%, 100% { opacity: 1; transform: scale(1); }
                             50% { opacity: 0.7; transform: scale(1.1); }
+                        }
+                        @keyframes pulse {
+                            0%, 100% { opacity: 0.6; }
+                            50% { opacity: 1; }
                         }
                     `;
                     document.head.appendChild(style);
