@@ -3112,14 +3112,15 @@
                     wakeLock = await navigator.wakeLock.request('screen');
                     // 當 wake lock 被自動釋放時（例如系統資源不足、用戶按下電源鍵等），
                     // 嘗試重新取得（遊戲仍在執行時）
-                    wakeLock.addEventListener('release', async () => {
+                    wakeLock.addEventListener('release', () => {
                         wakeLock = null;
                         // 只有遊戲仍在執行時才重新請求 wake lock
                         if (gameRunning && !isPaused) {
                             // 使用 setTimeout 延遲重試，避免立即重試失敗
-                            setTimeout(async () => {
+                            // 注意：setTimeout 不應直接傳入 async 函數，改為在內部調用並捕獲錯誤
+                            setTimeout(() => {
                                 if (gameRunning && !isPaused) {
-                                    await requestWakeLock();
+                                    requestWakeLock().catch(() => {});
                                 }
                             }, 1000);
                         }
