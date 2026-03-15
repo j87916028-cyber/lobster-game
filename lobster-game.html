@@ -1382,6 +1382,9 @@
             // 重置暫停狀態
             pausedByHelp = false;
             
+            // 停止自動儲存（防止返回選單後繼續觸發儲存）
+            stopAutoSave();
+            
             // 暫停 AudioContext 以節省資源
             if (audioContext && audioContext.state === 'running') {
                 audioContext.suspend();
@@ -1511,7 +1514,7 @@
         
         // 彈出動畫元素物件池（分數彈出、道具彈出）
         const popupPool = [];
-        const POPUP_POOL_MAX_SIZE = 30; // 彈出池的最大大小 (從 15 增加到 30)
+        const POPUP_POOL_MAX_SIZE = 50; // 彈出池的最大大小 (從 30 增加到 50，高連擊時避免 DOM 重建)
 
         // 從池中取得氣泡元素，或創建新的
         function getBubbleFromPool() {
