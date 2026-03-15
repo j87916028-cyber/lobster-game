@@ -1,6 +1,6 @@
 // 龍蝦大戰 Service Worker - 離線支援
-// 版本號：使用時間戳記自動生成，確保每次部署都有唯一版本
-const CACHE_VERSION = 'v' + Date.now();
+// 版本號：使用固定版本号，避免每次加載都創建新緩存
+const CACHE_VERSION = 'v1.0.1';  // 手动更新版本号以触发缓存更新
 const CACHE_NAME = 'lobster-game-' + CACHE_VERSION;
 
 // 離線頁面 HTML 緩存（效能優化：避免每次請求時重新生成 HTML 字串）
