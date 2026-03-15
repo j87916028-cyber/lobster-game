@@ -3212,6 +3212,78 @@
                 // 當 controller 變化時，重新載入頁面以套用新版本
                 window.location.reload();
             });
+            
+            // ==================== PWA 安裝提示 ====================
+            // 監聽 PWA 安裝可用事件，主動提示用戶安裝
+            let deferredPrompt;
+            window.addEventListener('beforeinstallprompt', (e) => {
+                // 防止默認的迷你安裝條顯示
+                e.preventDefault();
+                // 儲存事件以便後續觸發
+                deferredPrompt = e;
+                // 顯示自定義的安裝提示（遊戲啟動後 3 秒顯示）
+                setTimeout(() => {
+                    showInstallPrompt();
+                }, 3000);
+            });
+            
+            // 顯示自定義安裝提示
+            function showInstallPrompt() {
+                // 如果已經安裝過或提示已顯示，則跳過
+                if (localStorage.getItem('pwaInstallPromptDismissed')) return;
+                if (document.getElementById('installPrompt')) return;
+                
+                const prompt = document.createElement('div');
+                prompt.id = 'installPrompt';
+                prompt.style.cssText = `
+                    position: fixed;
+                    bottom: 20px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: linear-gradient(135deg, #00d4ff, #0099cc);
+                    color: white;
+                    padding: 15px 25px;
+                    border-radius: 25px;
+                    font-size: 16px;
+                    font-weight: bold;
+                    box-shadow: 0 4px 15px rgba(0, 212, 255, 0.4);
+                    z-index: 10000;
+                    cursor: pointer;
+                    animation: slideUp 0.3s ease-out;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                `;
+                prompt.innerHTML = '📱 將遊戲安裝到主螢幕 🦞';
+                
+                // 點擊安裝
+                prompt.addEventListener('click', async () => {
+                    if (!deferredPrompt) return;
+                    // 顯示系統安裝提示
+                    deferredPrompt.prompt();
+                    // 等待用戶回應
+                    const { outcome } = await deferredPrompt.userChoice;
+                    // 清理
+                    deferredPrompt = null;
+                    prompt.remove();
+                    // 記住用戶的選擇
+                    if (outcome === 'dismissed') {
+                        localStorage.setItem('pwaInstallPromptDismissed', 'true');
+                    }
+                });
+                
+                document.body.appendChild(prompt);
+                
+                // 8 秒後自動隱藏
+                setTimeout(() => {
+                    if (prompt.parentNode) {
+                        prompt.style.animation = 'slideDown 0.3s ease-out';
+                        setTimeout(() => {
+                            if (prompt.parentNode) prompt.remove();
+                        }, 300);
+                    }
+                }, 8000);
+            }
         }
         
         // 顯示更新通知
