@@ -1039,7 +1039,8 @@
             SOUND_ENABLED_KEY: 'lobsterGameSoundEnabled',
             VOLUME_KEY: 'lobsterGameVolume',
             BEST_TIME_KEY: 'lobsterGameBestTime',
-            BEST_COINS_KEY: 'lobsterGameBestCoins'
+            BEST_COINS_KEY: 'lobsterGameBestCoins',
+            FPS_VISIBLE_KEY: 'lobsterGameFpsVisible'
         };
         
         const ITEM_EMOJIS = {
@@ -1360,6 +1361,22 @@
         let frameCount = 0;
         let fpsLastTime = 0;
         const fpsDisplay = document.getElementById('fpsDisplay');
+        
+        // FPS 顯示偏好（從本地存儲讀取，預設為顯示）
+        let fpsVisible = getStorageItem(GAME_CONFIG.FPS_VISIBLE_KEY, 'true') !== 'false';
+        fpsDisplay.style.display = fpsVisible ? '' : 'none';
+        
+        // FPS 顯示點擊切換功能（讓玩家可以開關 FPS 顯示）
+        fpsDisplay.style.cursor = 'pointer';
+        fpsDisplay.title = '點擊切換 FPS 顯示';
+        fpsDisplay.setAttribute('role', 'button');
+        fpsDisplay.setAttribute('aria-label', '點擊切換 FPS 顯示');
+        
+        fpsDisplay.addEventListener('click', () => {
+            fpsVisible = !fpsVisible;
+            fpsDisplay.style.display = fpsVisible ? '' : 'none';
+            setStorageItem(GAME_CONFIG.FPS_VISIBLE_KEY, fpsVisible.toString());
+        });
         
         // FPS 自適應難度變數（效能優化：低 FPS 時自動降低難度）
         let lowFpsCount = 0; // 持續低 FPS 計數
