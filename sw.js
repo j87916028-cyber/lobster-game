@@ -1,5 +1,5 @@
 // 龍蝦大戰 Service Worker - 離線支援
-const CACHE_NAME = 'lobster-game-v3';
+const CACHE_NAME = 'lobster-game-v4';
 const urlsToCache = [
   './',
   './lobster-game.html',
@@ -14,11 +14,10 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        console.log('Opened cache');
         return cache.addAll(urlsToCache);
       })
-      .catch((err) => {
-        console.log('Cache install failed:', err);
+      .catch(() => {
+        // 緩存安裝失敗時靜默忽略
       })
   );
   // 立即啟用 service worker
@@ -59,7 +58,6 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME) {
-            console.log('Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })

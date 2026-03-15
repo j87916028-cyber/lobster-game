@@ -15,5 +15,6 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["games", "entertainment"]
+  "categories": ["games", "entertainment"],
+  "permissions": ["periodic-sync"]
 }
