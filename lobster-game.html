@@ -1389,8 +1389,9 @@
                 animationFrameId = null;
             }
             
-            // 重置暫停狀態
+            // 重置暫停狀態（無論 resetState 是否為 true 都需重置）
             pausedByHelp = false;
+            pausedByVisibility = false;
             
             // 停止自動儲存（防止返回選單後繼續觸發儲存）
             stopAutoSave();
@@ -1467,7 +1468,6 @@
                 // 重置遊戲狀態
                 isInvincible = false;
                 invincibleReason = null;
-                pausedByVisibility = false;
                 resetCombo();
                 
                 // 重置分數動畫
