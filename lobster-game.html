@@ -1190,7 +1190,6 @@
 
         // 清除保存的遊戲狀態
         function clearSavedGameState() {
-            setStorageItem('lobsterGameState', null);
             localStorage.removeItem('lobsterGameState');
         }
 
@@ -2185,12 +2184,14 @@
             const playerCenterX = playerX + GAME_CONFIG.PLAYER_WIDTH / 2;
             const playerCenterY = PLAYER_TOP_BOUND + GAME_CONFIG.PLAYER_HEIGHT / 2;
             const collisionDistance = GAME_CONFIG.COLLISION_DISTANCE; // 使用預先計算的碰撞半徑
+            // 效能優化：預先計算時間因子，避免每個氣泡重複除法運算
+            const timeFactor = deltaTime / 16;
 
             for (let i = bubbles.length - 1; i >= 0; i--) {
                 const bubble = bubbles[i];
                 
                 // 使用 deltaTime 保持速度一致
-                bubble.y += bubble.speed * (deltaTime / 16);
+                bubble.y += bubble.speed * timeFactor;
                 // 統一使用 transform 定位（完全避免 Layout 迴流，使用 GPU 加速）
                 bubble.element.style.transform = `translate3d(${bubble.x}px, ${bubble.y}px, 0)`;
 
