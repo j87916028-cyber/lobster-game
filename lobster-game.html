@@ -1898,7 +1898,8 @@
                 playSound('combo');
             }
             
-            // 設置連擊超時
+            // 設置連擊超時（先清除舊計時器避免多個計時器同時運行）
+            if (comboTimeout) clearTimeout(comboTimeout);
             comboTimeout = setTimeout(() => {
                 resetCombo();
             }, COMBO_WINDOW);
