@@ -427,9 +427,14 @@
             background: rgba(255,255,255,0.1);
             padding: 10px 20px;
             border-radius: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
         }
         #gameStatsEnd span {
             color: #00d4ff;
+        }
+        #statAccuracy {
+            color: #ffd700; /* 命中率用金色突出顯示 */
         }
         #restartBtn {
             padding: 15px 30px;
@@ -901,6 +906,7 @@
                 <span>⏱️ <span id="statTimeEnd">0:00</span></span>
                 <span>💰 <span id="statCoinsEnd">0</span></span>
                 <span>💣 <span id="statBombsEnd">0</span></span>
+                <span>🎯 <span id="statAccuracy">0%</span></span>
             </div>
             <div id="bestRecords" aria-label="最佳記錄" style="display: none; margin-top: 10px; padding: 10px; background: rgba(255,215,0,0.15); border-radius: 10px; font-size: 0.9rem;">
                 <div style="color: #ffd700; margin-bottom: 5px;">🏆 最佳記錄</div>
@@ -1057,6 +1063,7 @@
         const statTimeEnd = document.getElementById('statTimeEnd');
         const statCoinsEnd = document.getElementById('statCoinsEnd');
         const statBombsEnd = document.getElementById('statBombsEnd');
+        const statAccuracy = document.getElementById('statAccuracy'); // 新增：命中率顯示
         // 最佳記錄元素
         const bestRecordsDiv = document.getElementById('bestRecords');
         const bestTimeEnd = document.getElementById('bestTimeEnd');
@@ -1137,6 +1144,7 @@
                 playerX: playerX,
                 elapsedTime: gameStats.elapsedTime,
                 coinsCollected: gameStats.coinsCollected,
+                coinsSpawned: gameStats.coinsSpawned,
                 bombsHit: gameStats.bombsHit,
                 activePowerups: activePowerups,
                 isInvincible: isInvincible,
@@ -1210,6 +1218,7 @@
             lives = savedState.lives;
             gameStats = {
                 coinsCollected: savedState.coinsCollected || 0,
+                coinsSpawned: savedState.coinsSpawned || 0,
                 bombsHit: savedState.bombsHit || 0,
                 startTime: Date.now() - (savedState.elapsedTime * 1000), // 調整開始時間以繼續計時
                 elapsedTime: savedState.elapsedTime || 0
@@ -1338,6 +1347,7 @@
         // 遊戲統計數據
         let gameStats = {
             coinsCollected: 0,
+            coinsSpawned: 0, // 新增：追蹤生成的金幣總數（用於計算命中率）
             bombsHit: 0,
             startTime: 0,
             elapsedTime: 0
@@ -2735,6 +2745,7 @@
             // 重置遊戲統計
             gameStats = {
                 coinsCollected: 0,
+                coinsSpawned: 0,
                 bombsHit: 0,
                 startTime: Date.now(),
                 elapsedTime: 0
@@ -2812,6 +2823,11 @@
                 // 取得可用道具（排除愛心如果已滿血，使用緩存優化效能）
                 powerupType = availablePowerupsCache[Math.floor(Math.random() * availablePowerupsCache.length)];
                 bubble.textContent = powerupType.emoji;
+                // 道具也計入可收集的物品（用於命中率計算）
+                gameStats.coinsSpawned++;
+            } else if (!isBad) {
+                // 非壞東西即為好東西（金幣/寶石），計入命中率統計
+                gameStats.coinsSpawned++;
             } else {
                 bubble.textContent = isBad 
                     ? ITEM_EMOJIS.BAD[Math.floor(Math.random() * ITEM_EMOJIS.BAD.length)]
@@ -2877,6 +2893,13 @@
             statTimeEnd.textContent = formatTime(gameStats.elapsedTime);
             statCoinsEnd.textContent = gameStats.coinsCollected;
             statBombsEnd.textContent = gameStats.bombsHit;
+            
+            // 計算並顯示命中率（接到的好東西/看到的好東西總數）
+            const accuracy = gameStats.coinsSpawned > 0 
+                ? Math.round((gameStats.coinsCollected / gameStats.coinsSpawned) * 100) 
+                : 0;
+            statAccuracy.textContent = accuracy + '%';
+            statAccuracy.setAttribute('aria-label', `命中率 ${accuracy}%，接到 ${gameStats.coinsCollected} / 看到 ${gameStats.coinsSpawned} 個金幣/道具`);
             
             // 檢查並更新最佳記錄
             let hasNewBest = false;
