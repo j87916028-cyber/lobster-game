@@ -1334,6 +1334,17 @@
         let frameCount = 0;
         let fpsLastTime = 0;
         const fpsDisplay = document.getElementById('fpsDisplay');
+        
+        // FPS 自適應難度變數（效能優化：低 FPS 時自動降低難度）
+        let lowFpsCount = 0; // 持續低 FPS 計數
+        let fpsAdaptiveLevel = 0; // FPS 自適應難度等級（0 = 正常，負數 = 降低難度）
+        const LOW_FPS_THRESHOLD = 30; // 低 FPS 閾值
+        const LOW_FPS_COUNTS_TO_ADJUST = 3; // 需要連續多少次低 FPS 才調整
+        const FPS_ADAPTIVE_RECOVERY_COUNT = 10; // 需要多少次高 FPS 才恢復難度
+        
+        // FPS 自適應難度系數
+        const FPS_ADAPTIVE_SPAWN_MULTIPLIER = 1.5; // 低 FPS 時生成間隔乘數
+        const FPS_ADAPTIVE_SPEED_MULTIPLIER = 0.7; // 低 FPS 時氣泡速度乘數
         const highScoreGapDisplay = document.getElementById('highScoreGap');
         // 實時統計顯示元素
         const liveTimeDisplay = document.getElementById('liveTime');
@@ -1487,6 +1498,10 @@
                 // 重置鍵盤狀態（防止殘留按鍵導致遊戲一開始就移動）
                 keys.left = false;
                 keys.right = false;
+                
+                // 重置 FPS 自適應難度
+                fpsAdaptiveLevel = 0;
+                lowFpsCount = 0;
             }
         }
 
@@ -1789,13 +1804,24 @@
         // 計算當前生成間隔
         function getCurrentSpawnInterval() {
             const level = getDifficultyLevel();
-            return Math.max(MIN_SPAWN_INTERVAL, INITIAL_SPAWN_INTERVAL - (level * GAME_CONFIG.SPAWN_DECREASE_PER_LEVEL));
+            let interval = Math.max(MIN_SPAWN_INTERVAL, INITIAL_SPAWN_INTERVAL - (level * GAME_CONFIG.SPAWN_DECREASE_PER_LEVEL));
+            // FPS 自適應：低 FPS 時增加生成間隔（降低難度）
+            if (fpsAdaptiveLevel < 0) {
+                interval = Math.min(GAME_CONFIG.INITIAL_SPAWN_INTERVAL, interval * (1 + Math.abs(fpsAdaptiveLevel) * (FPS_ADAPTIVE_SPAWN_MULTIPLIER - 1)));
+            }
+            return interval;
         }
 
         // 計算當前氣泡速度
         function getCurrentBubbleSpeed() {
             const level = getDifficultyLevel();
-            return Math.min(MAX_BUBBLE_SPEED, INITIAL_BUBBLE_SPEED + (level * GAME_CONFIG.SPEED_INCREASE_PER_LEVEL) + (Math.random() * 2));
+            let speed = Math.min(MAX_BUBBLE_SPEED, INITIAL_BUBBLE_SPEED + (level * GAME_CONFIG.SPEED_INCREASE_PER_LEVEL) + (Math.random() * 2));
+            // FPS 自適應：低 FPS 時降低氣泡速度
+            if (fpsAdaptiveLevel < 0) {
+                speed = speed * (1 + fpsAdaptiveLevel * (1 - FPS_ADAPTIVE_SPEED_MULTIPLIER));
+                speed = Math.max(GAME_CONFIG.INITIAL_BUBBLE_SPEED * 0.5, speed);
+            }
+            return speed;
         }
         
         // 道具狀態
@@ -2154,6 +2180,26 @@
                 frameCount = 0;
                 fpsLastTime = timestamp;
                 fpsDisplay.textContent = 'FPS: ' + fps;
+                
+                // FPS 自適應難度調整邏輯
+                if (fps < LOW_FPS_THRESHOLD) {
+                    lowFpsCount++;
+                    if (lowFpsCount >= LOW_FPS_COUNTS_TO_ADJUST && fpsAdaptiveLevel > -2) {
+                        fpsAdaptiveLevel--; // 降低難度
+                        lowFpsCount = 0; // 重置計數
+                    }
+                } else {
+                    // FPS 恢復正常時，逐漸恢復難度
+                    if (fpsAdaptiveLevel < 0) {
+                        lowFpsCount++;
+                        if (lowFpsCount >= FPS_ADAPTIVE_RECOVERY_COUNT) {
+                            fpsAdaptiveLevel++; // 提高難度
+                            lowFpsCount = 0;
+                        }
+                    } else {
+                        lowFpsCount = 0;
+                    }
+                }
             }
 
             const deltaTime = timestamp - lastTime;
