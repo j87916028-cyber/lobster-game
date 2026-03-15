@@ -1809,6 +1809,10 @@
             const deltaTime = timestamp - lastTime;
             lastTime = timestamp;
             
+            // 限制 deltaTime 上限，防止分頁切換後回來時遊戲元素瞬間移動過遠
+            const MAX_DELTA_TIME = 100;
+            const cappedDeltaTime = Math.min(deltaTime, MAX_DELTA_TIME);
+            
             // 更新遊戲時間統計
             gameStats.elapsedTime = (Date.now() - gameStats.startTime) / 1000;
 
@@ -1818,23 +1822,23 @@
 
             // 統一移動邏輯（鍵盤 + 觸控），使用動態邊界
             if (keys.left) {
-                playerX = Math.max(PLAYER_LEFT_BOUND, playerX - MOVE_SPEED * deltaTime);
+                playerX = Math.max(PLAYER_LEFT_BOUND, playerX - MOVE_SPEED * cappedDeltaTime);
             }
             if (keys.right) {
-                playerX = Math.min(PLAYER_RIGHT_BOUND, playerX + MOVE_SPEED * deltaTime);
+                playerX = Math.min(PLAYER_RIGHT_BOUND, playerX + MOVE_SPEED * cappedDeltaTime);
             }
             // 使用 transform 代替 left，利用 GPU 加速避免重排
             const playerOffsetX = playerX - PLAYER_CENTER_OFFSET;
             player.style.transform = `translateX(calc(-50% + ${playerOffsetX}px))`;
 
             // 更新氣泡位置
-            updateBubbles(deltaTime);
+            updateBubbles(cappedDeltaTime);
 
             // 更新分數滾動動畫
             updateScoreAnimation();
 
             // 生成新氣泡（使用動態難度間隔）
-            spawnTimer += deltaTime;
+            spawnTimer += cappedDeltaTime;
             const currentSpawnInterval = getCurrentSpawnInterval();
             if (spawnTimer >= currentSpawnInterval) {
                 spawnBubble();
