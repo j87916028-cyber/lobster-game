@@ -1645,7 +1645,7 @@
             oscillator.stop(ctx.currentTime + duration);
         }
 
-        // 播放多音符音調（用於愛心等複雜音效）
+        // 播放多音符音調（用於愛心等複雜音效）- 效能優化：收集所有 nodes 統一清理
         function playMultiTone(notes, duration, volume = 0.3) {
             const ctx = initAudio();
             if (!ctx) return; // AudioContext 不可用
@@ -1654,6 +1654,11 @@
             // 使用設定的音量比例（gameVolume 是 0-100，轉換為 0-1）
             const effectiveVolume = volume * (gameVolume / 100);
             
+            // 收集所有創建的 nodes，用於統一清理（效能優化：減少記憶體碎片）
+            const allNodes = [];
+            const noteDuration = duration / notes.length;
+            const totalDuration = ctx.currentTime + duration;
+            
             notes.forEach((freq, i) => {
                 const oscillator = ctx.createOscillator();
                 const gainNode = ctx.createGain();
@@ -1661,20 +1666,27 @@
                 oscillator.connect(gainNode);
                 gainNode.connect(ctx.destination);
                 
-                const startTime = ctx.currentTime + (i * duration / notes.length);
+                const startTime = ctx.currentTime + (i * noteDuration);
                 oscillator.frequency.setValueAtTime(freq, startTime);
                 gainNode.gain.setValueAtTime(effectiveVolume, startTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + (duration / notes.length));
-                
-                // 播放完畢後顯式斷開連接，避免記憶體洩漏
-                oscillator.onended = () => {
-                    oscillator.disconnect();
-                    gainNode.disconnect();
-                };
+                gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + noteDuration);
                 
                 oscillator.start(startTime);
-                oscillator.stop(startTime + (duration / notes.length));
+                oscillator.stop(startTime + noteDuration);
+                
+                // 收集 nodes 以便後續統一清理
+                allNodes.push(oscillator, gainNode);
             });
+            
+            // 使用單個 onended 處理程序統一清理所有 nodes（效能優化：減少記憶體佔用）
+            const lastOscillator = allNodes[allNodes.length - 2];
+            if (lastOscillator) {
+                lastOscillator.onended = () => {
+                    allNodes.forEach(node => {
+                        try { node.disconnect(); } catch (e) { /* 忽略斷開錯誤 */ }
+                    });
+                };
+            }
         }
 
         // 播放音效（使用 Web Audio API 生成簡單音效）
