@@ -2083,7 +2083,7 @@
                 }
 
                 // 超出範圍（使用緩存的游戏高度）
-                if (bubble.y > gameHeight + GAME_CONFIG.BUBBLE_SIZE) {
+                if (bubble.y > cachedGameHeight + GAME_CONFIG.BUBBLE_SIZE) {
                     returnBubbleToPool(bubble.element);
                     returnBubbleDataToPool(bubble);
                     bubbles.splice(i, 1);
