@@ -2394,6 +2394,9 @@
         }
 
         document.addEventListener('keydown', (e) => {
+            // 忽略按鍵重複事件，防止按住按鍵時重複觸發
+            if (e.repeat) return;
+            
             // 遊戲控制鍵需要阻止預設行為，防止網頁滾動（效能優化：使用 Set.has() 代替 Array.includes()）
             if (GAME_CONTROL_KEYS.has(e.key)) {
                 e.preventDefault();
@@ -2458,6 +2461,9 @@
         });
 
         document.addEventListener('keyup', (e) => {
+            // 忽略按鍵重複事件，保持一致性
+            if (e.repeat) return;
+            
             if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
                 keys.left = false;
             } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
