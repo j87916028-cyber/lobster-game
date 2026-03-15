@@ -7,7 +7,7 @@
   "display": "standalone",
   "background_color": "#1a1a2e",
   "theme_color": "#00d4ff",
-  "orientation": "portrait-primary",
+  "orientation": "any",
   "icons": [
     {
       "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect fill='%231a1a2e' width='192' height='192'/%3E%3Ctext x='96' y='145' font-size='120' text-anchor='middle'%3E%F0%9F%A6%9E%3C/text%3E%3C/svg%3E",
