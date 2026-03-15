@@ -543,6 +543,23 @@
         #menuBtn:hover {
             background: #ff5252;
         }
+        
+        /* 鍵盤導航焦點樣式（無障礙改善） */
+        #resumeBtn:focus {
+            outline: 3px solid #ffd700;
+            outline-offset: 2px;
+        }
+        
+        #menuBtn:focus {
+            outline: 3px solid #ffd700;
+            outline-offset: 2px;
+        }
+        
+        #resetHighScoreBtn:focus {
+            outline: 3px solid #ffd700;
+            outline-offset: 2px;
+        }
+        
         .instructions {
             margin-top: 20px;
             font-size: 1.2rem;
@@ -794,6 +811,11 @@
         
         #helpOverlay .help-close:hover {
             background: #00bfff;
+        }
+        
+        #helpOverlay .help-close:focus {
+            outline: 3px solid #ffd700;
+            outline-offset: 2px;
         }
     </style>
 </head>
