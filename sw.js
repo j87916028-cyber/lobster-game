@@ -100,11 +100,17 @@ self.addEventListener('fetch', (event) => {
           return response;
         })
         .catch(() => {
-          // 網絡失敗時返回緩存的首頁
-          return caches.match('./lobster-game.html').then(response => {
-            return response || new Response('Offline - Please check your connection', {
-              status: 503,
-              statusText: 'Service Unavailable'
+          // 網絡失敗時，先嘗試匹配用戶請求的頁面，沒有緩存才回退到首頁
+          return caches.match(request).then((cachedResponse) => {
+            if (cachedResponse) {
+              return cachedResponse;
+            }
+            // 請求的頁面沒有緩存，回退到首頁，沒有首頁緩存則返回錯誤提示
+            return caches.match('./lobster-game.html').then(response => {
+              return response || new Response('Offline - Please check your connection', {
+                status: 503,
+                statusText: 'Service Unavailable'
+              });
             });
           });
         })
