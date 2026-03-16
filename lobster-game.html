@@ -1666,6 +1666,7 @@
         // 無敵時間計時器（修復：儲存計時器以便清除）
         let invincibleTimeout = null;
         let invincibleStartTime = null; // 追蹤無敵計時器開始時間
+        let invincibleRemainingTime = 0; // 追蹤暫停時的剩餘無敵時間
 
         // 倒數計時相關變數（用於防止記憶體洩漏）
         let countdownInterval = null;
@@ -2289,7 +2290,38 @@
                 }, remainingTime);
             }
         }
-        
+
+        // 暫停無敵計時器（分頁隱藏時呼叫）
+        function pauseInvincibilityTimer() {
+            if (invincibleTimeout && isInvincible && invincibleStartTime) {
+                // 計算剩餘時間，正確追蹤暫停時的倒數
+                const elapsed = Date.now() - invincibleStartTime;
+                invincibleRemainingTime = Math.max(0, GAME_CONFIG.INVINCIBLE_DURATION - elapsed);
+                clearTimeout(invincibleTimeout);
+                invincibleTimeout = null;
+            }
+        }
+
+        // 恢復無敵計時器（分頁恢復時呼叫）
+        function resumeInvincibilityTimer() {
+            if (isInvincible && !invincibleTimeout) {
+                // 使用剩餘時間而非完整時間，確保遊戲公平性
+                const remainingTime = Math.max(100, invincibleRemainingTime); // 最少給 100ms 避免立即觸發
+                invincibleStartTime = Date.now(); // 重置開始時間
+                invincibleRemainingTime = remainingTime;
+                invincibleTimeout = setTimeout(() => {
+                    isInvincible = false;
+                    player.classList.remove('player-invincible');
+                    // 如果護盾也過期了，移除護盾視覺效果
+                    if (!activePowerups.shield) {
+                        player.classList.remove('player-shield');
+                    }
+                    invincibleTimeout = null;
+                    invincibleStartTime = null;
+                }, remainingTime);
+            }
+        }
+
         // 生成愛心字符串（共用函數，避免重複代碼）
         function getHeartsString(count) {
             return '❤️'.repeat(Math.max(0, count));
@@ -2872,9 +2904,10 @@
                 if (audioContext && audioContext.state === 'running') {
                     audioContext.suspend();
                 }
-                // 暫停時暫停連擊和道具計時器
+                // 暫停時暫停連擊、道具和無敵計時器
                 pauseComboTimer();
                 pausePowerupTimers();
+                pauseInvincibilityTimer();
             } else {
                 // 計算暫停時長並累加到總暫停時間
                 if (pauseStartTime > 0) {
@@ -2893,9 +2926,10 @@
                 if (audioContext && audioContext.state === 'suspended') {
                     audioContext.resume();
                 }
-                // 恢復時恢復連擊和道具計時器
+                // 恢復時恢復連擊、道具和無敵計時器
                 resumeComboTimer();
                 resumePowerupTimers();
+                resumeInvincibilityTimer();
             }
             // 暫停時取消當前的動畫框架，防止暫停期間堆疊調用
             if (isPaused && animationFrameId) {
@@ -3160,9 +3194,10 @@
                     // 釋放螢幕喚醒鎖
                     releaseWakeLock();
 
-                    // 暫停連擊和道具計時器，避免使用者離開時損失時間
+                    // 暫停連擊、道具和無敵計時器，避免使用者離開時損失時間
                     pauseComboTimer();
                     pausePowerupTimers();
+                    pauseInvincibilityTimer();
                 }
             } else {
                 // 分頁恢復顯示時，只有因為分頁隱藏而暫停時才恢復
@@ -3187,9 +3222,10 @@
                     // 恢復時請求螢幕喚醒鎖
                     requestWakeLock();
 
-                    // 恢復連擊和道具計時器
+                    // 恢復連擊、道具和無敵計時器
                     resumeComboTimer();
                     resumePowerupTimers();
+                    resumeInvincibilityTimer();
                 }
             }
         });
