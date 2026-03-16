@@ -1506,9 +1506,11 @@
                 audioContext.suspend();
             }
             
-            // 清除所有道具計時器
+            // 清除所有道具計時器和追蹤變數（合併優化：避免重複清除 powerupTimers）
             Object.values(powerupTimers).forEach(t => clearTimeout(t));
             powerupTimers = {};
+            powerupStartTimes = {};
+            powerupRemainingTimes = {};
             
             // 清除連擊計時器和無敵計時器
             if (comboTimeout) {
@@ -1522,12 +1524,6 @@
                 invincibleTimeout = null;
             }
             invincibleStartTime = null;
-            
-            // 清除道具計時器並重置追蹤變數
-            Object.values(powerupTimers).forEach(t => clearTimeout(t));
-            powerupTimers = {};
-            powerupStartTimes = {};
-            powerupRemainingTimes = {};
             
             // 清除倒數計時（防止記憶體洩漏）
             if (countdownInterval) {
