@@ -994,8 +994,8 @@
             <h2 id="helpTitle">⌨️ 操作說明</h2>
             <div class="help-content">
                 <div><kbd>←</kbd> <kbd>→</kbd> 或 <kbd>A</kbd> <kbd>D</kbd> - 移動龍蝦</div>
-                <div><kbd>Enter</kbd> - 開始/繼續/重新開始</div>
-                <div><kbd>ESC</kbd> <kbd>P</kbd> <kbd>Space</kbd> - 暫停/繼續</div>
+                <div><kbd>Enter</kbd> <kbd>Space</kbd> - 開始/繼續/重新開始</div>
+                <div><kbd>ESC</kbd> <kbd>P</kbd> - 暫停/繼續</div>
                 <div><kbd>M</kbd> - 靜音切換</div>
                 <div><kbd>H</kbd> - 顯示說明</div>
                 <div class="touch-hint" style="margin-top: 10px; color: #00d4ff;">📱 觸控裝置：使用螢幕下方的按鈕，或左右滑動螢幕來移動龍蝦</div>
@@ -2552,15 +2552,31 @@
             
             // Enter 鍵開始/重新開始/繼續遊戲
             if (e.key === 'Enter') {
-                if (!gameRunning) {
+                handleStartOrResume();
+                return;
+            }
+            
+            // 空白鍵開始/重新開始/繼續遊戲（僅在遊戲未開始、遊戲結束或暫停時有效）
+            // 遊戲進行中時，空白鍵會由下方的暫停處理代碼接管
+            if (e.key === ' ') {
+                if (!gameRunning || isStarting || gameOver.style.display === 'flex' || (isPaused && pauseOverlay.style.display === 'flex')) {
+                    handleStartOrResume();
+                    return;
+                }
+            }
+            
+            // 新增：統一的開始/繼續遊戲處理函數
+            function handleStartOrResume() {
+                if (!gameRunning || isStarting) {
+                    // 遊戲未開始或正在開始中，開始新遊戲
                     startGame();
                 } else if (gameOver.style.display === 'flex') {
+                    // 遊戲結束，重新開始
                     startGame();
                 } else if (isPaused && pauseOverlay.style.display === 'flex') {
-                    // 暫停時按 Enter 可以恢復遊戲
+                    // 暫停時恢復遊戲
                     togglePause();
                 }
-                return;
             }
             
             // M 鍵切換靜音 - 在遊戲控制之前處理，確保暫停時也能使用
