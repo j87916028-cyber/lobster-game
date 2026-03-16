@@ -485,6 +485,9 @@
         #bestRecords .best-coins {
             margin-left: 10px;
         }
+        #bestRecords .best-combo {
+            margin-left: 10px;
+        }
         #gameStatsEnd {
             display: flex;
             gap: 15px;
@@ -1140,6 +1143,7 @@
                 <div class="best-records-title">🏆 最佳記錄</div>
                 <span>⏱️ <span id="bestTimeEnd">0:00</span></span>
                 <span class="best-coins">💰 <span id="bestCoinsEnd">0</span></span>
+                <span class="best-combo">🔥 <span id="bestComboEnd">0</span></span>
             </div>
             <button id="restartBtn" aria-label="再玩一次">再玩一次</button>
             <button id="shareBtn" class="share-btn" aria-label="分享成績">📤 分享成績</button>
@@ -1258,6 +1262,7 @@
             VOLUME_KEY: 'lobsterGameVolume',
             BEST_TIME_KEY: 'lobsterGameBestTime',
             BEST_COINS_KEY: 'lobsterGameBestCoins',
+            BEST_COMBO_KEY: 'lobsterGameBestCombo',
             FPS_VISIBLE_KEY: 'lobsterGameFpsVisible'
         };
         
@@ -1310,6 +1315,7 @@
         const bestRecordsDiv = document.getElementById('bestRecords');
         const bestTimeEnd = document.getElementById('bestTimeEnd');
         const bestCoinsEnd = document.getElementById('bestCoinsEnd');
+        const bestComboEnd = document.getElementById('bestComboEnd'); // 最佳連擊顯示元素
 
         // 動態獲取遊戲容器尺寸（支援 RWD 響應式設計）
         function getGameDimensions() {
@@ -1651,6 +1657,7 @@
         let highScore = parseInt(getStorageItem(GAME_CONFIG.HIGH_SCORE_KEY, '0')) || 0;
         let bestTime = parseFloat(getStorageItem(GAME_CONFIG.BEST_TIME_KEY, '0')) || 0;
         let bestCoins = parseInt(getStorageItem(GAME_CONFIG.BEST_COINS_KEY, '0')) || 0;
+        let bestComboPersistent = parseInt(getStorageItem(GAME_CONFIG.BEST_COMBO_KEY, '0')) || 0; // 最佳連擊（永久儲存）
         
         // 初始化最高分顯示（頁面載入時就顯示 localStorage 的值）
         highScoreDisplay.textContent = '最高分: ' + formatScore(highScore);
@@ -3729,12 +3736,19 @@
                 setStorageItem(GAME_CONFIG.BEST_COINS_KEY, bestCoins);
                 hasNewBest = true;
             }
+            // 儲存最佳連擊記錄（永久儲存）
+            if (bestCombo > bestComboPersistent) {
+                bestComboPersistent = bestCombo;
+                setStorageItem(GAME_CONFIG.BEST_COMBO_KEY, bestComboPersistent);
+                hasNewBest = true;
+            }
             
             // 顯示最佳記錄
-            if (bestTime > 0 || bestCoins > 0) {
+            if (bestTime > 0 || bestCoins > 0 || bestComboPersistent > 0) {
                 bestRecordsDiv.classList.add('visible');
                 bestTimeEnd.textContent = formatTime(bestTime);
                 bestCoinsEnd.textContent = bestCoins;
+                bestComboEnd.textContent = bestComboPersistent > 0 ? `${bestComboPersistent} (x${Math.min(MAX_COMBO_MULTIPLIER, 1 + Math.floor(bestComboPersistent / 3))})` : '0';
                 if (hasNewBest) {
                     bestRecordsDiv.classList.add('highlight');
                 }
