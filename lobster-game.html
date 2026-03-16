@@ -1335,19 +1335,23 @@
         function saveGameState() {
             // 計算每個道具的剩餘時間（用於恢復遊戲時重建計時器）
             const powerupRemainingTime = {};
-            if (powerupTimers.shield) {
-                // 透過 setTimeout 的 ID 無法取得剩餘時間，這裡簡化處理：
-                // 恢復遊戲時使用預設持續時間，犧牲精確性換取穩定性
-                powerupRemainingTime.shield = GAME_CONFIG.SHIELD_DURATION;
+            if (powerupTimers.shield && powerupStartTimes.shield) {
+                // 計算實際剩餘時間
+                const elapsed = Date.now() - powerupStartTimes.shield;
+                powerupRemainingTime.shield = Math.max(0, GAME_CONFIG.SHIELD_DURATION - elapsed);
             }
-            if (powerupTimers['2x']) {
-                powerupRemainingTime['2x'] = GAME_CONFIG.DOUBLE_DURATION;
+            if (powerupTimers['2x'] && powerupStartTimes['2x']) {
+                // 計算實際剩餘時間
+                const elapsed = Date.now() - powerupStartTimes['2x'];
+                powerupRemainingTime['2x'] = Math.max(0, GAME_CONFIG.DOUBLE_DURATION - elapsed);
             }
             
             // 保存無敵狀態剩餘時間
             let invincibleRemainingTime = null;
-            if (isInvincible && invincibleTimeout) {
-                invincibleRemainingTime = GAME_CONFIG.INVINCIBLE_DURATION;
+            if (isInvincible && invincibleTimeout && invincibleStartTime) {
+                // 計算實際剩餘時間
+                const elapsed = Date.now() - invincibleStartTime;
+                invincibleRemainingTime = Math.max(0, GAME_CONFIG.INVINCIBLE_DURATION - elapsed);
             }
             
             const gameState = {
@@ -1447,6 +1451,7 @@
             // 恢復道具計時器（如果有保存的道具剩餘時間）
             const savedPowerupTime = savedState.powerupRemainingTime || {};
             if (activePowerups.shield && savedPowerupTime.shield) {
+                powerupStartTimes.shield = Date.now(); // 記錄恢复後的開始時間
                 powerupTimers.shield = setTimeout(() => {
                     activePowerups.shield = false;
                     player.classList.remove('player-shield');
@@ -1456,6 +1461,7 @@
                 player.classList.add('player-shield');
             }
             if (activePowerups['2x'] && savedPowerupTime['2x']) {
+                powerupStartTimes['2x'] = Date.now(); // 記錄恢复後的開始時間
                 powerupTimers['2x'] = setTimeout(() => {
                     activePowerups['2x'] = false;
                     updatePowerupIndicator();
@@ -1476,10 +1482,12 @@
                 player.classList.add('player-invincible');
                 // 恢復無敵計時器
                 const savedInvincibleTime = savedState.invincibleRemainingTime || GAME_CONFIG.INVINCIBLE_DURATION;
+                invincibleStartTime = Date.now(); // 記錄恢复後的開始時間
                 invincibleTimeout = setTimeout(() => {
                     isInvincible = false;
                     player.classList.remove('player-invincible');
                     invincibleTimeout = null;
+                    invincibleStartTime = null;
                 }, savedInvincibleTime);
             }
             
