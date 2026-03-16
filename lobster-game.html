@@ -1506,10 +1506,6 @@
                 audioContext.suspend();
             }
             
-            // 清除所有道具計時器
-            Object.values(powerupTimers).forEach(t => clearTimeout(t));
-            powerupTimers = {};
-            
             // 清除連擊計時器和無敵計時器
             if (comboTimeout) {
                 clearTimeout(comboTimeout);
@@ -2992,6 +2988,13 @@
         window.addEventListener('beforeunload', () => {
             if (gameRunning && !isPaused) {
                 saveGameState();
+            }
+        });
+
+        // 處理瀏覽器返回按鈕（提升行動裝置體驗）
+        window.addEventListener('popstate', () => {
+            if (gameRunning && !isPaused) {
+                togglePause();
             }
         });
 
