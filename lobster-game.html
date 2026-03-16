@@ -646,6 +646,13 @@
             transform: scale(0.9);
             background: rgba(0, 212, 255, 0.6);
         }
+        
+        /* 按鈕被按下時的持續視覺回饋（JavaScript 驅動）*/
+        .touch-btn.pressed {
+            transform: scale(0.9);
+            background: rgba(0, 212, 255, 0.8);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.8);
+        }
 
         /* 鍵盤焦點樣式（無障礙支援）*/
         .touch-btn:focus {
@@ -1737,6 +1744,9 @@
             if (typeof isTouchingRight !== 'undefined') {
                 isTouchingRight = false;
             }
+            // 新增：重置按鈕視覺狀態（防止遊戲結束時按鈕仍顯示按下狀態）
+            btnLeft.classList.remove('pressed');
+            btnRight.classList.remove('pressed');
             
             // 重置鍵盤狀態（防止殘留按鍵導致後續操作異常）
             keys.left = false;
@@ -3036,15 +3046,23 @@
                 if (direction === 'left') {
                     isTouchingLeft = true;
                     if (touchTimeoutLeft) clearTimeout(touchTimeoutLeft);
+                    btnLeft.classList.add('pressed'); // 新增：視覺回饋
                 } else {
                     isTouchingRight = true;
                     if (touchTimeoutRight) clearTimeout(touchTimeoutRight);
+                    btnRight.classList.add('pressed'); // 新增：視覺回饋
                 }
             } else if (e.type === 'mousedown') {
                 // 如果該方向正在觸控中，忽略滑鼠事件
                 if (direction === 'left' && isTouchingLeft) return;
                 if (direction === 'right' && isTouchingRight) return;
                 e.preventDefault(); // 防止文字選取
+                // 滑鼠按下時也提供視覺回饋
+                if (direction === 'left') {
+                    btnLeft.classList.add('pressed');
+                } else {
+                    btnRight.classList.add('pressed');
+                }
             }
             // 遊戲未運行或暫停時不處理觸控移動
             if (!gameRunning || isPaused) return;
@@ -3061,23 +3079,32 @@
                 if (touchTimeoutLeft) clearTimeout(touchTimeoutLeft);
                 touchTimeoutLeft = setTimeout(() => { isTouchingLeft = false; }, 100);
                 keys.left = false;
+                btnLeft.classList.remove('pressed'); // 新增：移除視覺回饋
             } else if (direction === 'right') {
                 if (touchTimeoutRight) clearTimeout(touchTimeoutRight);
                 touchTimeoutRight = setTimeout(() => { isTouchingRight = false; }, 100);
                 keys.right = false;
+                btnRight.classList.remove('pressed'); // 新增：移除視覺回饋
             }
         }
 
-        // 左按鈕 - 只使用 touch 事件，避免同時觸發 touch 和 mouse 事件導致的重複處理
-        // 效能優化：移除了多餘的 mouse 事件監聽器，減少事件處理開銷
+        // 左按鈕 - 觸控事件
         btnLeft.addEventListener('touchstart', (e) => handleTouchStart('left', e), { passive: false });
         btnLeft.addEventListener('touchend', () => handleTouchEnd('left'));
         btnLeft.addEventListener('touchcancel', () => handleTouchEnd('left')); // 觸控中斷時重置
+        // 新增：滑鼠事件處理（提供視覺回饋）
+        btnLeft.addEventListener('mousedown', (e) => handleTouchStart('left', e));
+        btnLeft.addEventListener('mouseup', () => handleTouchEnd('left'));
+        btnLeft.addEventListener('mouseleave', () => handleTouchEnd('left'));
 
-        // 右按鈕 - 同上
+        // 右按鈕 - 觸控事件
         btnRight.addEventListener('touchstart', (e) => handleTouchStart('right', e), { passive: false });
         btnRight.addEventListener('touchend', () => handleTouchEnd('right'));
         btnRight.addEventListener('touchcancel', () => handleTouchEnd('right')); // 觸控中斷時重置
+        // 新增：滑鼠事件處理（提供視覺回饋）
+        btnRight.addEventListener('mousedown', (e) => handleTouchStart('right', e));
+        btnRight.addEventListener('mouseup', () => handleTouchEnd('right'));
+        btnRight.addEventListener('mouseleave', () => handleTouchEnd('right'));
 
         // 暫停按鈕（使用標誌位防止 touchstart 和 click 重複觸發）
         let pauseHandlerTimeout = null;
