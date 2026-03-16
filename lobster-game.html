@@ -140,6 +140,26 @@
             will-change: opacity; /* GPU 加速提示 */
         }
         
+        /* 護盾視覺效果 - 玩家周圍的光環 */
+        .player-shield::after {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            border: 3px solid rgba(0, 191, 255, 0.8);
+            border-radius: 50%;
+            animation: shieldPulse 1s infinite ease-in-out;
+            pointer-events: none;
+            box-shadow: 0 0 20px rgba(0, 191, 255, 0.6), inset 0 0 15px rgba(0, 191, 255, 0.3);
+        }
+        
+        @keyframes shieldPulse {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.1); opacity: 1; }
+        }
+        
         /* 道具效果指示器 */
         #powerupIndicator {
             position: absolute;
@@ -1275,8 +1295,11 @@
             if (activePowerups.shield && savedPowerupTime.shield) {
                 powerupTimers.shield = setTimeout(() => {
                     activePowerups.shield = false;
+                    player.classList.remove('player-shield');
                     updatePowerupIndicator();
                 }, savedPowerupTime.shield);
+                // 恢復時也需要顯示護盾視覺效果
+                player.classList.add('player-shield');
             }
             if (activePowerups['2x'] && savedPowerupTime['2x']) {
                 powerupTimers['2x'] = setTimeout(() => {
@@ -2047,6 +2070,7 @@
                 powerupTimers.shield = setTimeout(() => {
                     activePowerups.shield = false;
                     updatePowerupIndicator();
+                    player.classList.remove('player-shield');
                     if (!activePowerups['2x']) {
                         player.classList.remove('player-invincible');
                     }
@@ -2282,7 +2306,7 @@
                 activePowerups.shield = true;
                 isInvincible = true;
                 invincibleReason = 'shield'; // 設置無敵原因為護盾
-                player.classList.add('player-invincible');
+                player.classList.add('player-invincible', 'player-shield');
                 updatePowerupIndicator();
                 
                 // 清除之前的計時器
@@ -2294,7 +2318,7 @@
                     if (invincibleReason === 'shield') {
                         isInvincible = false;
                         invincibleReason = null;
-                        player.classList.remove('player-invincible');
+                        player.classList.remove('player-invincible', 'player-shield');
                     }
                     // 如果同時處於受傷無敵狀態，保留無敵效果
                     else if (invincibleReason === 'damage') {
