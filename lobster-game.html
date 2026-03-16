@@ -2793,8 +2793,10 @@
             const collisionDistance = GAME_CONFIG.COLLISION_DISTANCE; // 使用預先計算的碰撞半徑
             // 效能優化：預先計算時間因子，避免每個氣泡重複除法運算
             const timeFactor = deltaTime / 16;
+            // 效能優化：使用標記-清除模式收集要移除的氣泡，減少 splice 調用次數
+            const bubblesToRemove = [];
 
-            for (let i = bubbles.length - 1; i >= 0; i--) {
+            for (let i = 0; i < bubbles.length; i++) {
                 const bubble = bubbles[i];
                 
                 // 使用 deltaTime 保持速度一致
@@ -2814,17 +2816,15 @@
                     
                     if (bubble.isBad) {
                         handleDamage(); // 改為扣血而非直接結束
-                        returnBubbleToPool(bubble.element);
-                        returnBubbleDataToPool(bubble);
-                        bubbles.splice(i, 1);
+                        // 標記氣泡為待移除
+                        bubblesToRemove.push(bubble);
                         continue; // 繼續檢查其他氣泡的碰撞
                     } else {
                         // 處理道具
                         if (bubble.isPowerup) {
                             activatePowerup(bubble.powerupType, bubble.x, bubble.y);
-                            returnBubbleToPool(bubble.element);
-                            returnBubbleDataToPool(bubble);
-                            bubbles.splice(i, 1);
+                            // 標記氣泡為待移除
+                            bubblesToRemove.push(bubble);
                             continue;
                         }
                         
@@ -2854,17 +2854,28 @@
                         showScorePopup(bubble.x, bubble.y, points, popupText);
                         // 玩家動畫
                         triggerPlayerCatchAnimation();
-                        returnBubbleToPool(bubble.element);
-                        returnBubbleDataToPool(bubble);
-                        bubbles.splice(i, 1);
+                        // 標記氣泡為待移除
+                        bubblesToRemove.push(bubble);
                     }
                 }
 
                 // 超出範圍（使用緩存的游戏高度）
                 if (bubble.y > cachedGameHeight + GAME_CONFIG.BUBBLE_SIZE) {
-                    returnBubbleToPool(bubble.element);
-                    returnBubbleDataToPool(bubble);
-                    bubbles.splice(i, 1);
+                    // 標記氣泡為待移除
+                    bubblesToRemove.push(bubble);
+                }
+            }
+
+            // 效能優化：一次性處理所有要移除的氣泡，使用 filter 代替多次 splice
+            if (bubblesToRemove.length > 0) {
+                const bubblesToRemoveSet = new Set(bubblesToRemove);
+                // 回收所有標記的氣泡並從陣列中移除
+                for (let i = bubbles.length - 1; i >= 0; i--) {
+                    if (bubblesToRemoveSet.has(bubbles[i])) {
+                        returnBubbleToPool(bubbles[i].element);
+                        returnBubbleDataToPool(bubbles[i]);
+                        bubbles.splice(i, 1);
+                    }
                 }
             }
         }
