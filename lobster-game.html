@@ -1421,6 +1421,7 @@
         // 連擊系統
         let comboCount = 0;
         let comboTimeout = null;
+        let comboStartTime = null; // 追蹤連擊計時器開始時間
         let comboMultiplier = 1;
         let comboRemainingTime = 0; // 追蹤暫停時的剩餘連擊時間
         const COMBO_WINDOW = 1500; // 連擊有效時間 (ms)
@@ -1441,6 +1442,7 @@
 
         // 無敵時間計時器（修復：儲存計時器以便清除）
         let invincibleTimeout = null;
+        let invincibleStartTime = null; // 追蹤無敵計時器開始時間
 
         // 倒數計時相關變數（用於防止記憶體洩漏）
         let countdownInterval = null;
@@ -1476,10 +1478,19 @@
                 clearTimeout(comboTimeout);
                 comboTimeout = null;
             }
+            comboStartTime = null;
+            comboRemainingTime = 0;
             if (invincibleTimeout) {
                 clearTimeout(invincibleTimeout);
                 invincibleTimeout = null;
             }
+            invincibleStartTime = null;
+            
+            // 清除道具計時器並重置追蹤變數
+            Object.values(powerupTimers).forEach(t => clearTimeout(t));
+            powerupTimers = {};
+            powerupStartTimes = {};
+            powerupRemainingTimes = {};
             
             // 清除倒數計時（防止記憶體洩漏）
             if (countdownInterval) {
@@ -1917,6 +1928,7 @@
             '2x': false
         };
         let powerupTimers = {};
+        let powerupStartTimes = {}; // 追蹤道具計時器開始時間
         let powerupRemainingTimes = {}; // 追蹤暫停時的道具剩餘時間
 
         // 格式化分數顯示（千分位）
@@ -1962,6 +1974,8 @@
             
             // 設置連擊超時（先清除舊計時器避免多個計時器同時運行）
             if (comboTimeout) clearTimeout(comboTimeout);
+            comboStartTime = Date.now(); // 記錄計時器開始時間
+            comboRemainingTime = COMBO_WINDOW; // 重置剩餘時間
             comboTimeout = setTimeout(() => {
                 resetCombo();
             }, COMBO_WINDOW);
@@ -1971,6 +1985,8 @@
         function resetCombo() {
             comboCount = 0;
             comboMultiplier = 1;
+            comboStartTime = null;
+            comboRemainingTime = 0;
             comboIndicator.classList.remove('show');
             if (comboTimeout) clearTimeout(comboTimeout);
             comboTimeout = null;
@@ -1979,34 +1995,39 @@
         // 暫停連擊計時器（分頁隱藏時呼叫）
         function pauseComboTimer() {
             if (comboTimeout && comboCount >= 2) {
-                // 使用 setTimeout 的剩餘時間無法直接取得，這裡簡化處理：
-                // 暫停時儲存當前連擊狀態，恢復時給予完整 COMBO_WINDOW 時間
-                // 這是一個 UX 優化：使用者離開時不應該損失連擊
+                // 計算剩餘時間，正確追蹤暫停時的倒數
+                const elapsed = Date.now() - comboStartTime;
+                comboRemainingTime = Math.max(0, COMBO_WINDOW - elapsed);
                 clearTimeout(comboTimeout);
                 comboTimeout = null;
-                // comboRemainingTime 已經在 handleCombo 中更新，這裡不需要再做什麼
             }
         }
 
         // 恢復連擊計時器（分頁恢復時呼叫）
         function resumeComboTimer() {
             if (comboCount >= 2 && !comboTimeout) {
-                // 恢復時給予完整的連擊窗口，讓使用者不會因為離開而被懲罰
+                // 使用剩餘時間而非完整時間，確保遊戲公平性
+                const remainingTime = Math.max(100, comboRemainingTime); // 最少給 100ms 避免立即觸發
+                comboStartTime = Date.now(); // 重置開始時間
+                comboRemainingTime = remainingTime;
                 comboTimeout = setTimeout(() => {
                     resetCombo();
-                }, COMBO_WINDOW);
+                }, remainingTime);
             }
         }
 
         // 暫停所有道具計時器
         function pausePowerupTimers() {
-            // 記錄每個道具的剩餘時間（無法直接取得，改為記錄 active 狀態）
-            // 清除計時器暫停倒數
-            if (powerupTimers.shield) {
+            // 計算並儲存每個道具的剩餘時間
+            if (powerupTimers.shield && activePowerups.shield) {
+                const elapsed = Date.now() - (powerupStartTimes.shield || 0);
+                powerupRemainingTimes.shield = Math.max(0, GAME_CONFIG.SHIELD_DURATION - elapsed);
                 clearTimeout(powerupTimers.shield);
                 powerupTimers.shield = null;
             }
-            if (powerupTimers['2x']) {
+            if (powerupTimers['2x'] && activePowerups['2x']) {
+                const elapsed = Date.now() - (powerupStartTimes['2x'] || 0);
+                powerupRemainingTimes['2x'] = Math.max(0, GAME_CONFIG.DOUBLE_DURATION - elapsed);
                 clearTimeout(powerupTimers['2x']);
                 powerupTimers['2x'] = null;
             }
@@ -2014,9 +2035,10 @@
 
         // 恢復所有道具計時器
         function resumePowerupTimers() {
-            // 恢復時重新啟動道具計時器（給予完整持續時間）
-            // 這確保使用者不會因為暫停而損失道具效果時間
+            // 使用剩餘時間而非完整時間，確保遊戲公平性
             if (activePowerups.shield) {
+                const remainingTime = Math.max(100, powerupRemainingTimes.shield || GAME_CONFIG.SHIELD_DURATION);
+                powerupStartTimes.shield = Date.now();
                 powerupTimers.shield = setTimeout(() => {
                     activePowerups.shield = false;
                     updatePowerupIndicator();
@@ -2025,14 +2047,16 @@
                     }
                     isInvincible = false;
                     powerupTimers.shield = null;
-                }, GAME_CONFIG.SHIELD_DURATION);
+                }, remainingTime);
             }
             if (activePowerups['2x']) {
+                const remainingTime = Math.max(100, powerupRemainingTimes['2x'] || GAME_CONFIG.DOUBLE_DURATION);
+                powerupStartTimes['2x'] = Date.now();
                 powerupTimers['2x'] = setTimeout(() => {
                     activePowerups['2x'] = false;
                     updatePowerupIndicator();
                     powerupTimers['2x'] = null;
-                }, GAME_CONFIG.DOUBLE_DURATION);
+                }, remainingTime);
             }
         }
         
@@ -2201,6 +2225,7 @@
             } else {
                 // 無敵時間 1 秒，遊戲繼續進行（修復：儲存計時器以便清除）
                 if (invincibleTimeout) clearTimeout(invincibleTimeout);
+                invincibleStartTime = Date.now(); // 記錄開始時間
                 invincibleTimeout = setTimeout(() => {
                     if (lives > 0) {
                         player.classList.remove('player-invincible');
@@ -2257,6 +2282,7 @@
                 
                 // 清除之前的計時器
                 if (powerupTimers.shield) clearTimeout(powerupTimers.shield);
+                powerupStartTimes.shield = Date.now(); // 記錄開始時間
                 powerupTimers.shield = setTimeout(() => {
                     activePowerups.shield = false;
                     // 只移除護盾造成的無敵，不影響受傷無敵狀態
@@ -2278,6 +2304,7 @@
                 
                 // 清除之前的計時器
                 if (powerupTimers['2x']) clearTimeout(powerupTimers['2x']);
+                powerupStartTimes['2x'] = Date.now(); // 記錄開始時間
                 powerupTimers['2x'] = setTimeout(() => {
                     activePowerups['2x'] = false;
                     updatePowerupIndicator();
