@@ -1932,6 +1932,11 @@
         // 音效開關（從本地存儲讀取設置，預設為開啟）
         let soundEnabled = getStorageItem(GAME_CONFIG.SOUND_ENABLED_KEY, 'true') !== 'false';
         soundBtn.textContent = soundEnabled ? '🔊' : '🔇';
+        
+        // Debounced 保存音效開關狀態（效能優化：避免快速切換時頻繁寫入 localStorage）
+        const debouncedSaveSoundEnabled = debounce((value) => {
+            setStorageItem(GAME_CONFIG.SOUND_ENABLED_KEY, value);
+        }, 300);
 
         // 初始化音效系統（添加錯誤處理，支援私人瀏覽模式）
         function initAudio() {
@@ -2774,7 +2779,7 @@
             if (e.key === 'm' || e.key === 'M') {
                 soundEnabled = !soundEnabled;
                 soundBtn.textContent = soundEnabled ? '🔊' : '🔇';
-                setStorageItem(GAME_CONFIG.SOUND_ENABLED_KEY, soundEnabled);
+                debouncedSaveSoundEnabled(soundEnabled);
                 return;
             }
             
@@ -3795,7 +3800,7 @@
         soundBtn.addEventListener('click', () => {
             soundEnabled = !soundEnabled;
             soundBtn.textContent = soundEnabled ? '🔊' : '🔇';
-            setStorageItem(GAME_CONFIG.SOUND_ENABLED_KEY, soundEnabled);
+            debouncedSaveSoundEnabled(soundEnabled);
             // 同步更新音量圖標和滑桿狀態
             updateVolumeIcon();
         });
