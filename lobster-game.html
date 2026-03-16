@@ -918,6 +918,96 @@
             outline-offset: 2px;
         }
         
+        /* 自定義確認對話框 - 取代原生 confirm() 改善無障礙和 UX */
+        #confirmOverlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        #confirmOverlay.show {
+            display: flex;
+        }
+        
+        .confirm-dialog {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border: 3px solid #00d4ff;
+            border-radius: 20px;
+            padding: 25px;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+        }
+        
+        .confirm-dialog h3 {
+            color: #ffd700;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        
+        .confirm-dialog p {
+            color: #fff;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        
+        .confirm-dialog .confirm-stats {
+            background: rgba(0, 212, 255, 0.1);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            color: #00d4ff;
+        }
+        
+        .confirm-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+        
+        .confirm-btn {
+            padding: 12px 25px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: bold;
+        }
+        
+        .confirm-btn-confirm {
+            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+            color: white;
+        }
+        
+        .confirm-btn-confirm:hover {
+            background: linear-gradient(135deg, #00bfff 0%, #0088aa 100%);
+            transform: scale(1.05);
+        }
+        
+        .confirm-btn-cancel {
+            background: linear-gradient(135deg, #ff6b6b 0%, #cc4444 100%);
+            color: white;
+        }
+        
+        .confirm-btn-cancel:hover {
+            background: linear-gradient(135deg, #ff5555 0%, #bb3333 100%);
+            transform: scale(1.05);
+        }
+        
+        .confirm-btn:focus {
+            outline: 3px solid #ffd700;
+            outline-offset: 2px;
+        }
+        
         /* 倒數動畫 - 效能優化：移至靜態 CSS 避免動態創建 style 標籤 */
         @keyframes countdownFadeInOut {
             0%, 100% { opacity: 1; transform: scale(1); }
@@ -1008,6 +1098,18 @@
                 <div>💣 炸彈 - 扣 1 條命</div>
             </div>
             <button class="help-close">知道了！</button>
+        </div>
+        <!-- 自定義確認對話框 - 取代原生 confirm() -->
+        <div id="confirmOverlay" role="dialog" aria-modal="true" aria-live="polite">
+            <div class="confirm-dialog">
+                <h3 id="confirmTitle">確認</h3>
+                <p id="confirmMessage">確定要執行這個操作嗎？</p>
+                <div id="confirmStats" class="confirm-stats" style="display: none;"></div>
+                <div class="confirm-buttons">
+                    <button id="confirmCancelBtn" class="confirm-btn confirm-btn-cancel">取消</button>
+                    <button id="confirmOkBtn" class="confirm-btn confirm-btn-confirm">確定</button>
+                </div>
+            </div>
         </div>
     </div>
     <p class="instructions">← → 方向鍵移動龍蝦，接住掉落的金幣！💰 按 ESC/P 暫停 | M 靜音 | H 說明</p>
@@ -1177,6 +1279,53 @@
                 return false;
             }
         }
+
+        // 自定義確認對話框 (取代原生 confirm())
+        let confirmResolve = null;
+        const confirmOverlay = document.getElementById('confirmOverlay');
+        const confirmTitle = document.getElementById('confirmTitle');
+        const confirmMessage = document.getElementById('confirmMessage');
+        const confirmStats = document.getElementById('confirmStats');
+        const confirmOkBtn = document.getElementById('confirmOkBtn');
+        const confirmCancelBtn = document.getElementById('confirmCancelBtn');
+
+        function showConfirm(title, message, stats = null) {
+            return new Promise((resolve) => {
+                confirmResolve = resolve;
+                confirmTitle.textContent = title;
+                confirmMessage.textContent = message;
+                
+                if (stats) {
+                    confirmStats.innerHTML = stats;
+                    confirmStats.style.display = 'block';
+                } else {
+                    confirmStats.style.display = 'none';
+                }
+                
+                confirmOverlay.classList.add('show');
+                confirmOkBtn.focus();
+            });
+        }
+
+        function hideConfirm(result) {
+            confirmOverlay.classList.remove('show');
+            if (confirmResolve) {
+                confirmResolve(result);
+                confirmResolve = null;
+            }
+        }
+
+        confirmOkBtn.addEventListener('click', () => hideConfirm(true));
+        confirmCancelBtn.addEventListener('click', () => hideConfirm(false));
+        
+        // 鍵盤支援 (Enter 確認, ESC 取消)
+        confirmOverlay.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                hideConfirm(true);
+            } else if (e.key === 'Escape') {
+                hideConfirm(false);
+            }
+        });
 
         // ==================== 遊戲狀態儲存 (未使用但保留擴充性) ====================
         // 自動儲存計時器
@@ -3133,7 +3282,7 @@
             }, duration); // 使用傳入的倒數時間參數
         }
 
-        function startGame(forceNewGame = false) {
+        async function startGame(forceNewGame = false) {
             // 防止快速重複點擊
             if (isStarting) return;
             
@@ -3141,8 +3290,9 @@
             if (!forceNewGame && hasSavedGameState()) {
                 const savedState = loadGameState();
                 if (savedState && savedState.score > 0) {
-                    // 顯示詢問對話框
-                    const continueGame = confirm(`發現保存的遊戲進度！\n\n分數: ${savedState.score}\n時間: ${formatTime(savedState.elapsedTime)}\n難度: ${savedState.difficultyLevel + 1}\n\n是否繼續遊戲？\n（選擇「取消」將開始新遊戲）`);
+                    // 顯示自定義詢問對話框 (無障礙和 UX 改善)
+                    const statsHtml = `分數: ${savedState.score}<br>時間: ${formatTime(savedState.elapsedTime)}<br>難度: ${savedState.difficultyLevel + 1}`;
+                    const continueGame = await showConfirm('發現保存的遊戲進度！', '是否繼續遊戲？（選擇「取消」將開始新遊戲）', statsHtml);
                     
                     if (continueGame) {
                         // 繼續保存的遊戲
@@ -3478,14 +3628,16 @@
             }
         })();
 
-        // 重置最高分按鈕
+        // 重置最高分按鈕 (使用自定義對話框改善 UX 和無障礙)
         resetHighScoreBtn.addEventListener('click', () => {
-            if (confirm('確定要重置最高分嗎？這個動作無法復原。')) {
-                highScore = 0;
-                setStorageItem(GAME_CONFIG.HIGH_SCORE_KEY, 0);
-                highScoreDisplay.textContent = '最高分: 0';
-                updateHighScoreGapDisplay();
-            }
+            showConfirm('重置最高分', '確定要重置最高分嗎？這個動作無法復原。').then((confirmed) => {
+                if (confirmed) {
+                    highScore = 0;
+                    setStorageItem(GAME_CONFIG.HIGH_SCORE_KEY, 0);
+                    highScoreDisplay.textContent = '最高分: 0';
+                    updateHighScoreGapDisplay();
+                }
+            });
         });
 
         // 分享成績按鈕（使用 Web Share API）
