@@ -1507,6 +1507,10 @@
                 isTouchingRight = false;
             }
             
+            // 重置鍵盤狀態（防止殘留按鍵導致後續操作異常）
+            keys.left = false;
+            keys.right = false;
+            
             // 清理所有氣泡（從 DOM 移除並返回池中）
             bubbles.forEach(b => {
                 b.element.remove(); // 從 DOM 中移除
