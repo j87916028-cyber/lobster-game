@@ -1206,6 +1206,7 @@
                 lives: lives,
                 playerX: playerX,
                 elapsedTime: gameStats.elapsedTime,
+                totalPausedTime: gameStats.totalPausedTime || 0, // 保存總暫停時間
                 coinsCollected: gameStats.coinsCollected,
                 coinsSpawned: gameStats.coinsSpawned,
                 bombsHit: gameStats.bombsHit,
@@ -1282,9 +1283,13 @@
                 coinsCollected: savedState.coinsCollected || 0,
                 coinsSpawned: savedState.coinsSpawned || 0,
                 bombsHit: savedState.bombsHit || 0,
-                startTime: Date.now() - (savedState.elapsedTime * 1000), // 調整開始時間以繼續計時
-                elapsedTime: savedState.elapsedTime || 0
+                startTime: Date.now() - (savedState.elapsedTime * 1000) - (savedState.totalPausedTime || 0), // 調整開始時間以繼續計時（扣除暫停時間）
+                elapsedTime: savedState.elapsedTime || 0,
+                totalPausedTime: savedState.totalPausedTime || 0 // 恢復總暫停時間
             };
+            
+            // 恢復暫停追蹤變數
+            pauseStartTime = 0;
             
             // 恢復道具狀態
             activePowerups = savedState.activePowerups || { shield: false, '2x': false };
@@ -1443,8 +1448,12 @@
             coinsSpawned: 0, // 新增：追蹤生成的金幣總數（用於計算命中率）
             bombsHit: 0,
             startTime: 0,
-            elapsedTime: 0
+            elapsedTime: 0,
+            totalPausedTime: 0 // 追蹤總暫停時間，確保計時準確性
         };
+        
+        // 追蹤遊戲暫停時間點（用於準確計算遊戲時間）
+        let pauseStartTime = 0;
         
         // 連擊系統
         let comboCount = 0;
@@ -2414,8 +2423,8 @@
             const MAX_DELTA_TIME = 100;
             const cappedDeltaTime = Math.min(deltaTime, MAX_DELTA_TIME);
             
-            // 更新遊戲時間統計
-            gameStats.elapsedTime = (Date.now() - gameStats.startTime) / 1000;
+            // 更新遊戲時間統計（排除暫停時間，確保計時準確）
+            gameStats.elapsedTime = (Date.now() - gameStats.startTime - gameStats.totalPausedTime) / 1000;
 
             // 更新實時統計顯示
             liveTimeDisplay.textContent = formatTime(gameStats.elapsedTime);
@@ -2630,6 +2639,9 @@
             
             // 暫停時更新顯示的分數和生命值
             if (isPaused) {
+                // 記錄暫停開始時間（用於準確計算遊戲時間）
+                pauseStartTime = Date.now();
+                
                 pauseScore.textContent = '分數: ' + formatScore(score);
                 pauseLives.textContent = getHeartsString(lives);
                 updateStatsDisplay(); // 更新遊戲統計顯示
@@ -2650,6 +2662,12 @@
                 pauseComboTimer();
                 pausePowerupTimers();
             } else {
+                // 計算暫停時長並累加到總暫停時間
+                if (pauseStartTime > 0) {
+                    gameStats.totalPausedTime += Date.now() - pauseStartTime;
+                    pauseStartTime = 0;
+                }
+                
                 lastTime = performance.now(); // 重置 deltaTime
                 // 恢復時重新啟動動畫循環
                 animationFrameId = requestAnimationFrame(gameLoop);
@@ -2901,6 +2919,9 @@
                     isPaused = true;
                     pausedByVisibility = true;
                     
+                    // 記錄暫停開始時間（用於準確計算遊戲時間）
+                    pauseStartTime = Date.now();
+                    
                     // 取消動畫框架
                     if (animationFrameId) {
                         cancelAnimationFrame(animationFrameId);
@@ -2923,6 +2944,12 @@
                 // 分頁恢復顯示時，只有因為分頁隱藏而暫停時才恢復
                 // 如果是用戶手動暫停的，保持暫停狀態
                 if (pausedByVisibility && gameRunning) {
+                    // 計算暫停時長並累加到總暫停時間
+                    if (pauseStartTime > 0) {
+                        gameStats.totalPausedTime += Date.now() - pauseStartTime;
+                        pauseStartTime = 0;
+                    }
+                    
                     isPaused = false;
                     pausedByVisibility = false;
                     lastTime = performance.now();
@@ -3138,8 +3165,12 @@
                 coinsSpawned: 0,
                 bombsHit: 0,
                 startTime: Date.now(),
-                elapsedTime: 0
+                elapsedTime: 0,
+                totalPausedTime: 0 // 重置總暫停時間
             };
+            
+            // 重置暫停追蹤變數
+            pauseStartTime = 0;
             
             // 重置道具狀態
             activePowerups = { shield: false, '2x': false };
