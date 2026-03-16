@@ -2028,17 +2028,16 @@
                 
                 // 收集 nodes 以便後續統一清理
                 allNodes.push(oscillator, gainNode);
-            });
-            
-            // 使用單個 onended 處理程序統一清理所有 nodes（效能優化：減少記憶體佔用）
-            const lastOscillator = allNodes[allNodes.length - 2];
-            if (lastOscillator) {
-                lastOscillator.onended = () => {
-                    allNodes.forEach(node => {
-                        try { node.disconnect(); } catch (e) { /* 忽略斷開錯誤 */ }
-                    });
+                
+                // 為每個 oscillator 設置 onended 處理，確保音符結束後及時清理記憶體
+                //（修復：之前只對最後一個 oscillator 設置，導致較早結束的音符無法正確清理）
+                oscillator.onended = () => {
+                    try {
+                        oscillator.disconnect();
+                        gainNode.disconnect();
+                    } catch (e) { /* 忽略斷開錯誤 */ }
                 };
-            }
+            });
         }
 
         // 播放音效（使用 Web Audio API 生成簡單音效）
