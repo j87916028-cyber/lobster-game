@@ -1367,7 +1367,10 @@
                 isInvincible: isInvincible,
                 difficultyLevel: getDifficultyLevel(),
                 powerupRemainingTime: powerupRemainingTime,
-                invincibleRemainingTime: invincibleRemainingTime
+                invincibleRemainingTime: invincibleRemainingTime,
+                // 保存連擊狀態（Bug修復：之前恢復遊戲時會丢失連擊進度）
+                comboCount: comboCount,
+                comboMultiplier: comboMultiplier
             };
             setStorageItem('lobsterGameState', JSON.stringify(gameState));
         }
@@ -1498,8 +1501,16 @@
                 audioContext.resume();
             }
             
-            // 重置連擊系統
-            resetCombo();
+            // 恢復連擊系統（從保存的遊戲狀態恢復，而非重置）
+            if (savedState.comboCount && savedState.comboCount >= 2) {
+                comboCount = savedState.comboCount;
+                comboMultiplier = savedState.comboMultiplier || Math.min(MAX_COMBO_MULTIPLIER, 1 + Math.floor(comboCount / 3));
+                comboIndicator.textContent = `🔥 ${comboCount} 連擊! x${comboMultiplier}`;
+                comboIndicator.setAttribute('aria-label', `連擊 ${comboCount} 倍`);
+                comboIndicator.classList.add('show');
+            } else {
+                resetCombo();
+            }
             
             keys.left = false;
             keys.right = false;
