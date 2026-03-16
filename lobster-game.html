@@ -892,6 +892,21 @@
             outline: 3px solid #ffd700;
             outline-offset: 2px;
         }
+        
+        /* 倒數動畫 - 效能優化：移至靜態 CSS 避免動態創建 style 標籤 */
+        @keyframes countdownFadeInOut {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.1); }
+        }
+        
+        @keyframes countdownPulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+        
+        .countdown-animate {
+            animation: countdownFadeInOut 1s infinite;
+        }
     </style>
 </head>
 <body>
@@ -2984,22 +2999,8 @@
             
             // 無障礙：偏好減少動畫時，直接顯示數字不播放動畫
             if (!reducedMotion) {
-                // 添加動畫 keyframes（如果尚未添加）
-                if (!document.getElementById('countdownAnimStyle')) {
-                    const style = document.createElement('style');
-                    style.id = 'countdownAnimStyle';
-                    style.textContent = `
-                        @keyframes fadeInOut {
-                            0%, 100% { opacity: 1; transform: scale(1); }
-                            50% { opacity: 0.7; transform: scale(1.1); }
-                        }
-                        @keyframes pulse {
-                            0%, 100% { opacity: 0.6; }
-                            50% { opacity: 1; }
-                        }
-                    `;
-                    document.head.appendChild(style);
-                }
+                // 使用靜態 CSS 中定義的動畫類別（效能優化：避免動態創建 style 標籤）
+                countdownOverlay.classList.add('countdown-animate');
             }
             
             countdownInterval = setInterval(() => {
@@ -3007,10 +3008,10 @@
                 if (count > 0) {
                     countdownOverlay.textContent = count;
                     if (!reducedMotion) {
-                        // 重置動畫
-                        countdownOverlay.style.animation = 'none';
+                        // 重置動畫：使用 class 切換而非直接操作 style（效能優化）
+                        countdownOverlay.classList.remove('countdown-animate');
                         void countdownOverlay.offsetWidth;
-                        countdownOverlay.style.animation = 'fadeInOut 1s infinite';
+                        countdownOverlay.classList.add('countdown-animate');
                     }
                     playTone(440, 440, 0.15, 0.2); // 倒數音效
                 } else {
