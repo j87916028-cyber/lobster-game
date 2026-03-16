@@ -3213,12 +3213,10 @@
             const badChance = Math.min(GAME_CONFIG.BAD_CHANCE_MAX, GAME_CONFIG.BAD_CHANCE_BASE + (difficultyLevel * GAME_CONFIG.BAD_CHANCE_INCREASE));
             const isBad = randomForType < badChance;
             
-            // 道具機率生成（不在壞東西中）
+            // 道具機率生成（不在壞東西中）：檢查 randomForType 是否在 [badChance, badChance + POWERUP_CHANCE) 範圍內
             let isPowerup = false;
             let powerupType = null;
-            // 使用剩餘隨機值計算道具機率，進一步減少 Math.random() 調用
-            const remainingRandom = randomForType - badChance;
-            if (!isBad && remainingRandom > 0 && remainingRandom < GAME_CONFIG.POWERUP_CHANCE) {
+            if (!isBad && randomForType >= badChance && randomForType < badChance + GAME_CONFIG.POWERUP_CHANCE) {
                 isPowerup = true;
                 // 取得可用道具（排除愛心如果已滿血，使用緩存優化效能）
                 // 這裡仍需要一次隨機選擇道具陣列
