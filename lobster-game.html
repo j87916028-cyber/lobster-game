@@ -574,6 +574,12 @@
             font-size: 1.5rem;
             margin-bottom: 10px;
         }
+        #pauseCombo {
+            font-size: 1.2rem;
+            color: #ff6b35;
+            margin-bottom: 10px;
+            min-height: 1.5em;
+        }
         
         #gameStats {
             font-size: 0.9rem;
@@ -1152,6 +1158,7 @@
             <h2 id="pauseTitle">暫停</h2>
             <div id="pauseScore" aria-label="目前分數">分數: 0</div>
             <div id="pauseLives" aria-label="剩餘生命">❤️❤️❤️</div>
+            <div id="pauseCombo" aria-label="目前連擊">🔥 0 連擊</div>
             <div id="gameStats" aria-label="遊戲統計">
                 <span>⏱️ <span id="statTime">0:00</span></span>
                 <span>💰 <span id="statCoins">0</span></span>
@@ -1296,6 +1303,7 @@
         const pauseBtn = document.getElementById('pauseBtn');
         const pauseScore = document.getElementById('pauseScore');
         const pauseLives = document.getElementById('pauseLives');
+        const pauseCombo = document.getElementById('pauseCombo');
         const statTime = document.getElementById('statTime');
         const statCoins = document.getElementById('statCoins');
         const statBombs = document.getElementById('statBombs');
@@ -3001,6 +3009,8 @@
                 
                 pauseScore.textContent = '分數: ' + formatScore(score);
                 pauseLives.textContent = getHeartsString(lives);
+                // 顯示當前連擊數（如果有連擊的話）
+                pauseCombo.textContent = comboCount >= 2 ? `🔥 ${comboCount} 連擊! x${comboMultiplier}` : '🔥 無連擊';
                 updateStatsDisplay(); // 更新遊戲統計顯示
                 // 暫停時釋放螢幕喚醒鎖
                 releaseWakeLock();
@@ -3061,6 +3071,8 @@
                 pauseOverlay.style.display = 'flex';
                 pauseScore.textContent = '分數: ' + formatScore(score);
                 pauseLives.textContent = getHeartsString(lives);
+                // 顯示當前連擊數（如果有連擊的話）
+                pauseCombo.textContent = comboCount >= 2 ? `🔥 ${comboCount} 連擊! x${comboMultiplier}` : '🔥 無連擊';
                 updateStatsDisplay();
                 if (animationFrameId) {
                     cancelAnimationFrame(animationFrameId);
