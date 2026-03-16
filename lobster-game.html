@@ -1059,6 +1059,7 @@
                 <span>💰 <span id="statCoinsEnd">0</span></span>
                 <span>💣 <span id="statBombsEnd">0</span></span>
                 <span>🎯 <span id="statAccuracy">0%</span></span>
+                <span>🔥 <span id="statBestComboEnd">0</span></span>
             </div>
             <div id="bestRecords" aria-label="最佳記錄" style="display: none; margin-top: 10px; padding: 10px; background: rgba(255,215,0,0.15); border-radius: 10px; font-size: 0.9rem;">
                 <div style="color: #ffd700; margin-bottom: 5px;">🏆 最佳記錄</div>
@@ -1228,6 +1229,7 @@
         const statTimeEnd = document.getElementById('statTimeEnd');
         const statCoinsEnd = document.getElementById('statCoinsEnd');
         const statBombsEnd = document.getElementById('statBombsEnd');
+        const statBestComboEnd = document.getElementById('statBestComboEnd');
         const statAccuracy = document.getElementById('statAccuracy'); // 新增：命中率顯示
         // 最佳記錄元素
         const bestRecordsDiv = document.getElementById('bestRecords');
@@ -1370,6 +1372,7 @@
                 invincibleRemainingTime: invincibleRemainingTime,
                 // 保存連擊狀態（Bug修復：之前恢復遊戲時會丢失連擊進度）
                 comboCount: comboCount,
+                bestCombo: bestCombo,
                 comboMultiplier: comboMultiplier
             };
             setStorageItem('lobsterGameState', JSON.stringify(gameState));
@@ -1504,6 +1507,7 @@
             // 恢復連擊系統（從保存的遊戲狀態恢復，而非重置）
             if (savedState.comboCount && savedState.comboCount >= 2) {
                 comboCount = savedState.comboCount;
+                bestCombo = savedState.bestCombo || comboCount; // 恢復最高連擊記錄
                 comboMultiplier = savedState.comboMultiplier || Math.min(MAX_COMBO_MULTIPLIER, 1 + Math.floor(comboCount / 3));
                 comboIndicator.textContent = `🔥 ${comboCount} 連擊! x${comboMultiplier}`;
                 comboIndicator.setAttribute('aria-label', `連擊 ${comboCount} 倍`);
@@ -1627,6 +1631,7 @@
         
         // 連擊系統
         let comboCount = 0;
+        let bestCombo = 0; // 追蹤本次遊戲最高連擊
         let comboTimeout = null;
         let comboStartTime = null; // 追蹤連擊計時器開始時間
         let comboMultiplier = 1;
@@ -1758,6 +1763,7 @@
                 // 重置遊戲狀態
                 isInvincible = false;
                 invincibleReason = null;
+                bestCombo = 0; // 重置最高連擊記錄
                 resetCombo();
                 
                 // 重置分數動畫
@@ -2163,6 +2169,10 @@
             if (comboTimeout) clearTimeout(comboTimeout);
             
             comboCount++;
+            // 更新最高連擊記錄
+            if (comboCount > bestCombo) {
+                bestCombo = comboCount;
+            }
             // 計算連擊倍數 (每3個連擊+1倍，上限5倍)
             comboMultiplier = Math.min(MAX_COMBO_MULTIPLIER, 1 + Math.floor(comboCount / 3));
             
@@ -3514,6 +3524,9 @@
                 : 0;
             statAccuracy.textContent = accuracy + '%';
             statAccuracy.setAttribute('aria-label', `命中率 ${accuracy}%，接到 ${gameStats.coinsCollected} / 看到 ${gameStats.coinsSpawned} 個金幣/道具`);
+            
+            // 顯示最高連擊記錄
+            statBestComboEnd.textContent = bestCombo > 0 ? `${bestCombo} (x${Math.min(MAX_COMBO_MULTIPLIER, 1 + Math.floor(bestCombo / 3))})` : '0';
             
             // 檢查並更新最佳記錄
             let hasNewBest = false;
