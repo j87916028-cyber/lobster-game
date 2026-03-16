@@ -3421,9 +3421,8 @@
             let powerupType = null;
             if (!isBad && randomForType >= badChance && randomForType < badChance + GAME_CONFIG.POWERUP_CHANCE) {
                 isPowerup = true;
-                // 取得可用道具（排除愛心如果已滿血，使用緩存優化效能）
-                // 這裡仍需要一次隨機選擇道具陣列
-                powerupType = availablePowerupsCache[Math.floor(Math.random() * availablePowerupsCache.length)];
+                // 效能優化：使用 randomForPosition（已經調用過的隨機值）來選擇道具，避免額外調用 Math.random()
+                powerupType = availablePowerupsCache[Math.floor(randomForPosition * availablePowerupsCache.length)];
                 bubble.textContent = powerupType.emoji;
                 // 道具也計入可收集的物品（用於命中率計算）
                 gameStats.coinsSpawned++;
