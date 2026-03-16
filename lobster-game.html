@@ -1531,6 +1531,7 @@
             startBtn.style.display = 'none';
             resetHighScoreBtn.style.display = 'none';
             gameOver.style.display = 'none';
+            isGameOver = false; // 效能優化：同步更新狀態變數
             pauseOverlay.style.display = 'none';
             
             // 顯示短暫的恢復通知
@@ -1571,6 +1572,7 @@
         let spawnTimer = 0;
         let animationFrameId = null;
         let isStarting = false; // 防止快速重複點擊
+        let isGameOver = false; // 效能優化：用變數追蹤遊戲結束狀態，避免重複讀取 DOM
 
         // FPS 計算變數
         let fps = 0;
@@ -2727,7 +2729,7 @@
             // 空白鍵開始/重新開始/繼續遊戲（僅在遊戲未開始、遊戲結束或暫停時有效）
             // 遊戲進行中時，空白鍵會由下方的暫停處理代碼接管
             if (e.key === ' ') {
-                if (!gameRunning || isStarting || gameOver.style.display === 'flex' || (isPaused && pauseOverlay.style.display === 'flex')) {
+                if (!gameRunning || isStarting || isGameOver || (isPaused && pauseOverlay.style.display === 'flex')) {
                     handleStartOrResume();
                     return;
                 }
@@ -2738,7 +2740,7 @@
                 if (!gameRunning || isStarting) {
                     // 遊戲未開始或正在開始中，開始新遊戲
                     startGame();
-                } else if (gameOver.style.display === 'flex') {
+                } else if (isGameOver) {
                     // 遊戲結束，重新開始
                     startGame();
                 } else if (isPaused && pauseOverlay.style.display === 'flex') {
@@ -3394,6 +3396,7 @@
             startBtn.style.display = 'none';
             resetHighScoreBtn.style.display = 'none';
             gameOver.style.display = 'none';
+            isGameOver = false; // 效能優化：同步更新狀態變數
             pauseOverlay.style.display = 'none';
             
             // 顯示倒數計時，然後啟動遊戲
@@ -3541,6 +3544,7 @@
             showPerformanceRating();
             
             gameOver.style.display = 'flex';
+            isGameOver = true; // 效能優化：同步更新狀態變數
             
             // 解鎖開始按鈕
             isStarting = false;
@@ -3715,6 +3719,7 @@
             // 隱藏所有遊戲 UI
             pauseOverlay.style.display = 'none';
             gameOver.style.display = 'none';
+            isGameOver = false; // 效能優化：同步更新狀態變數
             helpOverlay.style.display = 'none'; // 確保說明視窗也關閉
             
             // 顯示開始按鈕
