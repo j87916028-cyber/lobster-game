@@ -2963,21 +2963,16 @@
             }
         }
 
-        // 左按鈕 - 添加 touchcancel 處理防止觸控中斷時按鍵卡住，並使用被動监听器優化效能
+        // 左按鈕 - 只使用 touch 事件，避免同時觸發 touch 和 mouse 事件導致的重複處理
+        // 效能優化：移除了多餘的 mouse 事件監聽器，減少事件處理開銷
         btnLeft.addEventListener('touchstart', (e) => handleTouchStart('left', e), { passive: false });
         btnLeft.addEventListener('touchend', () => handleTouchEnd('left'));
         btnLeft.addEventListener('touchcancel', () => handleTouchEnd('left')); // 觸控中斷時重置
-        btnLeft.addEventListener('mousedown', (e) => handleTouchStart('left', e));
-        btnLeft.addEventListener('mouseup', () => handleTouchEnd('left'));
-        btnLeft.addEventListener('mouseleave', () => handleTouchEnd('left'));
 
-        // 右按鈕
+        // 右按鈕 - 同上
         btnRight.addEventListener('touchstart', (e) => handleTouchStart('right', e), { passive: false });
         btnRight.addEventListener('touchend', () => handleTouchEnd('right'));
         btnRight.addEventListener('touchcancel', () => handleTouchEnd('right')); // 觸控中斷時重置
-        btnRight.addEventListener('mousedown', (e) => handleTouchStart('right', e));
-        btnRight.addEventListener('mouseup', () => handleTouchEnd('right'));
-        btnRight.addEventListener('mouseleave', () => handleTouchEnd('right'));
 
         // 暫停按鈕（使用標誌位防止 touchstart 和 click 重複觸發）
         let pauseHandlerTimeout = null;
