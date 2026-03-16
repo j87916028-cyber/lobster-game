@@ -3528,9 +3528,10 @@
             const isBad = randomForType < badChance;
             
             // 道具機率生成（不在壞東西中）：檢查 randomForType 是否在 [badChance, badChance + POWERUP_CHANCE) 範圍內
+            // 修復：當 availablePowerupsCache 為空時跳過道具生成，避免 undefined 錯誤
             let isPowerup = false;
             let powerupType = null;
-            if (!isBad && randomForType >= badChance && randomForType < badChance + GAME_CONFIG.POWERUP_CHANCE) {
+            if (!isBad && availablePowerupsCache.length > 0 && randomForType >= badChance && randomForType < badChance + GAME_CONFIG.POWERUP_CHANCE) {
                 isPowerup = true;
                 // 效能優化：使用 randomForPosition（已經調用過的隨機值）來選擇道具，避免額外調用 Math.random()
                 powerupType = availablePowerupsCache[Math.floor(randomForPosition * availablePowerupsCache.length)];
