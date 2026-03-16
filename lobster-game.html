@@ -2073,7 +2073,7 @@
         const MOVE_SPEED = GAME_CONFIG.PLAYER_MOVE_SPEED; // 像素/毫秒
         
         // 遊戲控制鍵集合（效能優化：使用 Set 避免每次按鍵都創建數組，且 Set.has() 比 Array.includes() 更快）
-        const GAME_CONTROL_KEYS = new Set(['Enter', 'ArrowLeft', 'ArrowRight', 'Escape', 'a', 'A', 'd', 'D', ' ']);
+        const GAME_CONTROL_KEYS = new Set(['Enter', 'ArrowLeft', 'ArrowRight', 'Escape', 'a', 'A', 'd', 'D', ' ', 'f', 'F']);
 
         // ==================== 工具函數 ====================
         // 防抖函數（效能優化：避免快速觸發的事件導致效能問題）
@@ -2789,6 +2789,12 @@
                 return;
             }
             
+            // F 鍵切換全螢幕 - 應該隨時可用
+            if (e.key === 'f' || e.key === 'F') {
+                toggleFullscreen();
+                return;
+            }
+            
             if (!gameRunning || isPaused) return;
             if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
                 keys.left = true;
@@ -2932,6 +2938,21 @@
                 }
                 // 關閉說明時重新請求 wakeLock（確保螢幕保持亮著）
                 requestWakeLock().catch(() => {});
+            }
+        }
+
+        // 切換全螢幕模式
+        function toggleFullscreen() {
+            const elem = document.documentElement;
+            
+            if (!document.fullscreenElement) {
+                elem.requestFullscreen().catch(err => {
+                    console.warn('無法進入全螢幕:', err);
+                });
+            } else {
+                document.exitFullscreen().catch(err => {
+                    console.warn('無法退出全螢幕:', err);
+                });
             }
         }
 
