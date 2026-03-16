@@ -3294,9 +3294,11 @@
 
         // 處理瀏覽器返回按鈕（提升行動裝置體驗）
         window.addEventListener('popstate', () => {
-            if (gameRunning && !isPaused) {
-                togglePause();
-            }
+            // 確保遊戲正在進行中才處理
+            if (!gameRunning || isStarting || isGameOver) return;
+            
+            // 切換暫停/繼續狀態
+            togglePause();
         });
 
         // 檢查使用者是否偏好減少動畫（無障礙支援）
