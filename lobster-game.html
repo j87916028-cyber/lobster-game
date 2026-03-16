@@ -452,6 +452,27 @@
             color: #ffd700;
             margin-bottom: 20px;
         }
+        #bestRecords {
+            display: none;
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(255,215,0,0.15);
+            border-radius: 10px;
+            font-size: 0.9rem;
+        }
+        #bestRecords.visible {
+            display: block;
+        }
+        #bestRecords.highlight {
+            background: rgba(255,215,0,0.3);
+        }
+        #bestRecords .best-records-title {
+            color: #ffd700;
+            margin-bottom: 5px;
+        }
+        #bestRecords .best-coins {
+            margin-left: 10px;
+        }
         #gameStatsEnd {
             display: flex;
             gap: 15px;
@@ -711,6 +732,9 @@
             opacity: 1;
             pointer-events: auto;
         }
+        #volumeContainer .volume-icon {
+            font-size: 1rem;
+        }
         #volumeSlider {
             width: 80px;
             height: 6px;
@@ -915,6 +939,22 @@
             color: #ffd700;
         }
         
+        #helpOverlay .help-content hr {
+            margin: 15px 0;
+            border-color: #444;
+        }
+        
+        #helpOverlay .touch-hint {
+            margin-top: 10px;
+            color: #00d4ff;
+        }
+        
+        #helpOverlay .screen-hint {
+            margin-top: 8px;
+            color: #00ff88;
+            font-size: 0.9em;
+        }
+        
         #helpOverlay .help-close {
             margin-top: 20px;
             padding: 10px 25px;
@@ -983,6 +1023,11 @@
             margin-bottom: 20px;
             font-size: 0.9rem;
             color: #00d4ff;
+            display: none;
+        }
+        
+        .confirm-dialog .confirm-stats.visible {
+            display: block;
         }
         
         .confirm-buttons {
@@ -1048,9 +1093,9 @@
         <div id="score" role="status" aria-live="polite" aria-label="目前分數">分數: 0</div>
         <button id="soundBtn" title="音效開關" aria-label="音效開關">🔊</button>
         <div id="volumeContainer">
-            <span style="font-size: 1rem;">🔈</span>
+            <span class="volume-icon">🔈</span>
             <input type="range" id="volumeSlider" min="0" max="100" value="30" aria-label="音量調整">
-            <span style="font-size: 1rem;">🔊</span>
+            <span class="volume-icon">🔊</span>
         </div>
         <button id="pauseBtn" title="暫停 (ESC)" aria-label="暫停遊戲">⏸️</button>
         <button id="helpBtn" title="說明 (H)" aria-label="顯示遊戲說明">❓</button>
@@ -1079,10 +1124,10 @@
                 <span>🎯 <span id="statAccuracy">0%</span></span>
                 <span>🔥 <span id="statBestComboEnd">0</span></span>
             </div>
-            <div id="bestRecords" aria-label="最佳記錄" style="display: none; margin-top: 10px; padding: 10px; background: rgba(255,215,0,0.15); border-radius: 10px; font-size: 0.9rem;">
-                <div style="color: #ffd700; margin-bottom: 5px;">🏆 最佳記錄</div>
+            <div id="bestRecords" aria-label="最佳記錄">
+                <div class="best-records-title">🏆 最佳記錄</div>
                 <span>⏱️ <span id="bestTimeEnd">0:00</span></span>
-                <span style="margin-left: 10px;">💰 <span id="bestCoinsEnd">0</span></span>
+                <span class="best-coins">💰 <span id="bestCoinsEnd">0</span></span>
             </div>
             <button id="restartBtn" aria-label="再玩一次">再玩一次</button>
             <button id="shareBtn" class="share-btn" aria-label="分享成績">📤 分享成績</button>
@@ -1107,9 +1152,9 @@
                 <div><kbd>ESC</kbd> <kbd>P</kbd> - 暫停/繼續</div>
                 <div><kbd>M</kbd> - 靜音切換</div>
                 <div><kbd>H</kbd> - 顯示說明</div>
-                <div class="touch-hint" style="margin-top: 10px; color: #00d4ff;">📱 觸控裝置：使用螢幕下方的按鈕，或左右滑動螢幕來移動龍蝦</div>
-                <div class="screen-hint" style="margin-top: 8px; color: #00ff88; font-size: 0.9em;">✨ 遊戲進行中螢幕會保持亮著</div>
-                <hr style="margin: 15px 0; border-color: #444;">
+                <div class="touch-hint">📱 觸控裝置：使用螢幕下方的按鈕，或左右滑動螢幕來移動龍蝦</div>
+                <div class="screen-hint">✨ 遊戲進行中螢幕會保持亮著</div>
+                <hr>
                 <div>💰 接住金幣和寶石得分</div>
                 <div>🛡️ 護盾 - 無敵 5 秒</div>
                 <div>🌟 雙倍 - 分数 x2</div>
@@ -1317,9 +1362,9 @@
                 
                 if (stats) {
                     confirmStats.innerHTML = stats;
-                    confirmStats.style.display = 'block';
+                    confirmStats.classList.add('visible');
                 } else {
-                    confirmStats.style.display = 'none';
+                    confirmStats.classList.remove('visible');
                 }
                 
                 confirmOverlay.classList.add('show');
@@ -3675,14 +3720,15 @@
             
             // 顯示最佳記錄
             if (bestTime > 0 || bestCoins > 0) {
-                bestRecordsDiv.style.display = 'block';
+                bestRecordsDiv.classList.add('visible');
                 bestTimeEnd.textContent = formatTime(bestTime);
                 bestCoinsEnd.textContent = bestCoins;
                 if (hasNewBest) {
-                    bestRecordsDiv.style.background = 'rgba(255,215,0,0.3)';
+                    bestRecordsDiv.classList.add('highlight');
                 }
             } else {
-                bestRecordsDiv.style.display = 'none';
+                bestRecordsDiv.classList.remove('visible');
+                bestRecordsDiv.classList.remove('highlight');
             }
             
             // 顯示遊戲表現評價
