@@ -1781,6 +1781,9 @@
                 // 重置分數動畫
                 score = 0;
                 targetScore = 0;
+                // 重置難度等級緩存
+                cachedDifficultyLevel = 0;
+                lastScoreForDifficulty = 0;
                 
                 // 重置道具狀態
                 activePowerups = { shield: false, '2x': false };
@@ -2120,9 +2123,17 @@
         const INITIAL_SPAWN_INTERVAL = GAME_CONFIG.INITIAL_SPAWN_INTERVAL;
         const INITIAL_BUBBLE_SPEED = GAME_CONFIG.INITIAL_BUBBLE_SPEED;
 
-        // 計算當前難度等級
+        // 計算當前難度等級（效能優化：使用緩存避免重複計算）
+        let cachedDifficultyLevel = 0;
+        let lastScoreForDifficulty = 0;
+
         function getDifficultyLevel() {
-            return Math.floor(score / DIFFICULTY_INCREASE_PER);
+            // 只在分數變化時重新計算難度等級
+            if (score !== lastScoreForDifficulty) {
+                lastScoreForDifficulty = score;
+                cachedDifficultyLevel = Math.floor(score / DIFFICULTY_INCREASE_PER);
+            }
+            return cachedDifficultyLevel;
         }
 
         // 計算當前生成間隔
@@ -3423,6 +3434,9 @@
             gameRunning = true;
             isPaused = false;
             score = 0;
+            // 重置難度等級緩存
+            cachedDifficultyLevel = 0;
+            lastScoreForDifficulty = 0;
             lives = GAME_CONFIG.MAX_LIVES; // 重置生命值
             updateAvailablePowerupsCache(); // 初始化可用道具緩存
             updateLivesDisplay(); // 更新生命值顯示
