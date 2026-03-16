@@ -1374,6 +1374,13 @@
                 invincibleRemainingTime = Math.max(0, GAME_CONFIG.INVINCIBLE_DURATION - elapsed);
             }
             
+            // 保存連擊剩餘時間（如果有 active combo）
+            let comboRemainingTimeToSave = comboRemainingTime;
+            if (comboTimeout && comboStartTime) {
+                const elapsed = Date.now() - comboStartTime;
+                comboRemainingTimeToSave = Math.max(0, COMBO_WINDOW - elapsed);
+            }
+            
             const gameState = {
                 score: score,
                 lives: lives,
@@ -1391,7 +1398,9 @@
                 // 保存連擊狀態（Bug修復：之前恢復遊戲時會丢失連擊進度）
                 comboCount: comboCount,
                 bestCombo: bestCombo,
-                comboMultiplier: comboMultiplier
+                comboMultiplier: comboMultiplier,
+                // 保存連擊剩餘時間（用於精確恢復計時器）
+                comboRemainingTime: comboRemainingTimeToSave
             };
             setStorageItem('lobsterGameState', JSON.stringify(gameState));
         }
@@ -1530,6 +1539,13 @@
                 comboIndicator.textContent = `🔥 ${comboCount} 連擊! x${comboMultiplier}`;
                 comboIndicator.setAttribute('aria-label', `連擊 ${comboCount} 倍`);
                 comboIndicator.classList.add('show');
+                // 修復：恢復連擊計時器（使用保存的剩餘時間，保持連擊連續性）
+                const savedComboTime = savedState.comboRemainingTime || COMBO_WINDOW;
+                comboStartTime = Date.now();
+                comboRemainingTime = savedComboTime;
+                comboTimeout = setTimeout(() => {
+                    resetCombo();
+                }, savedComboTime);
             } else {
                 resetCombo();
             }
