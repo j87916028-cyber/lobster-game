@@ -581,6 +581,15 @@
             min-height: 1.5em;
         }
         
+        #pausePowerups {
+            font-size: 1rem;
+            color: #ffd700;
+            margin-bottom: 10px;
+            min-height: 1.5em;
+            text-align: center;
+            line-height: 1.5;
+        }
+        
         #gameStats {
             font-size: 0.9rem;
             color: #aaa;
@@ -1159,6 +1168,7 @@
             <div id="pauseScore" aria-label="目前分數">分數: 0</div>
             <div id="pauseLives" aria-label="剩餘生命">❤️❤️❤️</div>
             <div id="pauseCombo" aria-label="目前連擊">🔥 0 連擊</div>
+            <div id="pausePowerups" aria-label="道具剩餘時間"></div>
             <div id="gameStats" aria-label="遊戲統計">
                 <span>⏱️ <span id="statTime">0:00</span></span>
                 <span>💰 <span id="statCoins">0</span></span>
@@ -1304,6 +1314,7 @@
         const pauseScore = document.getElementById('pauseScore');
         const pauseLives = document.getElementById('pauseLives');
         const pauseCombo = document.getElementById('pauseCombo');
+        const pausePowerups = document.getElementById('pausePowerups');
         const statTime = document.getElementById('statTime');
         const statCoins = document.getElementById('statCoins');
         const statBombs = document.getElementById('statBombs');
@@ -3010,6 +3021,24 @@
                 pauseLives.textContent = getHeartsString(lives);
                 // 顯示當前連擊數（如果有連擊的話）
                 pauseCombo.textContent = comboCount >= 2 ? `🔥 ${comboCount} 連擊! x${comboMultiplier}` : '🔥 無連擊';
+                
+                // 顯示道具剩餘時間
+                let powerupTexts = [];
+                if (activePowerups.shield) {
+                    const remaining = powerupRemainingTimes.shield || 0;
+                    powerupTexts.push(`🛡️ 護盾: ${Math.ceil(remaining / 1000)}秒`);
+                }
+                if (activePowerups['2x']) {
+                    const remaining = powerupRemainingTimes['2x'] || 0;
+                    powerupTexts.push(`🌟 雙倍: ${Math.ceil(remaining / 1000)}秒`);
+                }
+                if (isInvincible) {
+                    const remaining = invincibleRemainingTime || 0;
+                    powerupTexts.push(`⭐ 無敵: ${Math.ceil(remaining / 1000)}秒`);
+                }
+                pausePowerups.innerHTML = powerupTexts.length > 0 ? powerupTexts.join('<br>') : '';
+                pausePowerups.style.display = powerupTexts.length > 0 ? 'block' : 'none';
+                
                 updateStatsDisplay(); // 更新遊戲統計顯示
                 // 暫停時釋放螢幕喚醒鎖
                 releaseWakeLock();
