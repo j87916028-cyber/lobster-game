@@ -767,7 +767,7 @@
         #volumeContainer {
             position: absolute;
             top: 20px;
-            left: 70px;
+            left: 180px;
             display: flex;
             align-items: center;
             gap: 5px;
@@ -826,6 +826,28 @@
         #volumeSlider:disabled::-moz-range-thumb {
             background: #666;
             cursor: not-allowed;
+        }
+        
+        /* 震動開關按鈕 */
+        #vibrationBtn {
+            position: absolute;
+            top: 20px;
+            left: 130px;
+            font-size: 1.5rem;
+            background: rgba(0,0,0,0.5);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            padding: 8px 15px;
+            transition: transform 0.2s;
+            z-index: 10;
+        }
+        #vibrationBtn:hover {
+            transform: scale(1.1);
+        }
+        #vibrationBtn:focus {
+            outline: 3px solid #ffd700;
+            outline-offset: 2px;
         }
         
         /* 暫停按鈕 */
@@ -1140,6 +1162,7 @@
     <div id="gameContainer" role="application" aria-label="遊戲區域">
         <div id="score" role="status" aria-live="polite" aria-label="目前分數">分數: 0</div>
         <button id="soundBtn" title="音效開關" aria-label="音效開關">🔊</button>
+        <button id="vibrationBtn" title="震動開關" aria-label="震動開關">📳</button>
         <div id="volumeContainer">
             <span class="volume-icon">🔈</span>
             <input type="range" id="volumeSlider" min="0" max="100" value="30" aria-label="音量調整">
@@ -1329,6 +1352,7 @@
         const btnPause = document.getElementById('btnPause');
         const livesDisplay = document.getElementById('lives');
         const soundBtn = document.getElementById('soundBtn');
+        const vibrationBtn = document.getElementById('vibrationBtn');
         const pauseBtn = document.getElementById('pauseBtn');
         const pauseScore = document.getElementById('pauseScore');
         const pauseLives = document.getElementById('pauseLives');
@@ -2072,9 +2096,19 @@
         let soundEnabled = getStorageItem(GAME_CONFIG.SOUND_ENABLED_KEY, 'true') !== 'false';
         soundBtn.textContent = soundEnabled ? '🔊' : '🔇';
         
+        // 震動開關（從本地存儲讀取設置，預設為開啟）
+        const VIBRATION_ENABLED_KEY = 'lobsterGameVibrationEnabled';
+        let vibrationEnabled = getStorageItem(VIBRATION_ENABLED_KEY, 'true') !== 'false';
+        vibrationBtn.textContent = vibrationEnabled ? '📳' : '📴';
+        
         // Debounced 保存音效開關狀態（效能優化：避免快速切換時頻繁寫入 localStorage）
         const debouncedSaveSoundEnabled = debounce((value) => {
             setStorageItem(GAME_CONFIG.SOUND_ENABLED_KEY, value);
+        }, 300);
+        
+        // Debounced 保存震動開關狀態
+        const debouncedSaveVibrationEnabled = debounce((value) => {
+            setStorageItem(VIBRATION_ENABLED_KEY, value);
         }, 300);
 
         // 初始化音效系統（添加錯誤處理，支援私人瀏覽模式）
@@ -2562,6 +2596,9 @@
         // 觸覺震動反饋（增強行動裝置遊戲體驗）
         // 使用 navigator.vibrate() 提供震動感，支援大多數 Android 和部分 iOS 裝置
         function triggerVibration(type) {
+            // 檢查震動開關是否開啟
+            if (!vibrationEnabled) return;
+            
             // 檢查裝置是否支援震動 API
             if (!navigator.vibrate) return;
             
@@ -4076,6 +4113,13 @@
             debouncedSaveSoundEnabled(soundEnabled);
             // 同步更新音量圖標和滑桿狀態
             updateVolumeIcon();
+        });
+        
+        // 點擊震動按鈕切換震動開關
+        vibrationBtn.addEventListener('click', () => {
+            vibrationEnabled = !vibrationEnabled;
+            vibrationBtn.textContent = vibrationEnabled ? '📳' : '📴';
+            debouncedSaveVibrationEnabled(vibrationEnabled);
         });
         
         // 音量滑桿控制
