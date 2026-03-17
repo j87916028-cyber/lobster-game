@@ -1532,7 +1532,11 @@
 
         // 清除保存的遊戲狀態
         function clearSavedGameState() {
-            localStorage.removeItem('lobsterGameState');
+            try {
+                localStorage.removeItem('lobsterGameState');
+            } catch (e) {
+                // 私人瀏覽模式下靜默失敗
+            }
         }
 
         // 恢復保存的遊戲狀態
