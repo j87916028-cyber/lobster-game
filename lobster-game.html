@@ -4014,6 +4014,7 @@
         // 音效開關
         const volumeSlider = document.getElementById('volumeSlider');
         const volumeContainer = document.getElementById('volumeContainer');
+        const volumeIcon = volumeContainer.querySelector('span:first-child'); // 效能優化：緩存音量圖示元素引用
         let gameVolume = parseInt(getStorageItem(GAME_CONFIG.VOLUME_KEY, '30'));
         volumeSlider.value = gameVolume;
         
@@ -4021,15 +4022,15 @@
         function updateVolumeIcon() {
             // 如果聲音被關閉，統一顯示靜音圖標並禁用滑桿
             if (!soundEnabled || gameVolume === 0) {
-                volumeContainer.querySelector('span:first-child').textContent = '🔇';
+                volumeIcon.textContent = '🔇';
                 volumeSlider.disabled = true;
             } else {
                 // 啟用音量滑桿
                 volumeSlider.disabled = false;
                 if (gameVolume < 50) {
-                    volumeContainer.querySelector('span:first-child').textContent = '🔈';
+                    volumeIcon.textContent = '🔈';
                 } else {
-                    volumeContainer.querySelector('span:first-child').textContent = '🔊';
+                    volumeIcon.textContent = '🔊';
                 }
             }
         }
