@@ -3276,33 +3276,12 @@
             togglePause();
         });
         
-        // 雙擊遊戲區域暫停/恢復（觸控裝置常用操作）
-        let lastTapTime = 0;
-        gameContainer.addEventListener('touchend', (e) => {
-            const currentTime = Date.now();
-            const tapLength = currentTime - lastTapTime;
-            if (tapLength < 300 && tapLength > 0) {
-                // 雙擊檢測成功
-                if (gameRunning && !isStarting) {
-                    e.preventDefault();
-                    togglePause();
-                }
-            }
-            lastTapTime = currentTime;
-        });
-        
-        // PC 上雙擊滑鼠暫停/恢復
-        gameContainer.addEventListener('dblclick', (e) => {
-            if (gameRunning && !isStarting) {
-                e.preventDefault();
-                togglePause();
-            }
-        });
-        
         // ==================== 觸控滑動手勢支援（改進：更直觀的觸控操作）====================
         let touchStartX = 0;
         let touchStartY = 0;
+        let touchStartTime = 0; // 記錄觸摸開始時間，用於區分點擊和滑動
         const SWIPE_THRESHOLD = 30; // 最小滑動距離
+        const TAP_THRESHOLD_TIME = 200; // 觸摸超過此時間視為滑動，非點擊
 
         // 遊戲區域觸摸開始 - 記錄起始位置
         gameContainer.addEventListener('touchstart', (e) => {
@@ -3312,34 +3291,62 @@
             if (e.touches.length === 1) {
                 touchStartX = e.touches[0].clientX;
                 touchStartY = e.touches[0].clientY;
+                touchStartTime = Date.now();
             }
         }, { passive: true });
 
-        // 遊戲區域觸摸結束 - 計算滑動方向
+        // 統一處理 touchend：同時處理滑動和雙擊檢測（修復：合併兩個獨立的 touchend 監聽器，避免衝突）
+        let lastTapTime = 0;
         gameContainer.addEventListener('touchend', (e) => {
             // 忽略目標是按鈕的觸控
             if (e.target.closest('.touch-btn')) return;
             
-            // 如果遊戲未運行或正在開始中，不處理滑動
-            if (!gameRunning || isStarting || isPaused) return;
+            // 如果遊戲未運行，不處理
+            if (!gameRunning || isStarting) return;
             
             const touch = e.changedTouches[0];
             const deltaX = touch.clientX - touchStartX;
             const deltaY = touch.clientY - touchStartY;
+            const touchDuration = Date.now() - touchStartTime;
             
-            // 判斷是否為滑動操作（水平移動大於垂直移動，且超過閾值）
-            if (Math.abs(deltaX) > SWIPE_THRESHOLD && Math.abs(deltaX) > Math.abs(deltaY)) {
-                if (deltaX > 0) {
-                    // 向右滑動
-                    keys.right = true;
-                    setTimeout(() => { keys.right = false; }, 150);
-                } else {
-                    // 向左滑動
-                    keys.left = true;
-                    setTimeout(() => { keys.left = false; }, 150);
+            // 判斷是否為滑動操作（水平移動大於垂直移動，且超過閾值，且觸摸時間不超過閾值）
+            const isSwipe = Math.abs(deltaX) > SWIPE_THRESHOLD && 
+                           Math.abs(deltaX) > Math.abs(deltaY) && 
+                           touchDuration < TAP_THRESHOLD_TIME;
+            
+            if (isSwipe) {
+                // 滑動操作
+                if (!isPaused) {
+                    if (deltaX > 0) {
+                        // 向右滑動
+                        keys.right = true;
+                        setTimeout(() => { keys.right = false; }, 150);
+                    } else {
+                        // 向左滑動
+                        keys.left = true;
+                        setTimeout(() => { keys.left = false; }, 150);
+                    }
                 }
+            } else if (!isPaused && touchDuration < TAP_THRESHOLD_TIME) {
+                // 點擊操作（非滑動且觸摸時間短）- 檢測雙擊
+                const currentTime = Date.now();
+                const tapLength = currentTime - lastTapTime;
+                if (tapLength < 300 && tapLength > 0) {
+                    // 雙擊檢測成功，暫停/恢復遊戲
+                    e.preventDefault();
+                    togglePause();
+                }
+                lastTapTime = currentTime;
             }
         }, { passive: true });
+        
+        // PC 上雙擊滑鼠暫停/恢復
+        gameContainer.addEventListener('dblclick', (e) => {
+            if (gameRunning && !isStarting) {
+                e.preventDefault();
+                togglePause();
+            }
+        });
         
         // 說明按鈕點擊事件（使用標誌位防止 touchstart 和 click 重複觸發）
         const helpBtnElement = document.getElementById('helpBtn');
