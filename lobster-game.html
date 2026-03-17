@@ -3552,6 +3552,8 @@
             
             // 新增：點擊倒數畫面可跳過（提升使用者體驗）
             const skipCountdown = () => {
+                // 移除鍵盤事件監聽器，避免記憶體洩漏
+                document.removeEventListener('keydown', countdownKeyHandler);
                 if (countdownInterval) {
                     clearInterval(countdownInterval);
                     countdownInterval = null;
@@ -3569,9 +3571,19 @@
                 skipCountdown();
             });
             
-            // 添加「點擊跳過」提示文字
+            // 新增：鍵盤 Enter/Space 可跳過倒數計時（改善鍵盤使用者體驗）
+            const countdownKeyHandler = (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    document.removeEventListener('keydown', countdownKeyHandler);
+                    skipCountdown();
+                }
+            };
+            document.addEventListener('keydown', countdownKeyHandler);
+            
+            // 添加「點擊或按 Enter 跳過」提示文字
             const skipHint = document.createElement('div');
-            skipHint.textContent = '點擊跳過';
+            skipHint.textContent = '點擊或按 Enter 跳過';
             skipHint.style.cssText = `
                 position: absolute;
                 bottom: 20px;
