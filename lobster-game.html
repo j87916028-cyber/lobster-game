@@ -92,6 +92,8 @@
             pointer-events: none;
             z-index: 100;
             will-change: transform, opacity;
+            transform: translateZ(0); /* 強制 GPU 硬體加速 */
+            backface-visibility: hidden; /* 避免背面的不必要渲染 */
             user-select: none;
             -webkit-user-select: none;
         }
@@ -107,6 +109,8 @@
             pointer-events: none;
             z-index: 100;
             will-change: transform, opacity;
+            transform: translateZ(0); /* 強制 GPU 硬體加速 */
+            backface-visibility: hidden; /* 避免背面的不必要渲染 */
             user-select: none;
             -webkit-user-select: none;
         }
