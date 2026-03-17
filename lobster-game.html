@@ -1371,6 +1371,15 @@
             }
         }
 
+        // 安全的清除 timeout 函數（減少重複的 if判斷 + clearTimeout 代碼）
+        function safeClearTimeout(timeoutRef) {
+            if (timeoutRef) {
+                clearTimeout(timeoutRef);
+                return null;
+            }
+            return timeoutRef;
+        }
+
         // 自定義確認對話框 (取代原生 confirm())
         let confirmResolve = null;
         const confirmOverlay = document.getElementById('confirmOverlay');
@@ -1795,16 +1804,10 @@
             powerupRemainingTimes = {};
             
             // 清除連擊計時器和無敵計時器
-            if (comboTimeout) {
-                clearTimeout(comboTimeout);
-                comboTimeout = null;
-            }
+            comboTimeout = safeClearTimeout(comboTimeout);
             comboStartTime = null;
             comboRemainingTime = 0;
-            if (invincibleTimeout) {
-                clearTimeout(invincibleTimeout);
-                invincibleTimeout = null;
-            }
+            invincibleTimeout = safeClearTimeout(invincibleTimeout);
             invincibleStartTime = null;
             
             // 清除倒數計時（防止記憶體洩漏）
@@ -2291,7 +2294,7 @@
         // 連擊系統函數
         function handleCombo() {
             // 清除之前的計時器
-            if (comboTimeout) clearTimeout(comboTimeout);
+            comboTimeout = safeClearTimeout(comboTimeout);
             
             comboCount++;
             // 更新最高連擊記錄
@@ -2311,7 +2314,7 @@
             }
             
             // 設置連擊超時（先清除舊計時器避免多個計時器同時運行）
-            if (comboTimeout) clearTimeout(comboTimeout);
+            comboTimeout = safeClearTimeout(comboTimeout);
             comboStartTime = Date.now(); // 記錄計時器開始時間
             comboRemainingTime = COMBO_WINDOW; // 重置剩餘時間
             comboTimeout = setTimeout(() => {
@@ -2326,8 +2329,7 @@
             comboStartTime = null;
             comboRemainingTime = 0;
             comboIndicator.classList.remove('show');
-            if (comboTimeout) clearTimeout(comboTimeout);
-            comboTimeout = null;
+            comboTimeout = safeClearTimeout(comboTimeout);
         }
 
         // 暫停連擊計時器（分頁隱藏時呼叫）
@@ -2336,8 +2338,7 @@
                 // 計算剩餘時間，正確追蹤暫停時的倒數
                 const elapsed = Date.now() - comboStartTime;
                 comboRemainingTime = Math.max(0, COMBO_WINDOW - elapsed);
-                clearTimeout(comboTimeout);
-                comboTimeout = null;
+                comboTimeout = safeClearTimeout(comboTimeout);
             }
         }
 
@@ -2360,14 +2361,12 @@
             if (powerupTimers.shield && activePowerups.shield) {
                 const elapsed = Date.now() - (powerupStartTimes.shield || 0);
                 powerupRemainingTimes.shield = Math.max(0, GAME_CONFIG.SHIELD_DURATION - elapsed);
-                clearTimeout(powerupTimers.shield);
-                powerupTimers.shield = null;
+                powerupTimers.shield = safeClearTimeout(powerupTimers.shield);
             }
             if (powerupTimers['2x'] && activePowerups['2x']) {
                 const elapsed = Date.now() - (powerupStartTimes['2x'] || 0);
                 powerupRemainingTimes['2x'] = Math.max(0, GAME_CONFIG.DOUBLE_DURATION - elapsed);
-                clearTimeout(powerupTimers['2x']);
-                powerupTimers['2x'] = null;
+                powerupTimers['2x'] = safeClearTimeout(powerupTimers['2x']);
             }
         }
 
@@ -2594,7 +2593,7 @@
                 endGame();
             } else {
                 // 無敵時間 1 秒，遊戲繼續進行（修復：儲存計時器以便清除）
-                if (invincibleTimeout) clearTimeout(invincibleTimeout);
+                invincibleTimeout = safeClearTimeout(invincibleTimeout);
                 invincibleStartTime = Date.now(); // 記錄開始時間
                 invincibleTimeout = setTimeout(() => {
                     if (lives > 0) {
