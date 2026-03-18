@@ -2050,9 +2050,8 @@
                 element.parentNode.removeChild(element);
             }
             
-            // 清除元素內容和樣式
+            // 清除元素內容和樣式 - 只清除實際使用的屬性（優化：避免不必要的樣式操作）
             element.textContent = '';
-            element.style.left = '';
             element.style.transform = '';
             element.style.display = '';
             
