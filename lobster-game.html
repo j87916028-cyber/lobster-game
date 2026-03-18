@@ -1420,7 +1420,15 @@
                 localStorage.setItem(key, value);
                 return true;
             } catch (e) {
-                // 私人瀏覽模式下靜默失敗
+                // 區分不同錯誤類型，提供更精確的處理
+                if (e.name === 'QuotaExceededError' || e.code === 22 || e.message.includes('quota')) {
+                    // localStorage 儲存空間已滿
+                    console.warn('localStorage 儲存空間已滿，無法儲存資料');
+                    // 可以選擇清理舊資料後重試（可選優化）
+                } else {
+                    // 其他錯誤（如私人瀏覽模式、SecurityError 等）
+                    console.warn('localStorage 儲存失敗:', e.name);
+                }
                 return false;
             }
         }
