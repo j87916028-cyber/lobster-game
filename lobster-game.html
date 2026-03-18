@@ -2912,6 +2912,8 @@
                         // 處理道具
                         if (bubble.isPowerup) {
                             activatePowerup(bubble.powerupType, bubble.x, bubble.y);
+                            // 修復：接到道具也要計入收集統計，这样命中率计算才准确
+                            gameStats.coinsCollected++;
                             // 標記氣泡為待移除
                             bubblesToRemove.push(bubble);
                             continue;
