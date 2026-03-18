@@ -1225,6 +1225,7 @@
                 <div><kbd>Enter</kbd> <kbd>Space</kbd> - 開始/繼續/重新開始</div>
                 <div><kbd>ESC</kbd> <kbd>P</kbd> - 暫停/繼續</div>
                 <div><kbd>M</kbd> - 靜音切換</div>
+                <div><kbd>K</kbd> - 震動切換</div>
                 <div><kbd>H</kbd> - 顯示說明</div>
                 <div><kbd>F</kbd> - 切換全螢幕</div>
                 <div class="touch-hint">📱 觸控裝置：使用螢幕下方的按鈕，或左右滑動螢幕來移動龍蝦</div>
@@ -2252,7 +2253,7 @@
         const MOVE_SPEED = GAME_CONFIG.PLAYER_MOVE_SPEED; // 像素/毫秒
         
         // 遊戲控制鍵集合（效能優化：使用 Set 避免每次按鍵都創建數組，且 Set.has() 比 Array.includes() 更快）
-        const GAME_CONTROL_KEYS = new Set(['Enter', 'ArrowLeft', 'ArrowRight', 'Escape', 'a', 'A', 'd', 'D', ' ', 'f', 'F']);
+        const GAME_CONTROL_KEYS = new Set(['Enter', 'ArrowLeft', 'ArrowRight', 'Escape', 'a', 'A', 'd', 'D', ' ', 'f', 'F', 'k', 'K']);
 
         // ==================== 工具函數 ====================
         // 防抖函數（效能優化：避免快速觸發的事件導致效能問題）
@@ -3025,7 +3026,15 @@
                 toggleFullscreen();
                 return;
             }
-            
+
+            // K 鍵切換震動 - 應該隨時可用
+            if (e.key === 'k' || e.key === 'K') {
+                vibrationEnabled = !vibrationEnabled;
+                vibrationBtn.textContent = vibrationEnabled ? '📳' : '📴';
+                debouncedSaveVibrationEnabled(vibrationEnabled);
+                return;
+            }
+
             if (!gameRunning || isPaused) return;
             if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
                 keys.left = true;
