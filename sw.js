@@ -158,10 +158,11 @@ self.addEventListener('fetch', (event) => {
       caches.match(request)
         .then((cachedResponse) => {
           // 同時發起預加載請求（如果支援）
+          // 修復：當 navigationPreload 不支援時，不應該執行 fetch，避免不必要的網絡請求
           const preloadPromise = navigationPreloadSupported 
             ? self.registration.navigationPreload.getState()
                 .then(state => state.enabled ? fetch(request) : Promise.reject('preload disabled'))
-            : fetch(request).catch(() => {});
+            : Promise.reject('preload not supported');
           
           // 如果有緩存，立即返回並在背景更新
           if (cachedResponse) {
