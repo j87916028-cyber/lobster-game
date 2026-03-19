@@ -2389,8 +2389,7 @@
                 playSound('combo');
             }
             
-            // 設置連擊超時（先清除舊計時器避免多個計時器同時運行）
-            comboTimeout = safeClearTimeout(comboTimeout);
+            // 設置連擊超時
             comboStartTime = Date.now(); // 記錄計時器開始時間
             comboRemainingTime = COMBO_WINDOW; // 重置剩餘時間
             comboTimeout = setTimeout(() => {
