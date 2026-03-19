@@ -1225,6 +1225,7 @@
                 <div><kbd>Enter</kbd> <kbd>Space</kbd> - 開始/繼續/重新開始</div>
                 <div><kbd>ESC</kbd> <kbd>P</kbd> - 暫停/繼續</div>
                 <div><kbd>M</kbd> - 靜音切換</div>
+                <div><kbd>K</kbd> - 震動切換</div>
                 <div><kbd>H</kbd> - 顯示說明</div>
                 <div><kbd>F</kbd> - 切換全螢幕</div>
                 <div class="touch-hint">📱 觸控裝置：使用螢幕下方的按鈕，或左右滑動螢幕來移動龍蝦</div>
@@ -1232,7 +1233,7 @@
                 <hr>
                 <div>💰 接住金幣和寶石得分</div>
                 <div>🛡️ 護盾 - 無敵 5 秒</div>
-                <div>🌟 雙倍 - 分数 x2</div>
+                <div>🌟 雙倍 - 分數 x2</div>
                 <div>❤️ 生命 - 回復 1 條命</div>
                 <div>💣 炸彈 - 扣 1 條命</div>
             </div>
@@ -1420,7 +1421,15 @@
                 localStorage.setItem(key, value);
                 return true;
             } catch (e) {
-                // 私人瀏覽模式下靜默失敗
+                // 區分不同錯誤類型，提供更精確的處理
+                if (e.name === 'QuotaExceededError' || e.code === 22 || e.message.includes('quota')) {
+                    // localStorage 儲存空間已滿
+                    console.warn('localStorage 儲存空間已滿，無法儲存資料');
+                    // 可以選擇清理舊資料後重試（可選優化）
+                } else {
+                    // 其他錯誤（如私人瀏覽模式、SecurityError 等）
+                    console.warn('localStorage 儲存失敗:', e.name);
+                }
                 return false;
             }
         }
@@ -2042,9 +2051,8 @@
                 element.parentNode.removeChild(element);
             }
             
-            // 清除元素內容和樣式
+            // 清除元素內容和樣式 - 只清除實際使用的屬性（優化：避免不必要的樣式操作）
             element.textContent = '';
-            element.style.left = '';
             element.style.transform = '';
             element.style.display = '';
             
@@ -2245,7 +2253,7 @@
         const MOVE_SPEED = GAME_CONFIG.PLAYER_MOVE_SPEED; // 像素/毫秒
         
         // 遊戲控制鍵集合（效能優化：使用 Set 避免每次按鍵都創建數組，且 Set.has() 比 Array.includes() 更快）
-        const GAME_CONTROL_KEYS = new Set(['Enter', 'ArrowLeft', 'ArrowRight', 'Escape', 'a', 'A', 'd', 'D', ' ', 'f', 'F']);
+        const GAME_CONTROL_KEYS = new Set(['Enter', 'ArrowLeft', 'ArrowRight', 'Escape', 'a', 'A', 'd', 'D', ' ', 'f', 'F', 'k', 'K']);
 
         // ==================== 工具函數 ====================
         // 防抖函數（效能優化：避免快速觸發的事件導致效能問題）
@@ -2381,8 +2389,7 @@
                 playSound('combo');
             }
             
-            // 設置連擊超時（先清除舊計時器避免多個計時器同時運行）
-            comboTimeout = safeClearTimeout(comboTimeout);
+            // 設置連擊超時
             comboStartTime = Date.now(); // 記錄計時器開始時間
             comboRemainingTime = COMBO_WINDOW; // 重置剩餘時間
             comboTimeout = setTimeout(() => {
@@ -2904,6 +2911,8 @@
                         // 處理道具
                         if (bubble.isPowerup) {
                             activatePowerup(bubble.powerupType, bubble.x, bubble.y);
+                            // 修復：接到道具也要計入收集統計，这样命中率计算才准确
+                            gameStats.coinsCollected++;
                             // 標記氣泡為待移除
                             bubblesToRemove.push(bubble);
                             continue;
@@ -3018,7 +3027,15 @@
                 toggleFullscreen();
                 return;
             }
-            
+
+            // K 鍵切換震動 - 應該隨時可用
+            if (e.key === 'k' || e.key === 'K') {
+                vibrationEnabled = !vibrationEnabled;
+                vibrationBtn.textContent = vibrationEnabled ? '📳' : '📴';
+                debouncedSaveVibrationEnabled(vibrationEnabled);
+                return;
+            }
+
             if (!gameRunning || isPaused) return;
             if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
                 keys.left = true;
@@ -3552,6 +3569,8 @@
             
             // 新增：點擊倒數畫面可跳過（提升使用者體驗）
             const skipCountdown = () => {
+                // 移除鍵盤事件監聽器，避免記憶體洩漏
+                document.removeEventListener('keydown', countdownKeyHandler);
                 if (countdownInterval) {
                     clearInterval(countdownInterval);
                     countdownInterval = null;
@@ -3569,9 +3588,19 @@
                 skipCountdown();
             });
             
-            // 添加「點擊跳過」提示文字
+            // 新增：鍵盤 Enter/Space 可跳過倒數計時（改善鍵盤使用者體驗）
+            const countdownKeyHandler = (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    document.removeEventListener('keydown', countdownKeyHandler);
+                    skipCountdown();
+                }
+            };
+            document.addEventListener('keydown', countdownKeyHandler);
+            
+            // 添加「點擊或按 Enter 跳過」提示文字
             const skipHint = document.createElement('div');
-            skipHint.textContent = '點擊跳過';
+            skipHint.textContent = '點擊或按 Enter 跳過';
             skipHint.style.cssText = `
                 position: absolute;
                 bottom: 20px;

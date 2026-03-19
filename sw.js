@@ -1,10 +1,13 @@
 // 龍蝦大戰 Service Worker - 離線支援
 // 版本號：使用固定版本号，避免每次加載都創建新緩存
-const CACHE_VERSION = 'v1.0.2';  // 手动更新版本号以触发缓存更新
+const CACHE_VERSION = 'v1.0.3';  // 手动更新版本号以触发缓存更新
 const CACHE_NAME = 'lobster-game-' + CACHE_VERSION;
 
 // 離線頁面 HTML 緩存（效能優化：避免每次請求時重新生成 HTML 字串）
 let cachedOfflinePage = null;
+
+// 導航預加載（效能優化：讓導航請求更快）
+const navigationPreloadSupported = 'navigationPreload' in self.registration;
 
 // 離線頁面 HTML（當完全沒有緩存時顯示）
 function getOfflinePage() {
@@ -108,7 +111,7 @@ async function updateCache() {
   }
 }
 
-// 啟用事件 - 清理舊緩存
+// 啟用事件 - 清理舊緩存並啟用導航預加載
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -120,9 +123,17 @@ self.addEventListener('activate', (event) => {
         })
       );
     })
+    .then(() => {
+      // 啟用導航預加載（效能優化：讓導航請求更快）
+      if (navigationPreloadSupported) {
+        return self.registration.navigationPreload.enable();
+      }
+    })
+    .then(() => {
+      // 立即控制所有客戶端
+      return self.clients.claim();
+    })
   );
-  // 立即控制所有客戶端
-  self.clients.claim();
 });
 
 // 請求事件 - 緩存優先，失敗時回退到網絡（優化離線遊戲體驗）
@@ -141,29 +152,37 @@ self.addEventListener('fetch', (event) => {
   }
 
   // 導航請求（HTML 頁面）- 緩存優先，失敗時網絡回退（優化離線體驗）
+  // 使用 Stale-While-Revalidate 策略 + Navigation Preload 提升效能
   if (request.mode === 'navigate') {
     event.respondWith(
       caches.match(request)
         .then((cachedResponse) => {
+          // 同時發起預加載請求（如果支援）
+          // 修復：當 navigationPreload 不支援時，不應該執行 fetch，避免不必要的網絡請求
+          const preloadPromise = navigationPreloadSupported 
+            ? self.registration.navigationPreload.getState()
+                .then(state => state.enabled ? fetch(request) : Promise.reject('preload disabled'))
+            : Promise.reject('preload not supported');
+          
+          // 如果有緩存，立即返回並在背景更新
           if (cachedResponse) {
-            // 返回緩存的同時，嘗試在背景更新緩存
-            fetch(request)
-              .then((response) => {
-                if (response.ok) {
+            preloadPromise
+              .then(response => {
+                if (response && response.ok) {
                   const responseClone = response.clone();
                   caches.open(CACHE_NAME).then((cache) => {
                     cache.put(request, responseClone);
                   }).catch(() => {});
                 }
               })
-              .catch(() => {}); // 忽略網絡錯誤
+              .catch(() => {}); // 忽略預加載錯誤
             return cachedResponse;
           }
-          // 沒有緩存，嘗試網絡請求
-          return fetch(request)
-            .then((response) => {
-              // 複製響應並緩存
-              if (response.ok) {
+          
+          // 沒有緩存，使用預加載結果或網絡請求
+          return preloadPromise
+            .then(response => {
+              if (response && response.ok) {
                 const responseClone = response.clone();
                 caches.open(CACHE_NAME).then((cache) => {
                   cache.put(request, responseClone);
@@ -172,17 +191,31 @@ self.addEventListener('fetch', (event) => {
               return response;
             })
             .catch(() => {
-              // 網絡失敗時，返回離線提示頁面
-              return caches.match('./lobster-game.html').then(response => {
-                if (response) {
+              // 預加載失敗，嘗試普通網絡請求
+              return fetch(request)
+                .then((response) => {
+                  // 複製響應並緩存
+                  if (response.ok) {
+                    const responseClone = response.clone();
+                    caches.open(CACHE_NAME).then((cache) => {
+                      cache.put(request, responseClone);
+                    }).catch(() => {});
+                  }
                   return response;
-                }
-                return new Response(getOfflinePage(), {
-                  status: 503,
-                  statusText: 'Service Unavailable',
-                  headers: { 'Content-Type': 'text/html; charset=utf-8' }
+                })
+                .catch(() => {
+                  // 網絡失敗時，返回離線提示頁面
+                  return caches.match('./lobster-game.html').then(response => {
+                    if (response) {
+                      return response;
+                    }
+                    return new Response(getOfflinePage(), {
+                      status: 503,
+                      statusText: 'Service Unavailable',
+                      headers: { 'Content-Type': 'text/html; charset=utf-8' }
+                    });
+                  });
                 });
-              });
             });
         })
     );

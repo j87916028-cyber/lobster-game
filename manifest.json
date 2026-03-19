@@ -2,12 +2,15 @@
   "name": "🦞 龍蝦大戰",
   "short_name": "龍蝦大戰",
   "description": "🦞 龍蝦大冒險 - 躲避氣泡，收集金幣，挑戰最高分！",
+  "lang": "zh-TW",
+  "dir": "ltr",
+  "id": "com.lobstergame.app",
   "start_url": "./lobster-game.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#1a1a2e",
   "theme_color": "#00d4ff",
-  "orientation": "portrait",
+  "orientation": "landscape",
   "launch_handler": {
     "client_mode": "navigate-existing"
   },
