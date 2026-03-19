@@ -211,8 +211,9 @@ self.addEventListener('fetch', (event) => {
             }
             return networkResponse;
           }).catch(() => {
-            // 離線時返回空響應而非錯誤（更優雅的失敗處理）
-            return new Response('', { status: 200 });
+            // 離線時返回 503 錯誤，讓瀏覽器自然處理失敗，而非返回空 200 響應
+            // 這樣可以避免腳本/樣式載入時出現預期外的行為
+            return new Response('', { status: 503, statusText: 'Service Unavailable' });
           });
         })
     );
