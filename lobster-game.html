@@ -1842,6 +1842,7 @@
         // 倒數計時相關變數（用於防止記憶體洩漏）
         let countdownInterval = null;
         let countdownOverlay = null;
+        let countdownKeyHandler = null; // 修復：cleanupGame 也需移除 document keydown 監聽器
 
         // ==================== 統一遊戲清理函數 ====================
         // 統一處理遊戲結束/重啟時的清理工作，避免重複代碼
@@ -1885,6 +1886,11 @@
             if (countdownOverlay) {
                 countdownOverlay.remove();
                 countdownOverlay = null;
+            }
+            // 修復：移除 document 等級的 keydown 監聽器，防止記憶體洩漏
+            if (countdownKeyHandler) {
+                document.removeEventListener('keydown', countdownKeyHandler);
+                countdownKeyHandler = null;
             }
             
             // 清除觸控計時器並重置觸控狀態（防止記憶體洩漏和狀態殘留）
@@ -3589,10 +3595,12 @@
             });
             
             // 新增：鍵盤 Enter/Space 可跳過倒數計時（改善鍵盤使用者體驗）
-            const countdownKeyHandler = (e) => {
+            // 修復：改為賦值而非 const，確保 cleanupGame 能移除此監聽器（避免記憶體洩漏）
+            countdownKeyHandler = (e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
                     document.removeEventListener('keydown', countdownKeyHandler);
+                    countdownKeyHandler = null;
                     skipCountdown();
                 }
             };
