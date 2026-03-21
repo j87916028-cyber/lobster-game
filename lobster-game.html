@@ -132,17 +132,38 @@
             will-change: transform; /* GPU 加速提示 */
         }
         
-        /* 受傷震動動畫 */
+        /* 受傷震動動畫：純 transform（GPU 加速，無 repaint）*/
         @keyframes damageShake {
             0%, 100% { transform: translateX(0); }
-            20% { transform: translateX(-10px); background: rgba(255,0,0,0.3); }
+            20% { transform: translateX(-10px); }
             40% { transform: translateX(10px); }
             60% { transform: translateX(-10px); }
             80% { transform: translateX(10px); }
         }
         
+        /* 受傷紅色閃爍：使用 ::before + opacity（GPU 加速，無 repaint）*/
+        .damage-shake::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 0, 0, 0.3);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 50;
+        }
+        
+        .damage-shake.damage-flash::before {
+            animation: damageFlash 500ms ease-out forwards;
+        }
+        
+        @keyframes damageFlash {
+            0% { opacity: 0; }
+            15% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+        
         .damage-shake {
-            will-change: transform; /* GPU 加速提示 */
+            will-change: transform;
         }
         
         /* 無敵時間閃爍效果 */
@@ -2654,9 +2675,18 @@
         function triggerDamageAnimation() {
             // 無障礙：如果使用者偏好減少動態效果，則跳過動畫
             if (prefersReducedMotion()) return;
-            gameContainer.style.animation = 'none';
+            // 使用 class 切換 + 重新添加 flash class，確保每次受傷都能觸發動畫
+            gameContainer.classList.remove('damage-shake', 'damage-flash');
             void gameContainer.offsetWidth; // 強制重繪
+            gameContainer.classList.add('damage-shake', 'damage-flash');
             gameContainer.style.animation = `damageShake ${GAME_CONFIG.DAMAGE_SHAKE_DURATION}ms ease-out`;
+            // 動畫結束後清除 classes（避免殘留影響後續動畫）
+            const onAnimEnd = () => {
+                gameContainer.classList.remove('damage-shake', 'damage-flash');
+                gameContainer.style.animation = '';
+                gameContainer.removeEventListener('animationend', onAnimEnd);
+            };
+            gameContainer.addEventListener('animationend', onAnimEnd);
         }
 
         // 觸覺震動反饋（增強行動裝置遊戲體驗）
