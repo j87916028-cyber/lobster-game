@@ -647,6 +647,12 @@ function startGame() {
             }
         }
         
+        function closeMenu() {
+            // 關閉任何開啟的 overlay（商店、排行榜、成就、每日挑戰）
+            document.getElementById('shop').style.display = 'none';
+            document.getElementById('leaderboard').style.display = 'none';
+        }
+        
         function addToLeaderboard(name, score) {
             let board = JSON.parse(localStorage.getItem('lobsterLeaderboard') || '[]');
             board.push({ name, score, date: new Date().toLocaleDateString() });
