@@ -450,7 +450,9 @@ function startGame() {
         }
         
         function updateGame() {
-            items.forEach((item, index) => {
+            // 倒序遍歷，避免 splice 造成索引偏移
+            for (let i = items.length - 1; i >= 0; i--) {
+                const item = items[i];
                 item.y += item.speed;
                 item.element.style.top = item.y + 'px';
                 
@@ -467,11 +469,14 @@ function startGame() {
                 
                 if (itemRect.bottom > playerRect.top + 20 && itemRect.top < playerRect.bottom &&
                     itemRect.right > playerRect.left + 10 && itemRect.left < playerRect.right - 10) {
-                    handleCollision(item, index);
+                    handleCollision(item, i);
                 }
                 
-                if (item.y > 430) { if (item.element.parentNode) item.element.remove(); items.splice(index, 1); }
-            });
+                if (item.y > 430) {
+                    if (item.element.parentNode) item.element.remove();
+                    items.splice(i, 1);
+                }
+            }
             
             currentLevel = Math.floor(score / 500) + 1;
             document.getElementById('level').textContent = currentLevel;
