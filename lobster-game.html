@@ -940,13 +940,21 @@
             }
         }
         
-        /* 減少動畫偏好支援 (無障礙) */
+        /* 減少動畫偏好支援 (無障礙) - 使用 animation: none 而非縮短時間，
+           以確保 inline animation 樣式也被覆蓋，並避免 animationend 事件觸發 */
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after {
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
+                animation: none !important;
                 transition-duration: 0.01ms !important;
             }
+            /* 遊戲特定元素的動畫禁用（這些有 inline animation 樣式） */
+            #gameContainer {
+                animation: none !important;
+            }
+            .life-lost {
+                animation: none !important;
+            }
+            /* 通用動畫覆蓋（確保靜態顯示） */
             .score-popup, .powerup-popup {
                 animation: none !important;
                 opacity: 1;
@@ -965,6 +973,17 @@
                 animation: none !important;
             }
             .new-record {
+                animation: none !important;
+            }
+            /* 倒數計時覆蓋（避免計時數字動畫残留） */
+            #countdownOverlay {
+                animation: none !important;
+            }
+            #countdownOverlay span {
+                animation: none !important;
+            }
+            /* 安裝/更新提示覆蓋 */
+            #installPrompt, #updateNotification {
                 animation: none !important;
             }
         }
@@ -2537,6 +2556,21 @@
             popup.style.top = y + 'px';
             gameContainer.appendChild(popup);
             
+            // 無障礙：如果使用者偏好減少動態效果，則不使用動畫，直接短暫顯示後回收
+            if (prefersReducedMotion()) {
+                // 1 秒後自動回收（無障礙替代方案）
+                const cleanupHandler = function() {
+                    popup.removeEventListener('animationend', cleanupHandler);
+                    popup.remove();
+                    returnPopupToPool(popup);
+                };
+                popup._animationEndHandler = cleanupHandler;
+                setTimeout(() => {
+                    cleanupHandler();
+                }, 1000);
+                return;
+            }
+            
             // 使用 animationend 事件確保動畫結束後才回收，比 setTimeout 更精確且避免記憶體洩漏
             // 儲存 handler 參考以便後續移除
             const handler = function() {
@@ -2601,6 +2635,8 @@
 
         // 玩家受傷時的動畫
         function triggerDamageAnimation() {
+            // 無障礙：如果使用者偏好減少動態效果，則跳過動畫
+            if (prefersReducedMotion()) return;
             gameContainer.style.animation = 'none';
             void gameContainer.offsetWidth; // 強制重繪
             gameContainer.style.animation = `damageShake ${GAME_CONFIG.DAMAGE_SHAKE_DURATION}ms ease-out`;
@@ -2694,6 +2730,8 @@
 
         // 玩家接到物品時的動畫
         function triggerPlayerCatchAnimation() {
+            // 無障礙：如果使用者偏好減少動態效果，則跳過動畫
+            if (prefersReducedMotion()) return;
             player.classList.remove('player-catch');
             void player.offsetWidth; // 強制重繪
             player.classList.add('player-catch');
