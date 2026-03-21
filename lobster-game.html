@@ -2000,6 +2000,7 @@
                 // 重置遊戲狀態
                 isInvincible = false;
                 invincibleReason = null;
+                invincibleRemainingTime = 0; // 重置無敵剩餘時間（避免殘留值影響新遊戲）
                 bestCombo = 0; // 重置最高連擊記錄
                 resetCombo();
                 
@@ -2537,8 +2538,7 @@
                 // 計算剩餘時間，正確追蹤暫停時的倒數
                 const elapsed = Date.now() - invincibleStartTime;
                 invincibleRemainingTime = Math.max(0, GAME_CONFIG.INVINCIBLE_DURATION - elapsed);
-                clearTimeout(invincibleTimeout);
-                invincibleTimeout = null;
+                invincibleTimeout = safeClearTimeout(invincibleTimeout);
             }
         }
 
@@ -2550,14 +2550,15 @@
                 invincibleStartTime = Date.now(); // 重置開始時間
                 invincibleRemainingTime = remainingTime;
                 invincibleTimeout = setTimeout(() => {
+                    // 修復 bug：當受傷無敵計時器觸發時，也要清除護盾視覺效果
+                    // 否則當護盾先過期（但被錯誤保留）後再觸發受傷無敵計時器，
+                    // 護盾視覺會殘留在畫面上
                     isInvincible = false;
-                    player.classList.remove('player-invincible');
-                    // 如果護盾也過期了，移除護盾視覺效果
-                    if (!activePowerups.shield) {
-                        player.classList.remove('player-shield');
-                    }
                     invincibleTimeout = null;
                     invincibleStartTime = null;
+                    player.classList.remove('player-invincible');
+                    player.classList.remove('player-shield');
+                    invincibleReason = null;
                 }, remainingTime);
             }
         }
@@ -2767,7 +2768,10 @@
                 invincibleStartTime = Date.now(); // 記錄開始時間
                 invincibleTimeout = setTimeout(() => {
                     if (lives > 0) {
+                        // 修復 bug：受傷無敵結束時，也要清除護盾視覺效果
+                        // 否則當護盾與受傷無敵重疊且護盾先過期時，護盾視覺會殘留
                         player.classList.remove('player-invincible');
+                        player.classList.remove('player-shield');
                         isInvincible = false;
                         invincibleReason = null;
                     }
@@ -2826,15 +2830,18 @@
                 powerupStartTimes.shield = Date.now(); // 記錄開始時間
                 powerupTimers.shield = setTimeout(() => {
                     activePowerups.shield = false;
-                    // 只移除護盾造成的無敵，不影響受傷無敵狀態
-                    if (invincibleReason === 'shield') {
+                    // 修復 bug：當護盾過期時，檢查受傷無敵計時器是否仍在運行
+                    // 如果 invincibleTimeout 仍非 null，表示受傷無敵尚未結束
+                    // 這種情況發生在：受傷無敵先啟動(1秒) -> 護盾後啟動覆蓋 invincibleReason -> 護盾先過期(5秒)
+                    // 原本會錯誤清除 isInvincible，現在保留受傷無敵狀態
+                    if (invincibleTimeout !== null) {
+                        // 受傷無敵仍在運行：保留無敵狀態，只移除護盾視覺
+                        player.classList.remove('player-shield');
+                    } else {
+                        // 沒有受傷無敵在運行：清除所有無敵狀態
                         isInvincible = false;
                         invincibleReason = null;
                         player.classList.remove('player-invincible', 'player-shield');
-                    }
-                    // 如果同時處於受傷無敵狀態，保留無敵效果
-                    else if (invincibleReason === 'damage') {
-                        // 保持受傷無敵狀態，什麼都不做
                     }
                     updatePowerupIndicator();
                 }, powerup.duration);
