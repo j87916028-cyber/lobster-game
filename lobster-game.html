@@ -3613,9 +3613,20 @@
         });
 
         // 檢查使用者是否偏好減少動畫（無障礙支援）
+        // 效能優化：快取結果避免每幀重複查詢 matchMedia
+        let cachedPrefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
         function prefersReducedMotion() {
-            return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            return cachedPrefersReducedMotion;
         }
+        // 監聽系統偏好變更（支援用户在遊戲中改變設定）
+        try {
+            const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+            if (motionQuery.addEventListener) {
+                motionQuery.addEventListener('change', (e) => {
+                    cachedPrefersReducedMotion = e.matches;
+                });
+            }
+        } catch (e) { /* 不支援的瀏覽器直接忽略 */ }
 
         // 顯示倒數計時（遊戲開始前）
         function showCountdown(callback, duration = 1000, customMessage = null) {
