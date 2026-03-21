@@ -1,6 +1,6 @@
 // 龍蝦大戰 Service Worker - 離線支援
 // 版本號：使用固定版本号，避免每次加載都創建新緩存
-const CACHE_VERSION = 'v1.0.4';  // 手动更新版本号以触发缓存更新
+const CACHE_VERSION = 'v1.0.5';  // 手动更新版本号以触发缓存更新
 const CACHE_NAME = 'lobster-game-' + CACHE_VERSION;
 
 // 離線頁面 HTML 緩存（效能優化：避免每次請求時重新生成 HTML 字串）
@@ -57,7 +57,9 @@ function getOfflinePage() {
   <button onclick="window.location.reload()">重新載入</button>
 </body>
 </html>`;
+  return cachedOfflinePage;
 }
+
 const urlsToCache = [
   './',
   './index.html',
@@ -97,7 +99,7 @@ async function updateCache() {
     const cache = await caches.open(CACHE_NAME);
     // 後台更新靜態資源
     await Promise.all(
-      urlsToCache.map(url => 
+      urlsToCache.map(url =>
         fetch(url, { cache: 'no-store' })
           .then(response => {
             if (response.ok) {
@@ -137,6 +139,18 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+// 輔助函式：嘗試更新緩存中的資源
+function updateCacheFromResponse(request, response) {
+  if (response && response.ok) {
+    const responseClone = response.clone();
+    caches.open(CACHE_NAME).then((cache) => {
+      cache.put(request, responseClone);
+    }).catch(() => {});
+    return response;
+  }
+  return null;
+}
+
 // 請求事件 - 緩存優先，失敗時回退到網絡（優化離線遊戲體驗）
 self.addEventListener('fetch', (event) => {
   const { request } = event;
@@ -152,80 +166,62 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 導航請求（HTML 頁面）- 緩存優先，失敗時網絡回退（優化離線體驗）
-  // 使用 Stale-While-Revalidate 策略 + Navigation Preload 提升效能
+  // 導航請求（HTML 頁面）- Stale-While-Revalidate 策略
   if (request.mode === 'navigate') {
     event.respondWith(
       caches.match(request)
         .then((cachedResponse) => {
-          // 同時發起預加載請求（如果支援）
-          // 修復：當 navigationPreload 不支援時，不應該執行 fetch，避免不必要的網絡請求
-          const preloadPromise = navigationPreloadSupported 
-            ? self.registration.navigationPreload.getState()
-                .then(state => state.enabled ? fetch(request) : Promise.reject('preload disabled'))
-            : Promise.reject('preload not supported');
-          
-          // 如果有緩存，立即返回並在背景更新
+          // 同時發起網絡請求（無論是否有緩存都用 Stale-While-Revalidate）
+          const networkPromise = fetch(request)
+            .then((networkResponse) => {
+              updateCacheFromResponse(request, networkResponse);
+              return networkResponse;
+            })
+            .catch(() => null); // 網絡失敗時返回 null，不阻斷流程
+
           if (cachedResponse) {
-            preloadPromise
-              .then(response => {
-                if (response && response.ok) {
-                  const responseClone = response.clone();
-                  caches.open(CACHE_NAME).then((cache) => {
-                    cache.put(request, responseClone);
-                  }).catch(() => {});
-                }
-              })
-              .catch(() => {}); // 忽略預加載錯誤
+            // 有緩存：立即返回緩存，同時在背景更新緩存
+            // 只有當 navigationPreload 可用時才嘗試使用它，否則直接用普通 fetch
+            if (navigationPreloadSupported) {
+              // 檢查預加載是否啟用（不阻塞返回緩存）
+              self.registration.navigationPreload.getState()
+                .then((state) => {
+                  if (state && state.enabled) {
+                    // 預加載已啟用，額外發起一次預加載 fetch 來加速後續導航
+                    // 但不等待結果，因為我們已經在用網絡結果更新緩存了
+                    fetch(request).catch(() => {});
+                  }
+                })
+                .catch(() => {});
+            }
             return cachedResponse;
           }
-          
-          // 沒有緩存，使用預加載結果或網絡請求
-          return preloadPromise
-            .then(response => {
-              if (response && response.ok) {
-                const responseClone = response.clone();
-                caches.open(CACHE_NAME).then((cache) => {
-                  cache.put(request, responseClone);
-                }).catch(() => {});
-              }
+
+          // 無緩存：等待網絡響應
+          return networkPromise.then((response) => {
+            if (response) {
               return response;
-            })
-            .catch(() => {
-              // 預加載失敗，嘗試普通網絡請求
-              return fetch(request)
-                .then((response) => {
-                  // 複製響應並緩存
-                  if (response.ok) {
-                    const responseClone = response.clone();
-                    caches.open(CACHE_NAME).then((cache) => {
-                      cache.put(request, responseClone);
-                    }).catch(() => {});
-                  }
-                  return response;
-                })
-                .catch(() => {
-                  // 網絡失敗時，返回離線提示頁面
-                  return caches.match('./lobster-game.html').then(response => {
-                    if (response) {
-                      return response;
-                    }
-                    return new Response(getOfflinePage(), {
-                      status: 503,
-                      statusText: 'Service Unavailable',
-                      headers: { 'Content-Type': 'text/html; charset=utf-8' }
-                    });
-                  });
-                });
+            }
+            // 網絡也失敗：返回離線提示頁面
+            return caches.match('./lobster-game.html').then((fallback) => {
+              if (fallback) {
+                return fallback;
+              }
+              return new Response(getOfflinePage(), {
+                status: 503,
+                statusText: 'Service Unavailable',
+                headers: { 'Content-Type': 'text/html; charset=utf-8' }
+              });
             });
+          });
         })
     );
     return;
   }
 
   // 靜態資源（JS、CSS、圖片、字體、媒體）- 緩存優先，失敗時網絡回退
-  if (request.destination === 'script' || 
-      request.destination === 'style' || 
+  if (request.destination === 'script' ||
+      request.destination === 'style' ||
       request.destination === 'image' ||
       request.destination === 'font' ||
       request.destination === 'media') {
@@ -237,16 +233,10 @@ self.addEventListener('fetch', (event) => {
           }
           return fetch(request).then((networkResponse) => {
             // 緩存新的靜態資源
-            if (networkResponse && networkResponse.ok) {
-              const responseClone = networkResponse.clone();
-              caches.open(CACHE_NAME).then((cache) => {
-                cache.put(request, responseClone);
-              }).catch(() => {});
-            }
+            updateCacheFromResponse(request, networkResponse);
             return networkResponse;
           }).catch(() => {
-            // 離線時返回 503 錯誤，讓瀏覽器自然處理失敗，而非返回空 200 響應
-            // 這樣可以避免腳本/樣式載入時出現預期外的行為
+            // 離線時返回 503 錯誤，讓瀏覽器自然處理失敗
             return new Response('', { status: 503, statusText: 'Service Unavailable' });
           });
         })
@@ -266,7 +256,7 @@ self.addEventListener('fetch', (event) => {
           if (!response || response.status !== 200 || response.type !== 'basic') {
             return response;
           }
-          // 克隆響應
+          // 克隆響應並緩存
           const responseToCache = response.clone();
           caches.open(CACHE_NAME)
             .then((cache) => {
@@ -278,7 +268,7 @@ self.addEventListener('fetch', (event) => {
       })
       .catch(() => {
         // 離線時返回離線頁面或緩存的遊戲
-        return caches.match('./lobster-game.html').then(response => {
+        return caches.match('./lobster-game.html').then((response) => {
           return response || new Response('Offline', { status: 503 });
         });
       })
