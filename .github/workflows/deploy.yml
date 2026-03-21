@@ -1,0 +1,19 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: none
+  pages: write
+  id-token: none
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Deploying from docs folder"
