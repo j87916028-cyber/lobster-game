@@ -1,0 +1,1288 @@
+<!DOCTYPE html>
+<html lang="zh-TW" dir="ltr" translate="no">
+<head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Comic+Sans+MS&display=swap">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>🦞 龍蝦大冒險 - 收集金幣買裝備！</title>
+    <meta name="description" content="🦞 經典龍蝦收集遊戲！躲避炸彈、收集金幣、購買強化道具，挑戰最高分！">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🦞</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🦞</text></svg>">
+    <meta name="theme-color" content="#1a1a2e">
+    <meta property="og:title" content="🦞 龍蝦大冒險">
+    <meta property="og:description" content="🦞 經典龍蝦收集遊戲！躲避炸彈、收集金幣、購買強化道具，挑戰最高分！">
+    <meta property="og:type" content="website">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            background: linear-gradient(135deg, #0c0c1e 0%, #1a1a3e 50%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            overflow-x: hidden;
+            user-select: none;
+            touch-action: manipulation; -ms-touch-action: manipulation;
+        }
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 0 30px #ffd700, 0 0 60px #ff8c00;
+            text-align: center;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        @keyframes glow {
+            from { text-shadow: 0 0 30px #ffd700, 0 0 60px #ff8c00; }
+            to { text-shadow: 0 0 50px #ffd700, 0 0 100px #ff8c00, 0 0 150px #ff4500; }
+        }
+        .stats {
+            display: flex;
+            gap: 20px;
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .stat {
+            background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,140,0,0.2));
+            padding: 10px 20px;
+            border-radius: 25px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 2px solid rgba(255,215,0,0.5);
+        }
+        .stat-icon { font-size: 1.5rem; }
+        #gameContainer {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            height: 500px;
+            background: linear-gradient(to bottom, #1e90ff 0%, #00bfff 30%, #90ee90 50%, #228b22 80%, #006400 100%);
+            border-radius: 25px;
+            border: 5px solid #ffd700;
+            overflow: hidden;
+            box-shadow: 0 0 80px rgba(255, 215, 0, 0.4), inset 0 0 100px rgba(0,0,0,0.3);
+        }
+        #player {
+            transition: transform 0.3s ease, filter 0.3s ease;
+            will-change: transform;
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            font-size: 65px;
+            bottom: 85px;
+            left: 360px;
+            transition: left 0.05s linear;
+            z-index: 10;
+            filter: drop-shadow(0 8px 8px rgba(0,0,0,0.4));
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .bouncing { animation: bounce 0.5s ease infinite; }
+        #ground {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 75px;
+            background: linear-gradient(to bottom, #32cd32, #228b22, #006400);
+            border-top: 8px solid #7cfc00;
+        }
+        .item {
+            position: absolute;
+            font-size: 40px;
+            animation: fall linear forwards;cursor: default;
+            z-index: 5;
+        }
+        @keyframes fall {
+            0% { transform: rotate(0deg) scale(1); opacity: 1; }
+            50% { transform: rotate(180deg) scale(1.1); }
+            100% { transform: rotate(360deg) scale(1); opacity: 0.8; }
+        }
+        @keyframes collect {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+        .collected { animation: collect 0.3s ease forwards !important; }
+        .combo-text {
+            position: absolute;
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ffd700;
+            text-shadow: 2px 2px 4px #000;
+            animation: comboAnim 0.8s ease forwards;
+            z-index: 100;
+        }
+        @keyframes comboAnim {
+            0% { transform: scale(0.5); opacity: 1; }
+            50% { transform: scale(1.5); }
+            100% { transform: scale(1) translateY(-50px); opacity: 0; }
+        }
+        #menu, #shop, #leaderboard {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            overflow-y: auto;
+        }
+        #shop, #leaderboard { display: none; }
+        .menu-title {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #ffd700, #ff8c00, #ff4500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .menu-btn {
+            padding: 18px 50px;
+            font-size: 1.4rem;
+            margin: 10px;
+            background: linear-gradient(45deg, #ffd700, #ff8c00);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            color: #1a1a2e;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 20px rgba(255,215,0,0.4);
+        }
+        .menu-btn:hover {
+            transform: scale(1.1) rotate(-2deg);
+            box-shadow: 0 10px 40px rgba(255,215,0,0.6);
+        }
+        .menu-btn.secondary, .menu-btn.purple, .menu-btn.lang, .menu-btn.daily {
+            background: linear-gradient(45deg, #00d4ff, #0099cc);
+            box-shadow: 0 5px 20px rgba(0,212,255,0.4);
+        }
+        .menu-btn.shop {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a5a);
+            box-shadow: 0 5px 20px rgba(255,107,107,0.4);
+        }
+        .closeBtn {
+            position: absolute;
+            top: 20px;
+            right: 25px;
+            font-size: 2.5rem;
+            cursor: pointer;
+            color: white;
+            transition: transform 0.3s;
+        }
+        .closeBtn:hover { transform: rotate(90deg) scale(1.2); }
+        #shopItems {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 15px;
+            max-width: 90%;
+        }
+        .shopItem {
+            background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
+            padding: 15px;
+            border-radius: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        .shopItem:hover {
+            transform: translateY(-5px);
+            border-color: #ffd700;
+        }
+        .shopItem .icon { font-size: 3rem; margin-bottom: 5px; }
+        .shopItem .name { font-size: 0.9rem; margin: 5px 0; }
+        .shopItem .price { color: #ffd700; font-weight: bold; }
+        .shopItem .owned { color: #00ff00; font-size: 0.8rem; margin-top: 5px; }
+        .shopItem.maxed { opacity: 0.5; }
+        .level-indicator {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            font-size: 1.2rem;
+            background: linear-gradient(45deg, #ff6b6b, #ffa500);
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        .lives-display {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 1.5rem;
+        }
+        .combo-display {
+            position: absolute;
+            top: 50px;
+            right: 15px;
+            font-size: 1rem;
+            color: #ffd700;
+            font-weight: bold;
+        }
+        .instructions {
+            margin-top: 15px;
+            font-size: 1rem;
+            opacity: 0.8;
+            text-align: center;
+            padding: 0 20px;
+        }
+        .mobile-controls {
+            display: none;
+            margin-top: 20px;
+            gap: 20px;
+        }
+        .mobile-btn {
+            width: 80px;
+            height: 80px;
+            font-size: 2rem;
+            background: rgba(255,255,255,0.2);
+            border: 2px solid #ffd700;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        @media (max-width: 600px) {
+            .mobile-controls { display: flex; }
+            #gameContainer { height: 400px; }
+            .stats { font-size: 1rem; }
+            h1 { font-size: 1.8rem; }
+            #shopItems { grid-template-columns: repeat(2, 1fr); }
+        }
+            button:focus { outline: 2px solid #ffd700; outline-offset: 2px; }
+    </style>
+</head>
+<body>
+    <h1>🦞 龍蝦大冒險</h1>
+    <div class="stats">
+        <div class="stat"><span class="stat-icon">💰</span> <span id="coins">0</span></div>
+        <div class="stat"><span class="stat-icon">🏆</span> <span id="highScore">0</span></div>
+        <div class="stat"><span class="stat-icon">🔥</span> 連擊 <span id="combo">0</span></div>
+    </div>
+    <div id="gameContainer">
+        <div class="level-indicator">關卡 <span id="level">1</span></div>
+        <div class="lives-display" id="lives">❤️❤️❤️</div>
+        <div class="combo-display" id="comboDisplay"></div>
+        <div id="player">🦞</div>
+        <div id="ground"></div>
+        <div id="menu">
+            <div class="menu-title">🦞 龍蝦大冒險</div>
+            <button type="button" class="menu-btn" onclick="startGame()">🎮 開始遊戲</button>
+            <button type="button" class="menu-btn shop" onclick="openShop()">🏪 商店</button>
+            <button type="button" class="menu-btn secondary" onclick="openLeaderboard()">📊 排行榜</button>
+            <button type="button" class="menu-btn purple" onclick="showAchievements()">🏅 成就</button>
+            <button type="button" class="menu-btn daily" onclick="showDailyChallenge()">📅 每日</button>
+            <button type="button" class="menu-btn lang" onclick="toggleLanguage()">🌐 語言</button>
+        </div>
+        <div id="shop">
+            <span class="closeBtn" onclick="closeShop()">✕</span>
+            <h2 style="color: #ffd700;">🏪 商店</h2>
+            <p>💰 金幣: <span id="shopCoins">0</span></p>
+            <div id="shopItems"></div>
+        </div>
+        <div id="leaderboard">
+            <span class="closeBtn" onclick="closeLeaderboard()">✕</span>
+            <h2 style="color: #ffd700;">📊 排行榜</h2>
+            <div id="leaderboardList"></div>
+        </div>
+    </div>
+    <p class="instructions">電腦：← → 鍵 / 手機：觸控螢幕左右移動<br>接金幣💰避開炸彈💣！</p>
+    <div class="mobile-controls">
+        <button type="button" class="mobile-btn" ontouchstart="moveLeft()">⬅️</button>
+        <button type="button" class="mobile-btn" ontouchstart="moveRight()">➡️</button>
+    </div>
+
+    <script defer>
+        // ===== 遊戲狀態 =====
+        let gameState = {
+            coins: parseInt(localStorage.getItem('lobsterCoins') || '0'),
+            highScore: parseInt(localStorage.getItem('lobsterHighScore') || '0'),
+            inventory: JSON.parse(localStorage.getItem('lobsterInventory') || '{}'),
+        };
+        
+        // localStorage 錯誤處理
+        try {
+            localStorage.setItem('test', 'test');
+            localStorage.removeItem('test');
+        } catch(e) {
+            console.warn('localStorage 不可用:', e);
+        }
+        
+        const shopItems = [
+            { id: 'speed', name: '⚡ 速度', price: 100, maxLevel: 10, desc: '移動更快' },
+            { id: 'magnet', name: '🧲 磁鐵', price: 200, maxLevel: 5, desc: '自動吸取' },
+            { id: 'shield', name: '🛡️ 護盾', price: 300, maxLevel: 5, desc: '擋住炸彈' },
+            { id: 'multi', name: '✖️ 2倍', price: 500, maxLevel: 5, desc: '雙倍金幣' },
+            { id: 'life', name: '❤️ 生命', price: 150, maxLevel: 10, desc: '額外生命' },
+            { id: 'x2score', name: '🎯 2倍分', price: 800, maxLevel: 5, desc: '雙倍分數' }
+        ];
+        
+        let playerX = 360;
+        let score = 0;
+        let gameRunning = false;
+        let items = [];
+        let gameLoop, spawnLoop;
+        let currentLevel = 1;
+        let lives = 3;
+        let combo = 0;
+        let comboTimer = null;
+        let lastCollectTime = 0;
+        
+        const player = document.getElementById('player');
+        const gameContainer = document.getElementById('gameContainer');
+        
+        document.getElementById('coins').textContent = gameState.coins;
+        initSpecialFeatures();
+        document.getElementById('highScore').textContent = gameState.highScore;
+        
+        let keys = {};
+        document.addEventListener('keydown', (e) => keys[e.key] = true);
+        document.addEventListener('keyup', (e) => keys[e.key] = false);
+        
+        function updatePlayerPosition() {
+            if (!gameRunning) return;
+            const speed = 8 + (gameState.inventory.speed || 1) * 2;
+            if (keys['ArrowLeft'] || keys['a']) playerX = Math.max(0, playerX - speed);
+            if (keys['ArrowRight'] || keys['d']) playerX = Math.min(720, playerX + speed);
+            player.style.left = playerX + 'px';
+            requestAnimationFrame(updatePlayerPosition);
+        }
+        
+        let mobileMoving = null;
+        function moveLeft() { mobileMoving = 'left'; }
+        function moveRight() { mobileMoving = 'right'; }
+        function stopMove() { mobileMoving = null; }
+        
+        function updateMobilePosition() {
+            if (!gameRunning || !mobileMoving) return;
+            const speed = 8 + (gameState.inventory.speed || 1) * 2;
+            if (mobileMoving === 'left') playerX = Math.max(0, playerX - speed);
+            if (mobileMoving === 'right') playerX = Math.min(720, playerX + speed);
+            player.style.left = playerX + 'px';
+            requestAnimationFrame(updateMobilePosition);
+        }
+        
+        document.querySelectorAll('.mobile-btn').forEach(btn => {
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (btn.textContent.includes('⬅️')) moveLeft();
+                else moveRight();
+                updateMobilePosition();
+            });
+            btn.addEventListener('touchend', stopMove);
+        });
+        
+        let paused = false;
+
+function togglePause() {
+    if (!gameRunning) return;
+    paused = !paused;
+    if (paused) {
+        clearInterval(gameLoop);
+        clearInterval(spawnLoop);
+        showPauseMenu();
+    } else {
+        gameLoop = setInterval(updateGame, 25);
+        spawnLoop = setInterval(spawnItem, 800);
+        updatePlayerPosition();
+    }
+}
+
+function startGame() {
+            document.getElementById('menu').style.display = 'none';
+            gameRunning = true;
+            score = 0;
+            items = [];
+            lives = 3 + (gameState.inventory.life || 0);
+            combo = 0;
+            playerX = 360;
+            player.style.left = playerX + 'px';
+            player.classList.add('bouncing');
+            updateLives();
+            updateCombo();
+            document.querySelectorAll('.item, .combo-text').forEach(e => e.remove());
+            gameLoop = setInterval(updateGame, 25);
+            document.addEventListener("keydown", (e) => { if(e.key === "p" || e.key === "P") togglePause(); });
+            spawnLoop = setInterval(spawnItem, 800);
+            updatePlayerPosition();
+        }
+        
+        function spawnItem() {
+            if (!gameRunning) return;
+            const item = document.createElement('div');
+            item.className = 'item';
+            item.style.left = Math.random() * 750 + 'px';
+            item.style.top = '-50px';
+            
+            const rand = Math.random();
+            if (rand < 0.6) {
+                item.textContent = rand < 0.5 ? '💰' : '💎';
+                item.dataset.type = rand < 0.5 ? 'coin' : 'gem';
+            } else if (rand < 0.9) {
+                item.textContent = '💣';
+                item.dataset.type = 'bomb';
+            } else if (rand < 0.95) {
+                item.textContent = '🎁';
+                item.dataset.type = 'gift';
+            } else {
+                item.textContent = ['⚡', '🛡️', '🧲'][Math.floor(Math.random() * 3)];
+                item.dataset.type = 'powerup';
+            }
+            
+            item.style.animationDuration = (3.5 - currentLevel * 0.15) + 's';
+            gameContainer.appendChild(item);
+            items.push({ element: item, y: -50, speed: 2.5 + Math.random() * 2 + currentLevel * 0.25, type: item.dataset.type });
+        }
+        
+        function updateGame() {
+            // 倒序遍歷，避免 splice 造成索引偏移
+            for (let i = items.length - 1; i >= 0; i--) {
+                const item = items[i];
+                item.y += item.speed;
+                item.element.style.top = item.y + 'px';
+                
+                if ((gameState.inventory.magnet || 0) > 0 && item.type !== 'bomb') {
+                    const itemX = parseFloat(item.element.style.left);
+                    const dist = itemX - playerX;
+                    if (Math.abs(dist) < 200) {
+                        item.element.style.left = (itemX - dist * 0.08) + 'px';
+                    }
+                }
+                
+                const playerRect = player.getBoundingClientRect();
+                const itemRect = item.element.getBoundingClientRect();
+                
+                if (itemRect.bottom > playerRect.top + 20 && itemRect.top < playerRect.bottom &&
+                    itemRect.right > playerRect.left + 10 && itemRect.left < itemRect.right - 10) {
+                    handleCollision(item, i);
+                }
+                
+                if (item.y > 430) {
+                    if (item.element.parentNode) item.element.remove();
+                    items.splice(i, 1);
+                }
+            }
+            
+            currentLevel = Math.floor(score / 500) + 1;
+            document.getElementById('level').textContent = currentLevel;
+        }
+        
+        function handleCollision(item, index) {
+            const multiplier = (gameState.inventory.multi || 1);
+            const scoreMultiplier = (gameState.inventory.x2score || 1);
+            
+            if (item.type === 'coin') { playSound('coin');
+                score += 10 * multiplier * scoreMultiplier;
+                addCombo();
+            } else if (item.type === 'gem') { playSound('gem');
+                score += 50 * multiplier * scoreMultiplier;
+                addCombo();
+            } else if (item.type === 'bomb') { playSound('bomb');
+                const shield = gameState.inventory.shield || 0;
+                if (shield > 0) {
+                    gameState.inventory.shield = shield - 1;
+                    localStorage.setItem('lobsterInventory', JSON.stringify(gameState.inventory));
+                checkAchievements();
+                } else {
+                    lives--; combo = 0; updateLives(); updateCombo();
+                    if (lives <= 0) endGame();
+                }
+            } else if (item.type === 'gift') {
+                score += 50;
+                showComboText('+50🎁');
+            } else if (item.type === 'powerup') {
+                if (item.element.textContent === '⚡') gameState.inventory.speed = Math.min(10, (gameState.inventory.speed || 0) + 1);
+                else if (item.element.textContent === '🛡️') gameState.inventory.shield = Math.min(5, (gameState.inventory.shield || 0) + 1);
+                else if (item.element.textContent === '🧲') gameState.inventory.magnet = Math.min(5, (gameState.inventory.magnet || 0) + 1);
+                localStorage.setItem('lobsterInventory', JSON.stringify(gameState.inventory));
+                checkAchievements();
+                showComboText('升級!'); playSound('powerup');
+            }
+            
+            item.element.classList.add('collected');
+                if(item.type === 'coin') createParticles(playerX + 30, 380, '#ffd700');
+                else if(item.type === 'gem') createParticles(playerX + 30, 380, '#00ffff');
+            
+            // 立即從陣列移除（防止 updateGame 同一 frame 重複觸發碰撞），DOM 延後移除
+            const arrIdx = items.indexOf(item);
+            if (arrIdx > -1) items.splice(arrIdx, 1);
+            
+            setTimeout(() => {
+                try {
+                    if (item.element && item.element.parentNode) {
+                        item.element.remove();
+                    }
+                } catch(e) {}
+            }, 300);
+        }
+        
+        function addCombo() {
+            const now = Date.now();
+            combo = (now - lastCollectTime < 500) ? combo + 1 : 1;
+            lastCollectTime = now;
+            updateCombo();
+            clearTimeout(comboTimer);
+            comboTimer = setTimeout(() => { combo = 0; updateCombo(); }, 1500);
+        }
+        
+        function updateCombo() {
+            document.getElementById('combo').textContent = combo;
+            document.getElementById('comboDisplay').style.display = combo >= 5 ? 'block' : 'none';
+            if (combo >= 5) document.getElementById('comboDisplay').textContent = combo + '連擊!';
+        }
+        
+        function showComboText(text) {
+            const el = document.createElement('div');
+            el.className = 'combo-text';
+            el.textContent = text;
+            el.style.left = (playerX + 20) + 'px';
+            el.style.bottom = '150px';
+            gameContainer.appendChild(el);
+            setTimeout(() => el.remove(), 800);
+        }
+        
+        function updateLives() {
+            document.getElementById('lives').textContent = '❤️'.repeat(Math.max(0, lives));
+        }
+        
+        function endGame() {
+            gameRunning = false;
+            clearInterval(gameLoop);
+            clearInterval(spawnLoop);
+            player.classList.remove('bouncing');
+            
+            if (score > gameState.highScore) {
+                gameState.highScore = score;
+                localStorage.setItem('lobsterHighScore', score);
+            }
+            
+            const earnedCoins = Math.floor(score / 10);
+            gameState.coins += earnedCoins;
+            localStorage.setItem('lobsterCoins', gameState.coins);
+            
+            const m = document.createElement('div');
+            m.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);z-index:9999;display:flex;align-items:center;justify-content:center;';
+            m.innerHTML = '<div style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:40px;border-radius:25px;text-align:center;max-width:350px;"><h2 style="color:#ff6b6b;margin-bottom:20px;">🎮 遊戲結束！</h2><p style="color:#fff;font-size:1.5rem;margin:10px 0;">得分: ' + score + '</p><p style="color:#ffd700;font-size:1.2rem;margin:10px 0;">獲得金幣: +' + earnedCoins + '</p><input id="playerNameInput" type="text" placeholder="輸入名字" style="margin:20px 0;padding:12px;border-radius:10px;border:none;width:80%;text-align:center;" value="匿名"><br><button type="button" onclick="saveScore()" style="padding:12px 30px;background:#4caf50;border:none;border-radius:10px;color:white;font-size:1.1rem;cursor:pointer;">儲存</button></div>';
+            document.body.appendChild(m);
+            window.saveScore = function() {
+                const name = document.getElementById('playerNameInput').value || '匿名';
+                addToLeaderboard(name, score);
+                m.remove();
+                document.getElementById('menu').style.display = 'flex';
+                document.getElementById('highScore').textContent = gameState.highScore;
+                document.getElementById('coins').textContent = gameState.coins;
+                initSpecialFeatures();
+            };
+            document.getElementById('menu').style.display = 'flex';
+            document.getElementById('highScore').textContent = gameState.highScore;
+            document.getElementById('coins').textContent = gameState.coins;
+        initSpecialFeatures();
+        }
+        
+        function openShop() {
+            document.getElementById('shop').style.display = 'flex';
+            document.getElementById('shopCoins').textContent = gameState.coins;
+            renderShop();
+        }
+        function closeShop() { document.getElementById('shop').style.display = 'none'; }
+        
+        function renderShop() {
+            const container = document.getElementById('shopItems');
+            container.innerHTML = '';
+            shopItems.forEach(item => {
+                const owned = gameState.inventory[item.id] || 0;
+                const div = document.createElement('div');
+                div.className = 'shopItem' + (owned >= item.maxLevel ? ' maxed' : '');
+                div.innerHTML = `<div class="icon">${item.name.split(' ')[0]}</div><div class="name">${item.name.split(' ')[1]}</div><div style="font-size:0.7rem;opacity:0.7">${item.desc}</div><div class="price">💰 ${item.price * (owned + 1)}</div><div class="owned">Lv.${owned}/${item.maxLevel}</div>`;
+                div.onclick = () => buyItem(item);
+                container.appendChild(div);
+            });
+        }
+        
+        function buyItem(item) {
+            const owned = gameState.inventory[item.id] || 0;
+            if (owned >= item.maxLevel) { const m = document.createElement('div');
+        m.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;';
+        m.innerHTML = '<div style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:30px;border-radius:20px;text-align:center;"><p style="color:#ff6b6b;font-size:1.2rem;">已滿等！</p><button type="button" onclick="this.parentElement.parentElement.remove()" style="margin-top:15px;padding:8px 20px;background:#e94560;border:none;border-radius:8px;color:white;cursor:pointer;">關閉</button></div>';
+        document.body.appendChild(m); return; }
+            const price = item.price * (owned + 1);
+            if (gameState.coins < price) { const m = document.createElement('div');
+        m.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;';
+        m.innerHTML = '<div style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:30px;border-radius:20px;text-align:center;"><p style="color:#ff6b6b;font-size:1.2rem;">金幣不足！需要 ' + price + ' 💰</p><button type="button" onclick="this.parentElement.parentElement.remove()" style="margin-top:15px;padding:8px 20px;background:#e94560;border:none;border-radius:8px;color:white;cursor:pointer;">關閉</button></div>';
+        document.body.appendChild(m); return; }
+            
+            gameState.coins -= price;
+            gameState.inventory[item.id] = owned + 1;
+            localStorage.setItem('lobsterInventory', JSON.stringify(gameState.inventory));
+                checkAchievements();
+            document.getElementById('coins').textContent = gameState.coins;
+        initSpecialFeatures();
+            document.getElementById('shopCoins').textContent = gameState.coins;
+            renderShop();
+            const m = document.createElement('div');
+        m.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;';
+        m.innerHTML = '<div style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:30px;border-radius:20px;text-align:center;"><p style="color:#4caf50;font-size:1.2rem;">購買成功！🎉</p><button type="button" onclick="this.parentElement.parentElement.remove()" style="margin-top:15px;padding:8px 20px;background:#4caf50;border:none;border-radius:8px;color:white;cursor:pointer;">關閉</button></div>';
+        document.body.appendChild(m);
+        }
+        
+        function openLeaderboard() {
+            document.getElementById('leaderboard').style.display = 'flex';
+            renderLeaderboard();
+        }
+        function closeLeaderboard() { 
+            document.getElementById('leaderboard').style.display = 'none';
+            // 關閉排行榜後繼續遊戲
+            if (!gameRunning) {
+                gameRunning = true;
+                updatePlayerPosition();
+            }
+        }
+        
+        function closeMenu() {
+            // 關閉任何開啟的 overlay（商店、排行榜、成就、每日挑戰）
+            document.getElementById('shop').style.display = 'none';
+            document.getElementById('leaderboard').style.display = 'none';
+        }
+        
+        function addToLeaderboard(name, score) {
+            let board = JSON.parse(localStorage.getItem('lobsterLeaderboard') || '[]');
+            board.push({ name, score, date: new Date().toLocaleDateString() });
+            board.sort((a, b) => b.score - a.score);
+            board = board.slice(0, 20);
+            localStorage.setItem('lobsterLeaderboard', JSON.stringify(board));
+        }
+        
+        function renderLeaderboard() {
+            const board = JSON.parse(localStorage.getItem('lobsterLeaderboard') || '[]');
+            const container = document.getElementById('leaderboardList');
+            container.innerHTML = board.map((entry, i) => `<div style="display:flex;justify-content:space-between;padding:12px;margin:8px 0;background:rgba(255,255,255,0.1);border-radius:10px;"><span>${i+1}. ${entry.name}</span><span>${entry.score} 分</span></div>`).join('') || '<p>還沒有人上榜！</p>';
+        }
+
+        // Sound Effect Functions
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+        function playSound(type) {
+            try {
+                if(!audioCtx) audioCtx = new AudioContext();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                if(type === 'coin') { osc.frequency.value = 800; gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1); osc.start(); osc.stop(audioCtx.currentTime + 0.1); }
+                else if(type === 'gem') { osc.frequency.value = 1200; gain.gain.setValueAtTime(0.15, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15); osc.start(); osc.stop(audioCtx.currentTime + 0.15); }
+                else if(type === 'bomb') { osc.type = 'sawtooth'; osc.frequency.value = 150; gain.gain.setValueAtTime(0.2, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3); osc.start(); osc.stop(audioCtx.currentTime + 0.3); }
+                else if(type === 'powerup') { osc.frequency.value = 600; osc.frequency.linearRampToValueAtTime(1200, audioCtx.currentTime + 0.2); gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2); osc.start(); osc.stop(audioCtx.currentTime + 0.2); }
+            } catch(e) {}
+        }
+
+
+        // Particle Effects
+        function createParticles(x, y, color) {
+            for(let i = 0; i < 8; i++) {
+                const p = document.createElement('div');
+                p.style.cssText = 'position:absolute;left:'+x+'px;top:'+y+'px;width:8px;height:8px;background:'+color+';border-radius:50%;pointer-events:none;z-index:100;';
+                document.getElementById('gameContainer').appendChild(p);
+                const angle = (Math.PI * 2 * i) / 8;
+                const speed = 3 + Math.random() * 3;
+                let vx = Math.cos(angle) * speed;
+                let vy = Math.sin(angle) * speed;
+                let life = 1;
+                const animate = () => {
+                    life -= 0.03;
+                    if(life <= 0) { p.remove(); return; }
+                    x += vx; y += vy; vy += 0.2;
+                    p.style.left = x + 'px'; p.style.top = y + 'px'; p.style.opacity = life;
+                    requestAnimationFrame(animate);
+                };
+                animate();
+            }
+        }
+
+    </script>
+</body>
+</html>
+
+// ========== 獨特功能系統 ==========
+
+// 龍蝦進化系統
+const lobsterEvos = [
+    { min: 0, emoji: '🦞', name: '小龍蝦', glow: '#ff6b6b' },
+    { min: 500, emoji: '🦞🔥', name: '火焰龍', glow: '#ff4500' },
+    { min: 2000, emoji: '🦞⚡', name: '雷電龍', glow: '#00ffff' },
+    { min: 5000, emoji: '🦞💎', name: '鑽石龍', glow: '#ffd700' },
+    { min: 10000, emoji: '🦞👑', name: '龍蝦王', glow: '#9400d3' }
+];
+
+function updateLobsterEvolution() {
+    const totalCoins = gameState.coins;
+    let currentEvo = lobsterEvos[0];
+    for (let evo of lobsterEvos) {
+        if (totalCoins >= evo.min) currentEvo = evo;
+    }
+    document.getElementById('player').textContent = currentEvo.emoji;
+    document.getElementById('player').style.filter = `drop-shadow(0 8px 8px rgba(0,0,0,0.4)) drop-shadow(0 0 20px ${currentEvo.glow})`;
+    
+    // 儲存當前進化
+    gameState.evolution = currentEvo.name;
+    localStorage.setItem('lobsterCoins', gameState.coins);
+}
+
+// 幸運雨事件
+let luckyRainActive = false;
+let luckyRainTimer = null;
+
+function startLuckyRain() {
+    if (luckyRainActive || !gameRunning) return;
+    luckyRainActive = true;
+    
+    // 顯示幸運雨提示
+    showEventText('🌈 幸運雨 🌈');
+    
+    // 快速生成多個獎勵道具
+    let rainCount = 0;
+    const rainInterval = setInterval(() => {
+        if (!gameRunning || rainCount >= 15) {
+            clearInterval(rainInterval);
+            luckyRainActive = false;
+            return;
+        }
+        
+        const item = document.createElement('div');
+        item.className = 'item';
+        item.style.left = Math.random() * 750 + 'px';
+        item.style.top = '-50px';
+        item.style.animationDuration = '1.5s';
+        
+        // 70% 金幣/寶石, 30% 禮物
+        const rand = Math.random();
+        if (rand < 0.5) { item.textContent = '💰'; item.dataset.type = 'coin'; }
+        else if (rand < 0.7) { item.textContent = '💎'; item.dataset.type = 'gem'; }
+        else { item.textContent = '🎁'; item.dataset.type = 'gift'; }
+        
+        gameContainer.appendChild(item);
+        items.push({ element: item, y: -50, speed: 6, type: item.dataset.type });
+        
+        rainCount++;
+    }, 200);
+    
+    // 30秒後再次觸發
+    luckyRainTimer = setTimeout(startLuckyRain, 30000);
+}
+
+// 事件文字顯示
+function showEventText(text) {
+    const el = document.createElement('div');
+    el.style.cssText = `
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 3rem;
+        font-weight: bold;
+        color: #ffd700;
+        text-shadow: 0 0 20px #ff6b6b, 0 0 40px #ff8c00;
+        animation: eventPop 2s ease forwards;
+        z-index: 200;
+    `;
+    el.textContent = text;
+    gameContainer.appendChild(el);
+    setTimeout(() => el.remove(), 2000);
+}
+
+// 成就系統
+const achievements = [
+    { id: 'first_coin', name: '🎯 初次獲利', desc: '收集第一枚金幣', icon: '💰', req: 1 },
+    { id: 'coin_100', name: '💎 小有积蓄', desc: '擁有 100 金幣', icon: '💎', req: 100 },
+    { id: 'coin_500', name: '🤑 小富翁', desc: '擁有 500 金幣', icon: '🤑', req: 500 },
+    { id: 'score_1000', name: '⭐ 初試身手', desc: '單次遊戲獲得 1000 分', icon: '⭐', req: 1000 },
+    { id: 'score_5000', name: '🏆 高分達人', desc: '單次遊戲獲得 5000 分', icon: '🏆', req: 5000 },
+    { id: 'combo_10', name: '🔥 連擊達人', desc: '達成 10 連擊', icon: '🔥', req: 10 },
+    { id: 'combo_20', name: '💥 連擊大師', desc: '達成 20 連擊', icon: '💥', req: 20 },
+    { id: 'level_5', name: '🌟 升級達人', desc: '達到等級 5', icon: '🌟', req: 5 },
+    { id: 'streak_3', name: '📅 連續登入', desc: '連續登入 3 天', icon: '📅', req: 3 },
+    { id: 'total_10000', name: '👑 龍蝦王', desc: '總金幣達到 10000', icon: '👑', req: 10000 }
+];
+
+function checkAchievements() {
+    const unlocked = JSON.parse(localStorage.getItem('lobsterAchievements') || '[]');
+    let newUnlock = null;
+    
+    // 檢查各項成就
+    if (gameState.coins >= 100 && !unlocked.includes('coin_100')) {
+        unlocked.push('coin_100'); newUnlock = achievements.find(a => a.id === 'coin_100');
+    }
+    if (gameState.coins >= 500 && !unlocked.includes('coin_500')) {
+        unlocked.push('coin_500'); newUnlock = achievements.find(a => a.id === 'coin_500');
+    }
+    if (score >= 1000 && !unlocked.includes('score_1000')) {
+        unlocked.push('score_1000'); newUnlock = achievements.find(a => a.id === 'score_1000');
+    }
+    if (score >= 5000 && !unlocked.includes('score_5000')) {
+        unlocked.push('score_5000'); newUnlock = achievements.find(a => a.id === 'score_5000');
+    }
+    if (combo >= 10 && !unlocked.includes('combo_10')) {
+        unlocked.push('combo_10'); newUnlock = achievements.find(a => a.id === 'combo_10');
+    }
+    if (combo >= 20 && !unlocked.includes('combo_20')) {
+        unlocked.push('combo_20'); newUnlock = achievements.find(a => a.id === 'combo_20');
+    }
+    if (currentLevel >= 5 && !unlocked.includes('level_5')) {
+        unlocked.push('level_5'); newUnlock = achievements.find(a => a.id === 'level_5');
+    }
+    
+    if (newUnlock) {
+        localStorage.setItem('lobsterAchievements', JSON.stringify(unlocked));
+        showAchievementPopup(newUnlock);
+    }
+}
+
+function showAchievementPopup(achievement) {
+    const el = document.createElement('div');
+    el.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #ffd700, #ff8c00);
+        color: #000;
+        padding: 15px 25px;
+        border-radius: 15px;
+        font-weight: bold;
+        z-index: 1000;
+        animation: slideIn 0.5s ease, fadeOut 0.5s ease 3s forwards;
+        box-shadow: 0 0 30px rgba(255,215,0,0.8);
+    `;
+    el.innerHTML = `🏆 成就解鎖!<br>${achievement.icon} ${achievement.name}`;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 3500);
+}
+
+// 顯示成就按鈕
+function showAchievements() {
+    const unlocked = JSON.parse(localStorage.getItem('lobsterAchievements') || '[]');
+    const container = document.getElementById('leaderboardList');
+    container.innerHTML = '<h2 style="color:#ffd700;margin-bottom:20px;">🏆 成就列表</h2>';
+    
+    achievements.forEach(a => {
+        const isUnlocked = unlocked.includes(a.id);
+        container.innerHTML += `
+            <div style="display:flex;align-items:center;gap:15px;padding:15px;margin:10px 0;background:${isUnlocked ? 'rgba(255,215,0,0.2)' : 'rgba(255,255,255,0.1)'};border-radius:15px;opacity:${isUnlocked ? 1 : 0.5};border:2px solid ${isUnlocked ? '#ffd700' : 'transparent'}">
+                <span style="font-size:2rem">${a.icon}</span>
+                <div>
+                    <div style="font-weight:bold;font-size:1.1rem">${a.name}</div>
+                    <div style="font-size:0.9rem;opacity:0.8">${a.desc}</div>
+                </div>
+                ${isUnlocked ? '<span style="margin-left:auto">✅</span>' : ''}
+            </div>
+        `;
+    });
+    
+    container.innerHTML += '<button type="button" onclick="closeMenu()" style="margin-top:20px;padding:12px 30px;font-size:1.1rem;background:linear-gradient(135deg,#ffd700,#ff8c00);border:none;border-radius:25px;cursor:pointer;">返回</button>';
+    document.getElementById('leaderboard').style.display = 'flex';
+}
+
+// 晝夜主題系統
+function updateDayNightTheme() {
+    const hour = new Date().getHours();
+    const gameContainer = document.getElementById('gameContainer');
+    
+    if (hour >= 6 && hour < 12) {
+        // 早晨
+        gameContainer.style.background = 'linear-gradient(to bottom, #87ceeb 0%, #fffacd 30%, #90ee90 50%, #228b22 80%, #006400 100%)';
+    } else if (hour >= 12 && hour < 17) {
+        // 白天
+        gameContainer.style.background = 'linear-gradient(to bottom, #1e90ff 0%, #00bfff 30%, #90ee90 50%, #228b22 80%, #006400 100%)';
+    } else if (hour >= 17 && hour < 20) {
+        // 黃昏
+        gameContainer.style.background = 'linear-gradient(to bottom, #ff6b6b 0%, #ffa500 30%, #9370db 50%, #4b0082 80%, #000080 100%)';
+    } else {
+        // 夜晚
+        gameContainer.style.background = 'linear-gradient(to bottom, #191970 0%, #483d8b 30%, #2f4f4f 50%, #000000 80%, #000000 100%)';
+    }
+}
+
+// 初始化獨特功能
+function initSpecialFeatures() {
+    updateLobsterEvolution();
+    updateDayNightTheme();
+    
+    // 啟動幸運雨定時器
+    luckyRainTimer = setTimeout(startLuckyRain, 30000);
+}
+
+// 事件動畫
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes eventPop {
+        0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+        20% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+        80% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        100% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+    }
+    @keyframes slideIn {
+        from { transform: translateX(100%); }
+        to { transform: translateX(0); }
+    }
+    @keyframes fadeOut {
+        to { opacity: 0; transform: translateX(100%); }
+    }
+`;
+document.head.appendChild(style);
+
+// ========== 多語言系統 ==========
+const translations = {
+    zh: {
+        title: '🦞 龍蝦大冒險 - 收集金幣買裝備！',
+        start: '開始遊戲', shop: '商店', leaderboard: '排行榜', achievements: '成就',
+        coins: '金幣', highScore: '最高分', level: '等級', combo: '連擊',
+        instructions: '電腦：← → 鍵 / 手機：觸控螢幕左右移動<br>接金幣💰避開炸彈💣！',
+        gameOver: '遊戲結束！', finalScore: '最終得分', newHighScore: '新紀錄！',
+        playAgain: '再玩一次', backToMenu: '返回選單', buy: '購買', max: '已滿',
+        continue: '繼續', pause: '暫停', resume: '繼續遊戲', quit: '離開',
+        unlocked: '成就解鎖！', luckyRain: '幸運雨 🌈',
+        evolution: { 0: '小龍蝦', 500: '火焰龍', 2000: '雷電龍', 5000: '鑽石龍', 10000: '龍蝦王' }
+    },
+    en: {
+        title: '🦞 Lobster Adventure - Collect Coins & Buy Gear!',
+        start: 'Start Game', shop: 'Shop', leaderboard: 'Leaderboard', achievements: 'Achievements',
+        coins: 'Coins', highScore: 'High Score', level: 'Level', combo: 'Combo',
+        instructions: 'PC: ← → keys / Mobile: touch left/right<br>Collect coins💰 Avoid bombs💣!',
+        gameOver: 'Game Over!', finalScore: 'Final Score', newHighScore: 'New Record!',
+        playAgain: 'Play Again', backToMenu: 'Back to Menu', buy: 'Buy', max: 'MAX',
+        continue: 'Continue', pause: 'Pause', resume: 'Resume', quit: 'Quit',
+        unlocked: 'Achievement Unlocked!', luckyRain: 'Lucky Rain 🌈',
+        evolution: { 0: 'Baby Lobster', 500: 'Fire Lobster', 2000: 'Thunder Lobster', 5000: 'Diamond Lobster', 10000: 'Lobster King' }
+    },
+    ja: {
+        title: '🦞 ロブスターアドベンチャー - コインを収集！',
+        start: 'ゲームスタート', shop: 'ショップ', leaderboard: 'ランキング', achievements: '実績',
+        coins: 'コイン', highScore: 'ハイスコア', level: 'レベル', combo: 'コンボ',
+        instructions: 'PC: ← → キー / スマホ: 左右スワイプ<br>コイン💰を集め爆弾💣を避けよう！',
+        gameOver: 'ゲームオーバー！', finalScore: '最終スコア', newHighScore: '新記録！',
+        playAgain: 'もう一度', backToMenu: 'メニューに戻る', buy: '購入', max: '最大',
+        continue: '続ける', pause: '一時停止', resume: '再開', quit: '終了',
+        unlocked: '実績解除！', luckyRain: 'ラッキー雨 🌈',
+        evolution: { 0: '子ロブスター', 500: '炎ロブスター', 2000: '雷ロブスター', 5000: 'ダイヤロブスター', 10000: 'ロブスター王' }
+    },
+    ko: {
+        title: '🦞龙虾 대모험 - 동전 수집하기!',
+        start: '게임 시작', shop: '상점', leaderboard: '순위표', achievements: '업적',
+        coins: '동전', highScore: '최고 점수', level: '레벨', combo: '콤보',
+        instructions: 'PC: ← → 키 / 모바일: 좌우 터치<br>동전💰을 모으고 폭탄💣을 피하세요!',
+        gameOver: '게임 오버!', finalScore: '최종 점수', newHighScore: '신기록!',
+        playAgain: '다시 하기', backToMenu: '메뉴로', buy: '구매', max: '최대',
+        continue: '계속', pause: '일시정지', resume: '재개', quit: '나가기',
+        unlocked: '업적 달성!', luckyRain: '행운의 비 🌈',
+        evolution: { 0: '아기龙虾', 500: '불龙虾', 2000: '번개龙虾', 5000: '다이아龙虾', 10000: '龙虾 왕' }
+    },
+    'zh-TW': {
+        title: '🦞 龍蝦大冒險 - 收集金幣買裝備！',
+        start: '開始遊戲', shop: '商店', leaderboard: '排行榜', achievements: '成就',
+        coins: '金幣', highScore: '最高分', level: '等級', combo: '連擊',
+        instructions: '電腦：← → 鍵 / 手機：觸控螢幕左右移動<br>接金幣💰避開炸彈💣！',
+        gameOver: '遊戲結束！', finalScore: '最終得分', newHighScore: '新紀錄！',
+        playAgain: '再玩一次', backToMenu: '返回選單', buy: '購買', max: '已滿',
+        continue: '繼續', pause: '暫停', resume: '繼續遊戲', quit: '離開',
+        unlocked: '成就解鎖！', luckyRain: '幸運雨 🌈',
+        evolution: { 0: '小龍蝦', 500: '火焰龍', 2000: '雷電龍', 5000: '鑽石龍', 10000: '龍蝦王' }
+    },
+    'zh-CN': {
+        title: '🦞 龙虾大冒险 - 收集金币买装备！',
+        start: '开始游戏', shop: '商店', leaderboard: '排行榜', achievements: '成就',
+        coins: '金币', highScore: '最高分', level: '等级', combo: '连击',
+        instructions: '电脑：← → 键 / 手机：触控屏幕左右移动<br>接金币💰避开炸弹💣！',
+        gameOver: '游戏结束！', finalScore: '最终得分', newHighScore: '新纪录！',
+        playAgain: '再玩一次', backToMenu: '返回选单', buy: '购买', max: '已满',
+        continue: '继续', pause: '暂停', resume: '继续游戏', quit: '离开',
+        unlocked: '成就解锁！', luckyRain: '幸运雨 🌈',
+        evolution: { 0: '小龙虾', 500: '火焰龙', 2000: '雷电龙', 5000: '钻石龙', 10000: '龙虾王' }
+    }
+};
+
+const langNames = { zh: '繁體中文', en: 'English', ja: '日本語', ko: '한국어', 'zh-TW': '繁中', 'zh-CN': '簡体中文' };
+const langOrder = ['zh', 'en', 'ja', 'ko', 'zh-TW', 'zh-CN'];
+let currentLang = localStorage.getItem('lobsterLang') || 'zh';
+
+function t(key) {
+    return translations[currentLang]?.[key] || translations.zh[key] || key;
+}
+
+function toggleLanguage() {
+    let idx = langOrder.indexOf(currentLang);
+    currentLang = langOrder[(idx + 1) % langOrder.length];
+    localStorage.setItem('lobsterLang', currentLang);
+    document.querySelector('.menu-btn.lang').textContent = '🌐 ' + langNames[currentLang];
+    updateLanguageUI();
+    initSpecialFeatures();
+}
+
+// 初始化語言按鈕
+document.querySelector('.menu-btn.lang').textContent = '🌐 ' + langNames[currentLang];
+
+function updateLanguageUI() {
+    // 更新所有可翻譯的文字
+    document.title = t('title');
+    document.querySelector('h1').textContent = t('title');
+    
+    // 選單按鈕
+    const menuButtons = document.querySelectorAll('.menu-btn, .menu-title + button, #menu button');
+    if (menuButtons[0]) menuButtons[0].textContent = t('start');
+    if (menuButtons[1]) menuButtons[1].textContent = t('shop');
+    
+    // 統計數據
+    document.querySelectorAll('.stat').forEach(stat => {
+        const icon = stat.querySelector('.stat-icon');
+        if (icon) {
+            if (icon.textContent === '💰') stat.querySelector('.stat-value').textContent = t('coins') + ': ' + gameState.coins;
+            if (icon.textContent === '🏆') stat.querySelector('.stat-value').textContent = t('highScore') + ': ' + gameState.highScore;
+        }
+    });
+    
+    // 說明文字
+    document.querySelector('.instructions').innerHTML = t('instructions').replace('\n', '<br>');
+    
+    // 遊戲結束畫面
+    const gameOverText = document.querySelector('#gameOverText');
+    if (gameOverText) gameOverText.textContent = t('gameOver');
+}
+
+// ========== 更多優化功能 ==========
+
+// 螢幕震動效果
+function screenShake(intensity = 10, duration = 300) {
+    const container = document.getElementById('gameContainer');
+    container.style.transition = 'transform 0.05s';
+    let startTime = Date.now();
+    
+    function shake() {
+        const elapsed = Date.now() - startTime;
+        if (elapsed > duration) {
+            container.style.transform = '';
+            return;
+        }
+        const decay = 1 - (elapsed / duration);
+        const x = (Math.random() - 0.5) * intensity * decay;
+        const y = (Math.random() - 0.5) * intensity * decay;
+        container.style.transform = `translate(${x}px, ${y}px)`;
+        requestAnimationFrame(shake);
+    }
+    shake();
+}
+
+// 速度線效果
+function showSpeedLines() {
+    const container = document.getElementById('gameContainer');
+    for (let i = 0; i < 5; i++) {
+        const line = document.createElement('div');
+        line.style.cssText = `
+            position: absolute;
+            width: 3px;
+            height: 30px;
+            background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.8));
+            left: ${Math.random() * 800}px;
+            top: ${Math.random() * 400}px;
+            animation: speedLine 0.3s linear forwards;
+            z-index: 50;
+        `;
+        container.appendChild(line);
+        setTimeout(() => line.remove(), 300);
+    }
+}
+
+// 更好的收集動畫
+function showCollectAnimation(x, y, type) {
+    const container = document.getElementById('gameContainer');
+    const el = document.createElement('div');
+    el.style.cssText = `
+        position: absolute;
+        left: ${x}px;
+        top: ${y}px;
+        font-size: 2rem;
+        animation: collectAnim 0.5s ease forwards;
+        z-index: 100;
+        pointer-events: none;
+    `;
+    
+    const colors = { coin: '#ffd700', gem: '#00ffff', bomb: '#ff4444', gift: '#ff69b4' };
+    el.textContent = type === 'coin' ? '+10' : type === 'gem' ? '+50' : type === 'gift' ? '+50' : '';
+    el.style.color = colors[type] || '#fff';
+    el.style.textShadow = `0 0 10px ${colors[type]}`;
+    
+    container.appendChild(el);
+    setTimeout(() => el.remove(), 500);
+}
+
+// 每日挑戰系統
+const dailyChallenges = [
+    { id: 'collect_100', desc: { zh: '收集 100 金幣', en: 'Collect 100 coins', ja: '100コイン収集', ko: '100동전 수집', 'zh-CN': '收集100金币' }, target: 100, type: 'coins' },
+    { id: 'score_500', desc: { zh: '獲得 500 分', en: 'Score 500 points', ja: '500点獲得', ko: '500점 획득', 'zh-CN': '获得500分' }, target: 500, type: 'score' },
+    { id: 'combo_10', desc: { zh: '達成 10 連擊', en: 'Get 10 combo', ja: '10コンボ達成', ko: '10콤보 달성', 'zh-CN': '达成10连击' }, target: 10, type: 'combo' },
+    { id: 'survive_60', desc: { zh: '生存 60 秒', en: 'Survive 60 seconds', ja: '60秒生存', ko: '60초 생존', 'zh-CN': '生存60秒' }, target: 60, type: 'time' }
+];
+
+function getTodayKey() {
+    return 'daily_' + new Date().toISOString().split('T')[0];
+}
+
+function getDailyProgress() {
+    return JSON.parse(localStorage.getItem(getTodayKey()) || '{"coins":0,"score":0,"combo":0,"time":0}');
+}
+
+function updateDailyProgress(type, value) {
+    const key = getTodayKey();
+    const progress = getDailyProgress();
+    progress[type] = Math.max(progress[type] || 0, value);
+    localStorage.setItem(key, JSON.stringify(progress));
+    checkDailyChallenge();
+}
+
+function checkDailyChallenge() {
+    const progress = getDailyChallenge();
+    const today = new Date().toISOString().split('T')[0];
+    const completed = JSON.parse(localStorage.getItem('dailyCompleted_' + today) || '[]');
+    
+    dailyChallenges.forEach((challenge, idx) => {
+        if (!completed.includes(idx)) {
+            const value = progress[challenge.type] || 0;
+            if (value >= challenge.target) {
+                completed.push(idx);
+                localStorage.setItem('dailyCompleted_' + today, JSON.stringify(completed));
+                // 獎勵
+                const bonus = 50 + challenge.target;
+                gameState.coins += bonus;
+                localStorage.setItem('lobsterCoins', gameState.coins);
+                showEventText(`🎁 每日挑戰完成！+${bonus}💰`);
+            }
+        }
+    });
+}
+
+function getDailyChallenge() {
+    return getDailyProgress();
+}
+
+function showDailyChallenge() {
+    const progress = getDailyProgress();
+    const today = new Date().toISOString().split('T')[0];
+    const completed = JSON.parse(localStorage.getItem('dailyCompleted_' + today) || '[]');
+    
+    const container = document.getElementById('leaderboardList');
+    container.innerHTML = '<h2 style="color:#ffd700;margin-bottom:20px;">📅 每日挑戰</h2>';
+    
+    dailyChallenges.forEach((challenge, idx) => {
+        const isDone = completed.includes(idx);
+        const value = progress[challenge.type] || 0;
+        const percent = Math.min(100, (value / challenge.target) * 100);
+        
+        container.innerHTML += `
+            <div style="padding:15px;margin:10px 0;background:rgba(255,255,255,0.1);border-radius:15px;opacity:${isDone ? 0.6 : 1}">
+                <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+                    <span>${challenge.desc.zh}</span>
+                    <span>${isDone ? '✅' : `${value}/${challenge.target}`}</span>
+                </div>
+                <div style="height:10px;background:rgba(255,255,255,0.2);border-radius:5px;overflow:hidden">
+                    <div style="height:100%;width:${percent}%;background:linear-gradient(90deg,#ffd700,#ff8c00);transition:width 0.3s"></div>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML += '<button type="button" onclick="closeMenu()" style="margin-top:20px;padding:12px 30px;background:linear-gradient(135deg,#ffd700,#ff8c00);border:none;border-radius:25px;cursor:pointer;">返回</button>';
+    document.getElementById('leaderboard').style.display = 'flex';
+}
+
+// 添加更多CSS動畫
+const extraStyle = document.createElement('style');
+extraStyle.textContent = `
+    @keyframes speedLine {
+        0% { transform: translateY(0); opacity: 1; }
+        100% { transform: translateY(100px); opacity: 0; }
+    }
+    @keyframes collectAnim {
+        0% { transform: scale(0.5) translateY(0); opacity: 1; }
+        100% { transform: scale(1.2) translateY(-30px); opacity: 0; }
+    }
+    .powerup-glow {
+        animation: powerupPulse 0.5s ease infinite;
+    }
+    @keyframes powerupPulse {
+        0%, 100% { filter: brightness(1); }
+        50% { filter: brightness(1.5); }
+    }
+`;
+document.head.appendChild(extraStyle);
+
+// 在碰撞時添加效果
+const originalHandleCollision = handleCollision;
+handleCollision = function(item, index) {
+    if (item.type === 'bomb') {
+        screenShake(15, 300);
+    } else {
+        showCollectAnimation(playerX + 30, 350, item.type);
+    }
+    originalHandleCollision(item, index);
+};
+
+<script defer>
+// ========== 浮動幫助按鈕 ==========
+function addHelpButton() {
+    const btn = document.createElement('div');
+    btn.id = 'helpBtn';
+    btn.style.cssText = 'position:fixed;bottom:20px;left:20px;width:50px;height:50px;background:linear-gradient(135deg,#e94560,#ff6b6b);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.5rem;cursor:pointer;z-index:1000;box-shadow:0 4px 15px rgba(0,0,0,0.3);';
+    btn.textContent = '❓';
+    btn.onclick = function() {
+        const m = document.createElement('div');
+        m.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;';
+        m.innerHTML = '<div style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:30px;border-radius:20px;max-width:350px;text-align:center;"><h2 style="color:#ff6b6b;margin-bottom:15px;">🦞 龍蝦大冒險</h2><p style="color:#ccc;margin:8px 0;">← → 鍵或滑鼠移動</p><p style="color:#ccc;margin:8px 0;">手機左右滑動</p><p style="color:#ffd700;margin:8px 0;">目標：接金幣🪙 避開炸彈💣</p><button type="button" onclick="this.parentElement.parentElement.remove()" style="margin-top:20px;padding:10px 30px;background:#e94560;border:none;border-radius:10px;color:white;cursor:pointer;">關閉</button></div>';
+        document.body.appendChild(m);
+    };
+    document.body.appendChild(btn);
+}
+setTimeout(addHelpButton, 3000);
+</script>
+
+<script defer>
+// 遊戲載入完成提示
+window.onload = function() {
+    console.log('🦞 龍蝦大冒險 loaded!');
+};
+</script>
+
+<script>
+// 遊戲狀態監控
+document.addEventListener('visibilitychange', function() {
+        if(document.hidden && gameRunning) {
+            gameRunning = false;
+            clearInterval(gameLoop);
+            clearInterval(spawnLoop);
+            console.log('⏸️ 遊戲已暫停');
+        } else if(!document.hidden) {
+            console.log('🔔 遊戲繼續');
+            // 恢復 AudioContext
+            if(audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+    });
+</script>
+
+<script>
+// 載入完成
+window.addEventListener('load', function() {
+    console.log('🦞 龍蝦大冒險載入完成');
+});
+</script>

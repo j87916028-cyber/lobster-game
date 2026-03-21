@@ -1,0 +1,4446 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#00d4ff">
+    <link rel="manifest" href="manifest.json">
+    <!-- PWA / 書籤優化：新增 favicon 和 Apple Touch Icon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect fill='%231a1a2e' width='32' height='32'/%3E%3Ctext x='16' y='24' font-size='20' text-anchor='middle'%3E%F0%9F%A6%9E%3C/text%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect fill='%231a1a2e' width='180' height='180' rx='30'/%3E%3Ctext x='90' y='135' font-size='110' text-anchor='middle'%3E%F0%9F%A6%9E%3C/text%3E%3C/svg%3E">
+    <!-- SEO: 新增 meta description -->
+    <meta name="description" content="🦞 龍蝦大冒險 - 躲避氣泡，收集金幣，挑戰最高分！簡單好玩的休閒遊戲，適合所有年齡層。">
+    <!-- Open Graph: 增強社群分享預覽 -->
+    <meta property="og:title" content="🦞 龍蝦大戰">
+    <meta property="og:description" content="躲避氣泡，收集金幣，挑戰最高分！簡單好玩的休閒遊戲。">
+    <meta property="og:image" content="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 630'%3E%3Crect fill='%231a1a2e' width='1200' height='630'/%3E%3Ctext x='600' y='380' font-size='300' text-anchor='middle'%3E%F0%9F%A6%9E%3C/text%3E%3Ctext x='600' y='500' font-size='80' text-anchor='middle' fill='%2300d4ff'%3E%E9%BE%8C%E8%9D%B6%E5%A4%A7%E6%88%98%3C/text%3E%3C/svg%3E">
+    <meta property="og:url" content="https://j87916028-cyber.github.io/lobster-game/lobster-game.html">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="龍蝦大戰">
+    <!-- Twitter Card: 增強 Twitter 分享預覽 -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="🦞 龍蝦大戰">
+    <meta name="twitter:description" content="躲避氣泡，收集金幣，挑戰最高分！">
+    <meta name="twitter:image" content="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 630'%3E%3Crect fill='%231a1a2e' width='1200' height='630'/%3E%3Ctext x='600' y='380' font-size='300' text-anchor='middle'%3E%F0%9F%A6%9E%3C/text%3E%3Ctext x='600' y='500' font-size='80' text-anchor='middle' fill='%2300d4ff'%3E%E9%BE%8C%E8%9D%B6%E5%A4%A7%E6%88%98%3C/text%3E%3C/svg%3E">
+    <title>🦞 龍蝦大戰</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            font-display: swap; /* 字體載入優化：先顯示系統字體，避免閃爍 */
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased; /* 字體渲染優化 */
+            overscroll-behavior: none; /* 防止手機橡皮筋效果 */
+            touch-action: manipulation; /* 優化觸控體驗 */
+        }
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px #00d4ff;
+        }
+        #gameContainer {
+            position: relative;
+            width: 800px;
+            height: 500px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
+            border: 3px solid #00d4ff;
+            overflow: hidden;
+            contain: layout style paint; /* 完整隔離：layout+style+paint 避免遊戲元素影響外部渲染 */
+            will-change: transform, animation; /* GPU 加速提示：優化受傷動畫等動態效果 */
+        }
+        #player {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            font-size: 50px;
+            bottom: 20px;
+            left: 50%;
+            will-change: transform; /* GPU 加速提示 */
+        }
+        .bubble {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            font-size: 30px;
+            will-change: transform; /* 硬體加速提示 */
+            touch-action: none; /* 防止觸控設備上的意外滾動/縮放 */
+            user-select: none; /* 防止選取文字 */
+            -webkit-user-select: none;
+        }
+        
+        /* 分數彈出動畫 */
+        .score-popup {
+            position: absolute;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #ffd700;
+            text-shadow: 0 0 10px #ffd700;
+            animation: scoreFloat 0.8s ease-out forwards;
+            pointer-events: none;
+            z-index: 100;
+            will-change: transform, opacity;
+            transform: translateZ(0); /* 強制 GPU 硬體加速 */
+            backface-visibility: hidden; /* 避免背面的不必要渲染 */
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* 道具彈出動畫 */
+        .powerup-popup {
+            position: absolute;
+            font-size: 1.2rem;
+            font-weight: bold;
+            padding: 8px 15px;
+            border-radius: 10px;
+            animation: powerupFloat 1s ease-out forwards;
+            pointer-events: none;
+            z-index: 100;
+            will-change: transform, opacity;
+            transform: translateZ(0); /* 強制 GPU 硬體加速 */
+            backface-visibility: hidden; /* 避免背面的不必要渲染 */
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        
+        @keyframes scoreFloat {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-50px) scale(1.5); }
+        }
+        
+        /* 接到金幣時的玩家動畫 */
+        @keyframes playerCatch {
+            0% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.2); }
+            100% { transform: translateX(-50%) scale(1); }
+        }
+        
+        .player-catch {
+            animation: playerCatch 0.2s ease-out;
+            will-change: transform; /* GPU 加速提示 */
+        }
+        
+        /* 受傷震動動畫 */
+        @keyframes damageShake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-10px); background: rgba(255,0,0,0.3); }
+            40% { transform: translateX(10px); }
+            60% { transform: translateX(-10px); }
+            80% { transform: translateX(10px); }
+        }
+        
+        .damage-shake {
+            will-change: transform; /* GPU 加速提示 */
+        }
+        
+        /* 無敵時間閃爍效果 */
+        @keyframes invincible {
+            0%, 100% { opacity: 1; text-shadow: 0 0 5px gold; }
+            50% { opacity: 0.5; text-shadow: 0 0 15px gold; }
+        }
+        
+        .player-invincible {
+            animation: invincible 0.25s infinite;
+            will-change: opacity; /* GPU 加速提示 */
+        }
+        
+        /* 護盾視覺效果 - 玩家周圍的光環 */
+        .player-shield::after {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            border: 3px solid rgba(0, 191, 255, 0.8);
+            border-radius: 50%;
+            animation: shieldPulse 1s infinite ease-in-out;
+            pointer-events: none;
+            box-shadow: 0 0 20px rgba(0, 191, 255, 0.6), inset 0 0 15px rgba(0, 191, 255, 0.3);
+        }
+        
+        @keyframes shieldPulse {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.1); opacity: 1; }
+        }
+        
+        /* 道具效果指示器 */
+        #powerupIndicator {
+            position: absolute;
+            top: 60px;
+            left: 20px;
+            display: flex;
+            gap: 8px;
+            z-index: 10;
+        }
+        
+        #difficultyIndicator {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1rem;
+            background: rgba(0,0,0,0.5);
+            padding: 5px 15px;
+            border-radius: 15px;
+            color: #00d4ff;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            line-height: 1.3;
+        }
+        
+        #difficultyIndicator .level {
+            font-weight: bold;
+        }
+        
+        #difficultyIndicator .next-level {
+            font-size: 0.75rem;
+            opacity: 0.8;
+            font-weight: normal;
+        }
+
+        #fpsDisplay {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 0.85rem;
+            background: rgba(0,0,0,0.5);
+            padding: 5px 10px;
+            border-radius: 10px;
+            color: #00ff88;
+            z-index: 10;
+            font-family: monospace;
+            opacity: 0.7;
+        }
+
+        /* 實時遊戲統計顯示 */
+        #liveStats {
+            position: absolute;
+            top: 45px;
+            left: 20px;
+            font-size: 0.85rem;
+            background: rgba(0,0,0,0.5);
+            padding: 5px 10px;
+            border-radius: 10px;
+            z-index: 10;
+            font-family: monospace;
+            opacity: 0.7;
+            color: #ffd700;
+            display: flex;
+            gap: 15px;
+        }
+
+        #liveStats span {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+        
+        /* 距離最高分差距顯示 */
+        #highScoreGap {
+            position: absolute;
+            top: 45px;
+            right: 20px;
+            font-size: 0.8rem;
+            background: rgba(0,0,0,0.5);
+            padding: 5px 10px;
+            border-radius: 10px;
+            z-index: 10;
+            font-family: monospace;
+            opacity: 0.7;
+            transition: color 0.3s;
+        }
+        
+        #highScoreGap.behind {
+            color: #ff6b6b;
+        }
+        
+        #highScoreGap.near {
+            color: #ffd700;
+            animation: nearGlow 1s infinite alternate;
+            will-change: opacity, transform;
+        }
+        
+        @keyframes nearGlow {
+            0% { text-shadow: 0 0 5px rgba(255,215,0,0.5); transform: scale(1); }
+            100% { text-shadow: 0 0 15px rgba(255,215,0,0.8); transform: scale(1.05); }
+        }
+        
+        #highScoreGap.ahead {
+            color: #00ff88;
+        }
+        
+        #highScoreGap.record {
+            color: #ffd700;
+            animation: recordPulse 0.5s infinite alternate;
+            will-change: transform; /* GPU 加速提示 */
+        }
+        
+        @keyframes recordPulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.1); }
+        }
+        
+        #comboIndicator {
+            position: absolute;
+            top: 90px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1.2rem;
+            font-weight: bold;
+            background: linear-gradient(90deg, #ff6b6b, #ffd700, #00d4ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            z-index: 10;
+            text-shadow: 0 0 10px rgba(255,215,0,0.5);
+            will-change: opacity, transform; /* GPU 加速提示 */
+        }
+        
+        #comboIndicator.show {
+            opacity: 1;
+            animation: comboPulse 0.5s infinite;
+            will-change: transform; /* GPU 加速提示 */
+        }
+        
+        @keyframes comboPulse {
+            0%, 100% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.1); }
+        }
+        
+        .powerup-badge {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            animation: powerupPulse 0.5s infinite alternate;
+            will-change: transform; /* GPU 加速提示 */
+        }
+        
+        .powerup-shield {
+            background: rgba(0, 191, 255, 0.8);
+            box-shadow: 0 0 10px #00bfff;
+        }
+        
+        .powerup-2x {
+            background: rgba(255, 215, 0, 0.8);
+            box-shadow: 0 0 10px #ffd700;
+        }
+        
+        /* 新紀錄慶祝動畫 */
+        .new-record {
+            animation: recordCelebrate 0.5s ease-out;
+        }
+        
+        @keyframes recordCelebrate {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1); }
+        }
+        
+        /* 遊戲結束畫面 */
+        #gameOver {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 100;
+        }
+        
+        #gameOver h2 {
+            font-size: 3rem;
+            color: #ff6b6b;
+            text-shadow: 0 0 20px #ff6b6b;
+            margin-bottom: 20px;
+        }
+        
+        #performanceRating {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding: 10px 20px;
+            border-radius: 15px;
+            animation: ratingPop 0.5s ease-out;
+        }
+        
+        @keyframes ratingPop {
+            0% { transform: scale(0.5); opacity: 0; }
+            70% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .rating-s { background: linear-gradient(135deg, #ffd700, #ff8c00); color: #1a1a2e; box-shadow: 0 0 20px #ffd700; }
+        .rating-a { background: linear-gradient(135deg, #00ff88, #00d4ff); color: #1a1a2e; box-shadow: 0 0 15px #00ff88; }
+        .rating-b { background: linear-gradient(135deg, #00d4ff, #6b5b95); color: white; box-shadow: 0 0 10px #00d4ff; }
+        .rating-c { background: rgba(255,255,255,0.2); color: #aaa; }
+        .rating-d { background: rgba(255,107,107,0.3); color: #ff6b6b; }
+        
+        @keyframes powerupPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        @keyframes powerupFloat {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-40px) scale(1.2); }
+        }
+        
+        #score {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 1.5rem;
+            background: rgba(0,0,0,0.5);
+            padding: 10px 20px;
+            border-radius: 10px;
+        }
+        #lives {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 1.5rem;
+            background: rgba(0,0,0,0.5);
+            padding: 10px 20px;
+            border-radius: 10px;
+        }
+        .life-lost {
+            animation: lifeLost 0.5s ease-out;
+            will-change: transform, opacity; /* GPU 加速提示 */
+        }
+        @keyframes lifeLost {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.5; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+        #startBtn {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 20px 40px;
+            font-size: 1.5rem;
+            background: #00d4ff;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            color: #1a1a2e;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+        #startBtn:hover {
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+        #startBtn:focus {
+            outline: 3px solid #ffd700;
+            outline-offset: 3px;
+        }
+        
+        /* 重置最高分按鈕 */
+        #resetHighScoreBtn {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, 50%);
+            font-size: 1.2rem;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid #555;
+            border-radius: 10px;
+            cursor: pointer;
+            padding: 8px 15px;
+            transition: all 0.2s;
+            z-index: 5;
+            opacity: 0.6;
+        }
+        
+        #resetHighScoreBtn:hover {
+            background: rgba(255,0,0,0.3);
+            border-color: #ff6b6b;
+            opacity: 1;
+        }
+        
+        #resetHighScoreBtn.hidden {
+            display: none;
+        }
+        
+        #finalScore {
+            font-size: 2rem;
+            margin: 20px 0;
+        }
+        #highScore {
+            font-size: 1.2rem;
+            color: #ffd700;
+            margin-bottom: 20px;
+        }
+        #bestRecords {
+            display: none;
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(255,215,0,0.15);
+            border-radius: 10px;
+            font-size: 0.9rem;
+        }
+        #bestRecords.visible {
+            display: block;
+        }
+        #bestRecords.highlight {
+            background: rgba(255,215,0,0.3);
+        }
+        #bestRecords .best-records-title {
+            color: #ffd700;
+            margin-bottom: 5px;
+        }
+        #bestRecords .best-coins {
+            margin-left: 10px;
+        }
+        #bestRecords .best-combo {
+            margin-left: 10px;
+        }
+        #gameStatsEnd {
+            display: flex;
+            gap: 15px;
+            font-size: 1rem;
+            margin-bottom: 20px;
+            background: rgba(255,255,255,0.1);
+            padding: 10px 20px;
+            border-radius: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        #gameStatsEnd span {
+            color: #00d4ff;
+        }
+        #statAccuracy {
+            color: #ffd700; /* 命中率用金色突出顯示 */
+        }
+        #restartBtn {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            background: #00d4ff;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            color: #1a1a2e;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+        #restartBtn:hover {
+            transform: scale(1.1);
+        }
+        #restartBtn:focus {
+            outline: 3px solid #ffd700;
+            outline-offset: 3px;
+        }
+        .share-btn {
+            margin-top: 15px;
+            padding: 12px 25px;
+            font-size: 1rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            color: white;
+            font-weight: bold;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .share-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+        }
+        .share-btn:focus {
+            outline: 3px solid #ffd700;
+            outline-offset: 3px;
+        }
+        .share-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        #pauseOverlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+        }
+        #pauseOverlay h2 {
+            font-size: 3rem;
+            color: #00d4ff;
+            margin-bottom: 20px;
+        }
+        #pauseScore {
+            font-size: 1.5rem;
+            color: #ffd700;
+            margin-bottom: 10px;
+        }
+        #pauseLives {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+        #pauseCombo {
+            font-size: 1.2rem;
+            color: #ff6b35;
+            margin-bottom: 10px;
+            min-height: 1.5em;
+        }
+        
+        #pausePowerups {
+            font-size: 1rem;
+            color: #ffd700;
+            margin-bottom: 10px;
+            min-height: 1.5em;
+            text-align: center;
+            line-height: 1.5;
+        }
+        
+        #gameStats {
+            font-size: 0.9rem;
+            color: #aaa;
+            text-align: center;
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+        }
+        
+        #gameStats span {
+            display: inline-block;
+            margin: 0 8px;
+        }
+        
+        #resumeBtn {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            background: #00d4ff;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            color: #1a1a2e;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+        
+        #menuBtn {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            background: #ff6b6b;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            color: white;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        
+        #menuBtn:hover {
+            background: #ff5252;
+        }
+        
+        /* 鍵盤導航焦點樣式（無障礙改善） */
+        #resumeBtn:focus {
+            outline: 3px solid #ffd700;
+            outline-offset: 2px;
+        }
+        
+        #menuBtn:focus {
+            outline: 3px solid #ffd700;
+            outline-offset: 2px;
+        }
+        
+        #resetHighScoreBtn:focus {
+            outline: 3px solid #ffd700;
+            outline-offset: 2px;
+        }
+        
+        .instructions {
+            margin-top: 20px;
+            font-size: 1.2rem;
+            opacity: 0.8;
+        }
+        
+        /* 行動裝置觸控按鈕 */
+        .touch-controls {
+            display: none;
+            margin-top: 20px;
+            gap: 30px;
+        }
+        
+        .touch-btn {
+            width: 80px;
+            height: 80px;
+            background: rgba(0, 212, 255, 0.3);
+            border: 3px solid #00d4ff;
+            border-radius: 50%;
+            font-size: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none; /* 防止 iOS 長按彈出菜單 */
+            touch-action: manipulation;
+            transition: transform 0.1s, background 0.1s;
+            -webkit-tap-highlight-color: transparent; /* 移除點擊高亮 */
+            color: white; /* 按鈕文字顏色 */
+            cursor: pointer; /* 指標游標 */
+        }
+        
+        /* 移除 button 預設樣式 */
+        button.touch-btn {
+            padding: 0;
+            line-height: 1;
+        }
+        
+        /* 禁用雙擊縮放 */
+        * {
+            touch-action: manipulation;
+        }
+        
+        .touch-btn:active {
+            transform: scale(0.9);
+            background: rgba(0, 212, 255, 0.6);
+        }
+        
+        /* 按鈕被按下時的持續視覺回饋（JavaScript 驅動）*/
+        .touch-btn.pressed {
+            transform: scale(0.9);
+            background: rgba(0, 212, 255, 0.8);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.8);
+        }
+
+        /* 鍵盤焦點樣式（無障礙支援）*/
+        .touch-btn:focus {
+            outline: 3px solid #ffd700;
+            outline-offset: 3px;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.7);
+        }
+
+        .touch-btn:focus:not(:focus-visible) {
+            outline: none;
+            box-shadow: none;
+        }
+
+        .touch-btn:focus-visible {
+            outline: 3px solid #ffd700;
+            outline-offset: 3px;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.7);
+        }
+        
+        /* 音效開關按鈕 */
+        #soundBtn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 1.5rem;
+            background: rgba(0,0,0,0.5);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            padding: 8px 15px;
+            transition: transform 0.2s;
+            z-index: 10;
+        }
+        #soundBtn:hover {
+            transform: scale(1.1);
+        }
+        #soundBtn:focus {
+            outline: 3px solid #ffd700;
+            outline-offset: 2px;
+        }
+        
+        /* 音量滑桿 */
+        #volumeContainer {
+            position: absolute;
+            top: 20px;
+            left: 180px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        #volumeContainer.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        #volumeContainer .volume-icon {
+            font-size: 1rem;
+        }
+        #volumeSlider {
+            width: 80px;
+            height: 6px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: rgba(255,255,255,0.3);
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        #volumeSlider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #00d4ff;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        #volumeSlider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            background: #00d4ff;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+        }
+        #volumeSlider:focus {
+            outline: 2px solid #ffd700;
+            outline-offset: 2px;
+        }
+        
+        /* 音量滑桿禁用狀態 */
+        #volumeSlider:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        #volumeSlider:disabled::-webkit-slider-thumb {
+            background: #666;
+            cursor: not-allowed;
+        }
+        #volumeSlider:disabled::-moz-range-thumb {
+            background: #666;
+            cursor: not-allowed;
+        }
+        
+        /* 震動開關按鈕 */
+        #vibrationBtn {
+            position: absolute;
+            top: 20px;
+            left: 130px;
+            font-size: 1.5rem;
+            background: rgba(0,0,0,0.5);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            padding: 8px 15px;
+            transition: transform 0.2s;
+            z-index: 10;
+        }
+        #vibrationBtn:hover {
+            transform: scale(1.1);
+        }
+        #vibrationBtn:focus {
+            outline: 3px solid #ffd700;
+            outline-offset: 2px;
+        }
+        
+        /* 暫停按鈕 */
+        #pauseBtn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 1.5rem;
+            background: rgba(0,0,0,0.5);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            padding: 8px 15px;
+            transition: transform 0.2s;
+            z-index: 10;
+        }
+        
+        /* 說明按鈕 */
+        #helpBtn {
+            position: absolute;
+            top: 20px;
+            right: 70px;
+            font-size: 1.5rem;
+            background: rgba(0,0,0,0.5);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            padding: 8px 15px;
+            transition: transform 0.2s;
+            z-index: 10;
+        }
+        #helpBtn:focus {
+            outline: 3px solid #ffd700;
+            outline-offset: 2px;
+        }
+        #pauseBtn:hover {
+            transform: scale(1.1);
+        }
+        #pauseBtn:focus {
+            outline: 3px solid #ffd700;
+            outline-offset: 2px;
+        }
+        
+        /* 觸控回饋（提升行動裝置體驗） */
+        #pauseBtn:active {
+            transform: scale(0.9);
+            background: rgba(0, 212, 255, 0.7);
+        }
+        
+        #helpBtn:active {
+            transform: scale(0.9);
+            background: rgba(0, 212, 255, 0.7);
+        }
+        
+        /* 行動裝置適配 */
+        @media (max-width: 850px) {
+            #gameContainer {
+                width: 95vw;
+                height: 60vh;
+                max-height: 500px;
+            }
+            h1 {
+                font-size: 2rem;
+            }
+            .instructions {
+                font-size: 1rem;
+            }
+            .touch-controls {
+                display: flex;
+            }
+        }
+        
+        /* 更小的螢幕優化 */
+        @media (max-width: 480px) {
+            #gameContainer {
+                height: 50vh;
+                border-width: 2px;
+            }
+            h1 {
+                font-size: 1.5rem;
+                margin-bottom: 10px;
+            }
+            .touch-controls {
+                gap: 20px;
+            }
+            .touch-btn {
+                width: 60px;
+                height: 60px;
+                font-size: 2rem;
+            }
+        }
+        
+        /* 減少動畫偏好支援 (無障礙) - 使用 animation: none 而非縮短時間，
+           以確保 inline animation 樣式也被覆蓋，並避免 animationend 事件觸發 */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation: none !important;
+                transition-duration: 0.01ms !important;
+            }
+            /* 遊戲特定元素的動畫禁用（這些有 inline animation 樣式） */
+            #gameContainer {
+                animation: none !important;
+            }
+            .life-lost {
+                animation: none !important;
+            }
+            /* 通用動畫覆蓋（確保靜態顯示） */
+            .score-popup, .powerup-popup {
+                animation: none !important;
+                opacity: 1;
+            }
+            .player-catch {
+                animation: none !important;
+            }
+            .player-invincible {
+                animation: none !important;
+            }
+            #comboIndicator {
+                animation: none !important;
+                opacity: 1;
+            }
+            .powerup-badge {
+                animation: none !important;
+            }
+            .new-record {
+                animation: none !important;
+            }
+            /* 倒數計時覆蓋（避免計時數字動畫残留） */
+            #countdownOverlay {
+                animation: none !important;
+            }
+            #countdownOverlay span {
+                animation: none !important;
+            }
+            /* 安裝/更新提示覆蓋 */
+            #installPrompt, #updateNotification {
+                animation: none !important;
+            }
+        }
+        
+        /* 遊戲說明弹窗 */
+        #helpOverlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            padding: 20px;
+        }
+        
+        #helpOverlay h2 {
+            font-size: 2rem;
+            color: #00d4ff;
+            margin-bottom: 20px;
+            text-shadow: 0 0 15px #00d4ff;
+        }
+        
+        #helpOverlay .help-content {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px 30px;
+            border-radius: 15px;
+            font-size: 1.1rem;
+            line-height: 1.8;
+        }
+        
+        #helpOverlay .help-content kbd {
+            background: #333;
+            padding: 3px 10px;
+            border-radius: 5px;
+            border: 1px solid #555;
+            font-family: monospace;
+            color: #ffd700;
+        }
+        
+        #helpOverlay .help-content hr {
+            margin: 15px 0;
+            border-color: #444;
+        }
+        
+        #helpOverlay .touch-hint {
+            margin-top: 10px;
+            color: #00d4ff;
+        }
+        
+        #helpOverlay .screen-hint {
+            margin-top: 8px;
+            color: #00ff88;
+            font-size: 0.9em;
+        }
+        
+        #helpOverlay .help-close {
+            margin-top: 20px;
+            padding: 10px 25px;
+            font-size: 1rem;
+            background: #00d4ff;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            color: #1a1a2e;
+            font-weight: bold;
+        }
+        
+        #helpOverlay .help-close:hover {
+            background: #00bfff;
+        }
+        
+        #helpOverlay .help-close:focus {
+            outline: 3px solid #ffd700;
+            outline-offset: 2px;
+        }
+        
+        /* 自定義確認對話框 - 取代原生 confirm() 改善無障礙和 UX */
+        #confirmOverlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        #confirmOverlay.show {
+            display: flex;
+        }
+        
+        .confirm-dialog {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border: 3px solid #00d4ff;
+            border-radius: 20px;
+            padding: 25px;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+        }
+        
+        .confirm-dialog h3 {
+            color: #ffd700;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        
+        .confirm-dialog p {
+            color: #fff;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        
+        .confirm-dialog .confirm-stats {
+            background: rgba(0, 212, 255, 0.1);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            color: #00d4ff;
+            display: none;
+        }
+        
+        .confirm-dialog .confirm-stats.visible {
+            display: block;
+        }
+        
+        .confirm-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+        
+        .confirm-btn {
+            padding: 12px 25px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: bold;
+        }
+        
+        .confirm-btn-confirm {
+            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+            color: white;
+        }
+        
+        .confirm-btn-confirm:hover {
+            background: linear-gradient(135deg, #00bfff 0%, #0088aa 100%);
+            transform: scale(1.05);
+        }
+        
+        .confirm-btn-cancel {
+            background: linear-gradient(135deg, #ff6b6b 0%, #cc4444 100%);
+            color: white;
+        }
+        
+        .confirm-btn-cancel:hover {
+            background: linear-gradient(135deg, #ff5555 0%, #bb3333 100%);
+            transform: scale(1.05);
+        }
+        
+        .confirm-btn:focus {
+            outline: 3px solid #ffd700;
+            outline-offset: 2px;
+        }
+        
+        /* 倒數動畫 - 效能優化：移至靜態 CSS 避免動態創建 style 標籤 */
+        @keyframes countdownFadeInOut {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.1); }
+        }
+        
+        @keyframes countdownPulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+        
+        .countdown-animate {
+            animation: countdownFadeInOut 1s infinite;
+        }
+    </style>
+</head>
+<body>
+    <h1>🦞 龍蝦大戰</h1>
+    <div id="gameContainer" role="application" aria-label="遊戲區域">
+        <div id="score" role="status" aria-live="polite" aria-label="目前分數">分數: 0</div>
+        <button id="soundBtn" title="音效開關" aria-label="音效開關">🔊</button>
+        <button id="vibrationBtn" title="震動開關" aria-label="震動開關">📳</button>
+        <div id="volumeContainer">
+            <span class="volume-icon">🔈</span>
+            <input type="range" id="volumeSlider" min="0" max="100" value="30" aria-label="音量調整">
+            <span class="volume-icon">🔊</span>
+        </div>
+        <button id="pauseBtn" title="暫停 (ESC)" aria-label="暫停遊戲">⏸️</button>
+        <button id="helpBtn" title="說明 (H)" aria-label="顯示遊戲說明">❓</button>
+        <div id="lives" role="status" aria-live="polite" aria-label="剩餘生命">❤️❤️❤️</div>
+        <div id="powerupIndicator" role="status" aria-live="polite" aria-label="道具狀態"></div>
+        <div id="difficultyIndicator" role="status" aria-label="目前難度等級">難度 1</div>
+        <div id="fpsDisplay" aria-hidden="true">FPS: --</div>
+        <div id="liveStats" role="status" aria-live="polite" aria-label="遊戲統計">
+            <span>⏱️ <span id="liveTime">0:00</span></span>
+            <span>💰 <span id="liveCoins">0</span></span>
+        </div>
+        <div id="highScoreGap" role="status" aria-label="與最高分差距"></div>
+        <div id="comboIndicator" role="status" aria-live="polite" aria-label="連擊倍數"></div>
+        <div id="player" role="img" aria-label="玩家角色龍蝦">🦞</div>
+        <button id="startBtn" aria-label="開始遊戲">開始遊戲</button>
+        <button id="resetHighScoreBtn" title="重置最高分" aria-label="重置最高分記錄">🗑️</button>
+        <div id="gameOver" role="alert" aria-labelledby="gameOverTitle">
+            <h2 id="gameOverTitle">遊戲結束!</h2>
+            <div id="performanceRating" aria-label="表現評價"></div>
+            <div id="highScore" aria-label="最高分">最高分: 0</div>
+            <div id="finalScore" aria-label="本次遊戲分數">分數: 0</div>
+            <div id="gameStatsEnd" aria-label="遊戲統計">
+                <span>⏱️ <span id="statTimeEnd">0:00</span></span>
+                <span>💰 <span id="statCoinsEnd">0</span></span>
+                <span>💣 <span id="statBombsEnd">0</span></span>
+                <span>🎯 <span id="statAccuracy">0%</span></span>
+                <span>🔥 <span id="statBestComboEnd">0</span></span>
+            </div>
+            <div id="bestRecords" aria-label="最佳記錄">
+                <div class="best-records-title">🏆 最佳記錄</div>
+                <span>⏱️ <span id="bestTimeEnd">0:00</span></span>
+                <span class="best-coins">💰 <span id="bestCoinsEnd">0</span></span>
+                <span class="best-combo">🔥 <span id="bestComboEnd">0</span></span>
+            </div>
+            <button id="restartBtn" aria-label="再玩一次">再玩一次</button>
+            <button id="shareBtn" class="share-btn" aria-label="分享成績">📤 分享成績</button>
+        </div>
+        <div id="pauseOverlay" role="dialog" aria-labelledby="pauseTitle" aria-modal="true" aria-live="polite">
+            <h2 id="pauseTitle">暫停</h2>
+            <div id="pauseScore" aria-label="目前分數">分數: 0</div>
+            <div id="pauseLives" aria-label="剩餘生命">❤️❤️❤️</div>
+            <div id="pauseCombo" aria-label="目前連擊">🔥 0 連擊</div>
+            <div id="pausePowerups" aria-label="道具剩餘時間"></div>
+            <div id="gameStats" aria-label="遊戲統計">
+                <span>⏱️ <span id="statTime">0:00</span></span>
+                <span>💰 <span id="statCoins">0</span></span>
+                <span>💣 <span id="statBombs">0</span></span>
+            </div>
+            <button id="resumeBtn" aria-label="繼續遊戲">繼續遊戲</button>
+            <button id="menuBtn" aria-label="返回選單">返回選單</button>
+        </div>
+        <div id="helpOverlay" role="dialog" aria-labelledby="helpTitle" aria-modal="true" aria-live="polite">
+            <h2 id="helpTitle">⌨️ 操作說明</h2>
+            <div class="help-content">
+                <div><kbd>←</kbd> <kbd>→</kbd> 或 <kbd>A</kbd> <kbd>D</kbd> - 移動龍蝦</div>
+                <div><kbd>Enter</kbd> <kbd>Space</kbd> - 開始/繼續/重新開始</div>
+                <div><kbd>ESC</kbd> <kbd>P</kbd> - 暫停/繼續</div>
+                <div><kbd>M</kbd> - 靜音切換</div>
+                <div><kbd>K</kbd> - 震動切換</div>
+                <div><kbd>H</kbd> - 顯示說明</div>
+                <div><kbd>F</kbd> - 切換全螢幕</div>
+                <div class="touch-hint">📱 觸控裝置：使用螢幕下方的按鈕，或左右滑動螢幕來移動龍蝦</div>
+                <div class="screen-hint">✨ 遊戲進行中螢幕會保持亮著</div>
+                <hr>
+                <div>💰 接住金幣和寶石得分</div>
+                <div>🛡️ 護盾 - 無敵 5 秒</div>
+                <div>🌟 雙倍 - 分數 x2</div>
+                <div>❤️ 生命 - 回復 1 條命</div>
+                <div>💣 炸彈 - 扣 1 條命</div>
+            </div>
+            <button class="help-close">知道了！</button>
+        </div>
+        <!-- 自定義確認對話框 - 取代原生 confirm() -->
+        <div id="confirmOverlay" role="dialog" aria-modal="true" aria-live="polite">
+            <div class="confirm-dialog">
+                <h3 id="confirmTitle">確認</h3>
+                <p id="confirmMessage">確定要執行這個操作嗎？</p>
+                <div id="confirmStats" class="confirm-stats" style="display: none;"></div>
+                <div class="confirm-buttons">
+                    <button id="confirmCancelBtn" class="confirm-btn confirm-btn-cancel">取消</button>
+                    <button id="confirmOkBtn" class="confirm-btn confirm-btn-confirm">確定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <p class="instructions">← → 方向鍵移動龍蝦，接住掉落的金幣！💰 按 ESC/P 暫停 | M 靜音 | H 說明</p>
+    
+    <!-- 行動裝置觸控按鈕 (使用 button 元素以支援無障礙) -->
+    <div class="touch-controls">
+        <button class="touch-btn" id="btnLeft" aria-label="向左移動">◀</button>
+        <button class="touch-btn" id="btnRight" aria-label="向右移動">▶</button>
+        <button class="touch-btn" id="btnPause" aria-label="暫停遊戲">⏸</button>
+    </div>
+
+    <script>
+        // ==================== 遊戲配置常數 ====================
+        const GAME_CONFIG = {
+            // 遊戲容器尺寸
+            CONTAINER_WIDTH: 800,
+            CONTAINER_HEIGHT: 500,
+            
+            // 玩家尺寸
+            PLAYER_WIDTH: 60,
+            PLAYER_HEIGHT: 60,
+            PLAYER_BOTTOM: 20,           // 玩家距離底部的距離
+            PLAYER_MOVE_SPEED: 0.4,     // 移動速度 (像素/毫秒)
+            
+            // 氣泡/物品
+            BUBBLE_SIZE: 40,
+            BUBBLE_START_Y: -40,
+            
+            // 碰撞檢測半徑（預先計算以提升效能）
+            PLAYER_RADIUS: 30,          // PLAYER_WIDTH / 2
+            BUBBLE_RADIUS: 20,          // BUBBLE_SIZE / 2
+            COLLISION_DISTANCE: 50,     // PLAYER_RADIUS + BUBBLE_RADIUS
+            
+            // 生命值
+            MAX_LIVES: 3,
+            MAX_LIVES_CAP: 5,            // 吃到愛心道具的上限
+            INVINCIBLE_DURATION: 1000,  // 受傷後無敵時間 (ms)
+            
+            // 分數
+            COIN_BASE_POINTS: 10,       // 普通金幣基礎分數
+            COIN_2X_POINTS: 20,         // 雙倍分數
+            
+            // 難度系統
+            INITIAL_SPAWN_INTERVAL: 800,
+            MIN_SPAWN_INTERVAL: 300,
+            INITIAL_BUBBLE_SPEED: 3,
+            MAX_BUBBLE_SPEED: 8,
+            DIFFICULTY_INCREASE_PER: 50,
+            SPAWN_DECREASE_PER_LEVEL: 50,
+            SPEED_INCREASE_PER_LEVEL: 0.5,
+            BAD_CHANCE_BASE: 0.2,
+            BAD_CHANCE_MAX: 0.35,
+            BAD_CHANCE_INCREASE: 0.03,
+            POWERUP_CHANCE: 0.1,
+            
+            // 道具持續時間
+            SHIELD_DURATION: 5000,
+            DOUBLE_DURATION: 8000,
+            
+            // 動畫時間
+            SCORE_POPUP_DURATION: 800,
+            PLAYER_CATCH_DURATION: 200,
+            DAMAGE_SHAKE_DURATION: 500,
+            LIFE_LOST_DURATION: 500,
+            START_LOCK_DURATION: 500,
+            
+            // 本地存儲鍵名
+            HIGH_SCORE_KEY: 'lobsterGameHighScore',
+            SOUND_ENABLED_KEY: 'lobsterGameSoundEnabled',
+            VOLUME_KEY: 'lobsterGameVolume',
+            BEST_TIME_KEY: 'lobsterGameBestTime',
+            BEST_COINS_KEY: 'lobsterGameBestCoins',
+            BEST_COMBO_KEY: 'lobsterGameBestCombo',
+            FPS_VISIBLE_KEY: 'lobsterGameFpsVisible'
+        };
+        
+        const ITEM_EMOJIS = {
+            GOOD: ['💰', '💎', '⭐', '🎵', '🎮'],
+            BAD: ['💣', '🔥', '👾']
+        };
+        
+        const POWERUPS = [
+            { emoji: '🛡️', type: 'shield', duration: GAME_CONFIG.SHIELD_DURATION, name: '護盾' },
+            { emoji: '🌟', type: '2x', duration: GAME_CONFIG.DOUBLE_DURATION, name: '雙倍' },
+            { emoji: '❤️', type: 'heart', duration: 0, name: '生命+1' }
+        ];
+
+        // ==================== DOM 元素 ====================
+        const player = document.getElementById('player');
+        const gameContainer = document.getElementById('gameContainer');
+        const scoreDisplay = document.getElementById('score');
+        const startBtn = document.getElementById('startBtn');
+        const gameOver = document.getElementById('gameOver');
+        const finalScore = document.getElementById('finalScore');
+        const highScoreDisplay = document.getElementById('highScore');
+        const restartBtn = document.getElementById('restartBtn');
+        const pauseOverlay = document.getElementById('pauseOverlay');
+        const resumeBtn = document.getElementById('resumeBtn');
+        const btnLeft = document.getElementById('btnLeft');
+        const btnRight = document.getElementById('btnRight');
+        const btnPause = document.getElementById('btnPause');
+        const livesDisplay = document.getElementById('lives');
+        const soundBtn = document.getElementById('soundBtn');
+        const vibrationBtn = document.getElementById('vibrationBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const pauseScore = document.getElementById('pauseScore');
+        const pauseLives = document.getElementById('pauseLives');
+        const pauseCombo = document.getElementById('pauseCombo');
+        const pausePowerups = document.getElementById('pausePowerups');
+        const statTime = document.getElementById('statTime');
+        const statCoins = document.getElementById('statCoins');
+        const statBombs = document.getElementById('statBombs');
+        const menuBtn = document.getElementById('menuBtn');
+        const resetHighScoreBtn = document.getElementById('resetHighScoreBtn');
+        const shareBtn = document.getElementById('shareBtn');
+        // 說明彈窗元素
+        const helpOverlay = document.getElementById('helpOverlay');
+        const helpCloseBtn = document.querySelector('.help-close');
+        // 遊戲結束畫面的統計數據元素
+        const statTimeEnd = document.getElementById('statTimeEnd');
+        const statCoinsEnd = document.getElementById('statCoinsEnd');
+        const statBombsEnd = document.getElementById('statBombsEnd');
+        const statBestComboEnd = document.getElementById('statBestComboEnd');
+        const statAccuracy = document.getElementById('statAccuracy'); // 新增：命中率顯示
+        // 最佳記錄元素
+        const bestRecordsDiv = document.getElementById('bestRecords');
+        const bestTimeEnd = document.getElementById('bestTimeEnd');
+        const bestCoinsEnd = document.getElementById('bestCoinsEnd');
+        const bestComboEnd = document.getElementById('bestComboEnd'); // 最佳連擊顯示元素
+
+        // 動態獲取遊戲容器尺寸（支援 RWD 響應式設計）
+        function getGameDimensions() {
+            const rect = gameContainer.getBoundingClientRect();
+            return { width: rect.width, height: rect.height };
+        }
+
+        // 檢測觸控能力並顯示/隱藏觸控按鈕（支援觸控筆電和行動裝置）
+        function updateTouchControlsVisibility() {
+            const touchControls = document.querySelector('.touch-controls');
+            if (!touchControls) return;
+            
+            // 檢測是否為觸控裝置（多種方法檢測）
+            const isTouchDevice = (
+                'ontouchstart' in window || 
+                navigator.maxTouchPoints > 0 || 
+                navigator.msMaxTouchPoints > 0
+            );
+            
+            // 如果是觸控裝置，顯示觸控按鈕
+            if (isTouchDevice) {
+                touchControls.style.display = 'flex';
+            }
+            // 否則依賴 CSS media query 控制（保留原本行為）
+        }
+
+        // 安全處理 localStorage（私人瀏覽模式可能會拋出錯誤）
+        function getStorageItem(key, defaultValue = null) {
+            try {
+                const value = localStorage.getItem(key);
+                return value !== null ? value : defaultValue;
+            } catch (e) {
+                // 私人瀏覽模式下靜默失敗
+                return defaultValue;
+            }
+        }
+
+        function setStorageItem(key, value) {
+            try {
+                localStorage.setItem(key, value);
+                return true;
+            } catch (e) {
+                // 區分不同錯誤類型，提供更精確的處理
+                if (e.name === 'QuotaExceededError' || e.code === 22 || e.message.includes('quota')) {
+                    // localStorage 儲存空間已滿
+                    console.warn('localStorage 儲存空間已滿，無法儲存資料');
+                    // 可以選擇清理舊資料後重試（可選優化）
+                } else {
+                    // 其他錯誤（如私人瀏覽模式、SecurityError 等）
+                    console.warn('localStorage 儲存失敗:', e.name);
+                }
+                return false;
+            }
+        }
+
+        // 安全的清除 timeout 函數（減少重複的 if判斷 + clearTimeout 代碼）
+        function safeClearTimeout(timeoutRef) {
+            if (timeoutRef) {
+                clearTimeout(timeoutRef);
+                return null;
+            }
+            return timeoutRef;
+        }
+
+        // 自定義確認對話框 (取代原生 confirm())
+        let confirmResolve = null;
+        const confirmOverlay = document.getElementById('confirmOverlay');
+        const confirmTitle = document.getElementById('confirmTitle');
+        const confirmMessage = document.getElementById('confirmMessage');
+        const confirmStats = document.getElementById('confirmStats');
+        const confirmOkBtn = document.getElementById('confirmOkBtn');
+        const confirmCancelBtn = document.getElementById('confirmCancelBtn');
+
+        function showConfirm(title, message, stats = null) {
+            return new Promise((resolve) => {
+                confirmResolve = resolve;
+                confirmTitle.textContent = title;
+                confirmMessage.textContent = message;
+                
+                if (stats) {
+                    confirmStats.innerHTML = stats;
+                    confirmStats.classList.add('visible');
+                } else {
+                    confirmStats.classList.remove('visible');
+                }
+                
+                confirmOverlay.classList.add('show');
+                confirmOkBtn.focus();
+            });
+        }
+
+        function hideConfirm(result) {
+            confirmOverlay.classList.remove('show');
+            if (confirmResolve) {
+                confirmResolve(result);
+                confirmResolve = null;
+            }
+        }
+
+        confirmOkBtn.addEventListener('click', () => hideConfirm(true));
+        confirmCancelBtn.addEventListener('click', () => hideConfirm(false));
+        
+        // 鍵盤支援 (Enter 確認, ESC 取消)
+        confirmOverlay.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                hideConfirm(true);
+            } else if (e.key === 'Escape') {
+                hideConfirm(false);
+            }
+        });
+
+        // ==================== 遊戲狀態儲存 (未使用但保留擴充性) ====================
+        // 自動儲存計時器
+        let autoSaveInterval = null;
+        
+        // 儲存當前遊戲狀態到 localStorage
+        function saveGameState() {
+            // 計算每個道具的剩餘時間（用於恢復遊戲時重建計時器）
+            const powerupRemainingTime = {};
+            if (powerupTimers.shield && powerupStartTimes.shield) {
+                // 計算實際剩餘時間
+                const elapsed = Date.now() - powerupStartTimes.shield;
+                powerupRemainingTime.shield = Math.max(0, GAME_CONFIG.SHIELD_DURATION - elapsed);
+            }
+            if (powerupTimers['2x'] && powerupStartTimes['2x']) {
+                // 計算實際剩餘時間
+                const elapsed = Date.now() - powerupStartTimes['2x'];
+                powerupRemainingTime['2x'] = Math.max(0, GAME_CONFIG.DOUBLE_DURATION - elapsed);
+            }
+            
+            // 保存無敵狀態剩餘時間
+            let invincibleRemainingTime = null;
+            if (isInvincible && invincibleTimeout && invincibleStartTime) {
+                // 計算實際剩餘時間
+                const elapsed = Date.now() - invincibleStartTime;
+                invincibleRemainingTime = Math.max(0, GAME_CONFIG.INVINCIBLE_DURATION - elapsed);
+            }
+            
+            // 保存連擊剩餘時間（如果有 active combo）
+            let comboRemainingTimeToSave = comboRemainingTime;
+            if (comboTimeout && comboStartTime) {
+                const elapsed = Date.now() - comboStartTime;
+                comboRemainingTimeToSave = Math.max(0, COMBO_WINDOW - elapsed);
+            }
+            
+            const gameState = {
+                score: score,
+                lives: lives,
+                playerX: playerX,
+                elapsedTime: gameStats.elapsedTime,
+                totalPausedTime: gameStats.totalPausedTime || 0, // 保存總暫停時間
+                coinsCollected: gameStats.coinsCollected,
+                coinsSpawned: gameStats.coinsSpawned,
+                bombsHit: gameStats.bombsHit,
+                activePowerups: activePowerups,
+                isInvincible: isInvincible,
+                difficultyLevel: getDifficultyLevel(),
+                powerupRemainingTime: powerupRemainingTime,
+                invincibleRemainingTime: invincibleRemainingTime,
+                // 保存連擊狀態（Bug修復：之前恢復遊戲時會丢失連擊進度）
+                comboCount: comboCount,
+                bestCombo: bestCombo,
+                comboMultiplier: comboMultiplier,
+                // 保存連擊剩餘時間（用於精確恢復計時器）
+                comboRemainingTime: comboRemainingTimeToSave
+            };
+            setStorageItem('lobsterGameState', JSON.stringify(gameState));
+        }
+        
+        // 開始自動儲存（每 10 秒儲存一次）
+        function startAutoSave() {
+            stopAutoSave(); // 先停止現有的自動儲存
+            autoSaveInterval = setInterval(saveGameState, 10000);
+        }
+        
+        // 停止自動儲存
+        function stopAutoSave() {
+            if (autoSaveInterval) {
+                clearInterval(autoSaveInterval);
+                autoSaveInterval = null;
+            }
+        }
+
+        // 檢查是否有保存的遊戲狀態
+        function hasSavedGameState() {
+            const savedState = getStorageItem('lobsterGameState', null);
+            return savedState !== null;
+        }
+
+        // 載入保存的遊戲狀態
+        function loadGameState() {
+            const savedState = getStorageItem('lobsterGameState', null);
+            if (!savedState) return null;
+            
+            try {
+                return JSON.parse(savedState);
+            } catch (e) {
+                console.warn('無法解析保存的遊戲狀態:', e);
+                return null;
+            }
+        }
+
+        // 清除保存的遊戲狀態
+        function clearSavedGameState() {
+            try {
+                localStorage.removeItem('lobsterGameState');
+            } catch (e) {
+                // 私人瀏覽模式下靜默失敗
+            }
+        }
+
+        // 恢復保存的遊戲狀態
+        function restoreGame(savedState) {
+            // 防止快速重複點擊
+            if (isStarting) return;
+            
+            // 初始化 FPS 計算
+            frameCount = 0;
+            fpsLastTime = performance.now();
+            fpsDisplay.textContent = 'FPS: --';
+            
+            // 使用統一清理函數（重置遊戲狀態）
+            cleanupGame(true);
+            
+            isStarting = true;
+            
+            gameRunning = true;
+            isPaused = false;
+            
+            // 恢復遊戲狀態
+            score = savedState.score;
+            targetScore = score;
+            lives = savedState.lives;
+            gameStats = {
+                coinsCollected: savedState.coinsCollected || 0,
+                coinsSpawned: savedState.coinsSpawned || 0,
+                bombsHit: savedState.bombsHit || 0,
+                startTime: Date.now() - (savedState.elapsedTime * 1000) - (savedState.totalPausedTime || 0), // 調整開始時間以繼續計時（扣除暫停時間）
+                elapsedTime: savedState.elapsedTime || 0,
+                totalPausedTime: savedState.totalPausedTime || 0 // 恢復總暫停時間
+            };
+            
+            // 恢復暫停追蹤變數
+            pauseStartTime = 0;
+            
+            // 恢復道具狀態
+            activePowerups = savedState.activePowerups || { shield: false, '2x': false };
+            isInvincible = savedState.isInvincible || false;
+            
+            // 恢復道具計時器（如果有保存的道具剩餘時間）
+            const savedPowerupTime = savedState.powerupRemainingTime || {};
+            if (activePowerups.shield && savedPowerupTime.shield) {
+                powerupStartTimes.shield = Date.now(); // 記錄恢复後的開始時間
+                powerupTimers.shield = setTimeout(() => {
+                    activePowerups.shield = false;
+                    player.classList.remove('player-shield');
+                    updatePowerupIndicator();
+                }, savedPowerupTime.shield);
+                // 恢復時也需要顯示護盾視覺效果
+                player.classList.add('player-shield');
+            }
+            if (activePowerups['2x'] && savedPowerupTime['2x']) {
+                powerupStartTimes['2x'] = Date.now(); // 記錄恢复後的開始時間
+                powerupTimers['2x'] = setTimeout(() => {
+                    activePowerups['2x'] = false;
+                    updatePowerupIndicator();
+                }, savedPowerupTime['2x']);
+            }
+            
+            // 恢復玩家位置
+            updateGameBounds();
+            // 修復：使用 ?? 替代 ||，避免 playerX=0 被視為 falsy 值而忽略保存的位置
+            playerX = Math.max(PLAYER_LEFT_BOUND, Math.min(PLAYER_RIGHT_BOUND, savedState.playerX ?? playerX));
+            
+            updateAvailablePowerupsCache();
+            updateLivesDisplay();
+            updatePowerupIndicator();
+            
+            // 如果有無敵狀態，恢復無敵顯示
+            if (isInvincible) {
+                player.classList.add('player-invincible');
+                // 恢復無敵計時器
+                const savedInvincibleTime = savedState.invincibleRemainingTime || GAME_CONFIG.INVINCIBLE_DURATION;
+                invincibleStartTime = Date.now(); // 記錄恢复後的開始時間
+                invincibleTimeout = setTimeout(() => {
+                    isInvincible = false;
+                    player.classList.remove('player-invincible');
+                    invincibleTimeout = null;
+                    invincibleStartTime = null;
+                }, savedInvincibleTime);
+            }
+            
+            pausedByVisibility = false;
+            
+            // 確保 AudioContext 處於運行狀態
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            
+            // 恢復連擊系統（從保存的遊戲狀態恢復，而非重置）
+            if (savedState.comboCount && savedState.comboCount >= 2) {
+                comboCount = savedState.comboCount;
+                bestCombo = savedState.bestCombo || comboCount; // 恢復最高連擊記錄
+                comboMultiplier = savedState.comboMultiplier || Math.min(MAX_COMBO_MULTIPLIER, 1 + Math.floor(comboCount / 3));
+                comboIndicator.textContent = `🔥 ${comboCount} 連擊! x${comboMultiplier}`;
+                comboIndicator.setAttribute('aria-label', `連擊 ${comboCount} 倍`);
+                comboIndicator.classList.add('show');
+                // 修復：恢復連擊計時器（使用保存的剩餘時間，保持連擊連續性）
+                const savedComboTime = savedState.comboRemainingTime || COMBO_WINDOW;
+                comboStartTime = Date.now();
+                comboRemainingTime = savedComboTime;
+                comboTimeout = setTimeout(() => {
+                    resetCombo();
+                }, savedComboTime);
+            } else {
+                resetCombo();
+            }
+            
+            keys.left = false;
+            keys.right = false;
+            spawnTimer = 0;
+            lastTime = performance.now();
+            player.style.transform = 'translateX(-50%)';
+            player.classList.remove('player-catch');
+            
+            // 更新顯示
+            scoreDisplay.textContent = '分數: ' + formatScore(score);
+            updateDifficultyDisplay(); // 難度會從遊戲狀態中恢復
+            updateHighScoreGapDisplay();
+            
+            // 顯示遊戲統計
+            liveTimeDisplay.textContent = formatTime(gameStats.elapsedTime);
+            liveCoinsDisplay.textContent = gameStats.coinsCollected;
+            
+            startBtn.style.display = 'none';
+            resetHighScoreBtn.style.display = 'none';
+            gameOver.style.display = 'none';
+            isGameOver = false; // 效能優化：同步更新狀態變數
+            pauseOverlay.style.display = 'none';
+            
+            // 顯示短暫的恢復通知
+            showCountdown(async () => {
+                isStarting = false;
+                animationFrameId = requestAnimationFrame(gameLoop);
+                
+                // 請求螢幕喚醒鎖
+                await requestWakeLock();
+                
+                // 啟動自動儲存
+                startAutoSave();
+            }, 500, '繼續遊戲...'); // 較短的倒數時間
+        }
+
+        let playerX = 0; // 初始化為 0，startGame 時會正確設置
+        let score = 0;
+        let targetScore = 0; // 分數動畫目標值
+        const SCORE_ANIMATION_SPEED = 0.15; // 分數滾動速度 (0-1，越大越快)
+        const MAX_SCORE_INCREMENT = 50; // 分數動畫單次最大增量（防止使用者離開分頁後回來動畫等待過久）
+        let lives = GAME_CONFIG.MAX_LIVES;
+        let highScore = parseInt(getStorageItem(GAME_CONFIG.HIGH_SCORE_KEY, '0')) || 0;
+        let bestTime = parseFloat(getStorageItem(GAME_CONFIG.BEST_TIME_KEY, '0')) || 0;
+        let bestCoins = parseInt(getStorageItem(GAME_CONFIG.BEST_COINS_KEY, '0')) || 0;
+        let bestComboPersistent = parseInt(getStorageItem(GAME_CONFIG.BEST_COMBO_KEY, '0')) || 0; // 最佳連擊（永久儲存）
+        
+        // 初始化最高分顯示（頁面載入時就顯示 localStorage 的值）
+        highScoreDisplay.textContent = '最高分: ' + formatScore(highScore);
+        
+        // 初始化觸控控制項顯示（檢測觸控裝置）
+        updateTouchControlsVisibility();
+        
+        let gameRunning = false;
+        let isPaused = false;
+        let pausedByVisibility = false; // 追蹤是否因分頁隱藏而暫停
+        let pausedByHelp = false; // 追蹤是否因顯示說明而暫停
+        let bubbles = [];
+        let lastTime = 0;
+        let spawnTimer = 0;
+        let animationFrameId = null;
+        let isStarting = false; // 防止快速重複點擊
+        let isGameOver = false; // 效能優化：用變數追蹤遊戲結束狀態，避免重複讀取 DOM
+
+        // FPS 計算變數
+        let fps = 0;
+        let frameCount = 0;
+        let fpsLastTime = 0;
+        const fpsDisplay = document.getElementById('fpsDisplay');
+        
+        // FPS 顯示偏好（從本地存儲讀取，預設為顯示）
+        let fpsVisible = getStorageItem(GAME_CONFIG.FPS_VISIBLE_KEY, 'true') !== 'false';
+        fpsDisplay.style.display = fpsVisible ? '' : 'none';
+        
+        // FPS 顯示點擊切換功能（讓玩家可以開關 FPS 顯示）
+        fpsDisplay.style.cursor = 'pointer';
+        fpsDisplay.title = '點擊切換 FPS 顯示';
+        fpsDisplay.setAttribute('role', 'button');
+        fpsDisplay.setAttribute('aria-label', '點擊切換 FPS 顯示');
+        
+        fpsDisplay.addEventListener('click', () => {
+            fpsVisible = !fpsVisible;
+            fpsDisplay.style.display = fpsVisible ? '' : 'none';
+            setStorageItem(GAME_CONFIG.FPS_VISIBLE_KEY, fpsVisible.toString());
+        });
+        
+        // FPS 自適應難度變數（效能優化：低 FPS 時自動降低難度）
+        let lowFpsCount = 0; // 持續低 FPS 計數
+        let fpsAdaptiveLevel = 0; // FPS 自適應難度等級（0 = 正常，負數 = 降低難度）
+        const LOW_FPS_THRESHOLD = 30; // 低 FPS 閾值
+        const LOW_FPS_COUNTS_TO_ADJUST = 3; // 需要連續多少次低 FPS 才調整
+        const FPS_ADAPTIVE_RECOVERY_COUNT = 10; // 需要多少次高 FPS 才恢復難度
+        
+        // FPS 自適應難度系數
+        const FPS_ADAPTIVE_SPAWN_MULTIPLIER = 1.5; // 低 FPS 時生成間隔乘數
+        const FPS_ADAPTIVE_SPEED_MULTIPLIER = 0.7; // 低 FPS 時氣泡速度乘數
+        const highScoreGapDisplay = document.getElementById('highScoreGap');
+        // 實時統計顯示元素
+        const liveTimeDisplay = document.getElementById('liveTime');
+        const liveCoinsDisplay = document.getElementById('liveCoins');
+        let audioContext = null; // Web Audio API
+        
+        // 遊戲統計數據
+        let gameStats = {
+            coinsCollected: 0,
+            coinsSpawned: 0, // 新增：追蹤生成的金幣總數（用於計算命中率）
+            bombsHit: 0,
+            startTime: 0,
+            elapsedTime: 0,
+            totalPausedTime: 0 // 追蹤總暫停時間，確保計時準確性
+        };
+        
+        // 追蹤遊戲暫停時間點（用於準確計算遊戲時間）
+        let pauseStartTime = 0;
+        
+        // 連擊系統
+        let comboCount = 0;
+        let bestCombo = 0; // 追蹤本次遊戲最高連擊
+        let comboTimeout = null;
+        let comboStartTime = null; // 追蹤連擊計時器開始時間
+        let comboMultiplier = 1;
+        let comboRemainingTime = 0; // 追蹤暫停時的剩餘連擊時間
+        const COMBO_WINDOW = 1500; // 連擊有效時間 (ms)
+        const MAX_COMBO_MULTIPLIER = 5; // 最大連擊倍數
+        const comboIndicator = document.getElementById('comboIndicator');
+        const difficultyIndicator = document.getElementById('difficultyIndicator'); // 緩存難度顯示元素（效能優化）
+        const powerupIndicator = document.getElementById('powerupIndicator'); // 緩存道具指示器元素（效能優化）
+
+        // 可用道具緩存（效能優化：避免每次生成氣泡時重複 filter）
+        let availablePowerupsCache = [];
+
+        // 更新可用道具緩存（當生命值變化時調用）
+        function updateAvailablePowerupsCache() {
+            availablePowerupsCache = POWERUPS.filter(p => 
+                p.type !== 'heart' || lives < GAME_CONFIG.MAX_LIVES_CAP
+            );
+        }
+
+        // 無敵時間計時器（修復：儲存計時器以便清除）
+        let invincibleTimeout = null;
+        let invincibleStartTime = null; // 追蹤無敵計時器開始時間
+        let invincibleRemainingTime = 0; // 追蹤暫停時的剩餘無敵時間
+
+        // 倒數計時相關變數（用於防止記憶體洩漏）
+        let countdownInterval = null;
+        let countdownOverlay = null;
+        let countdownKeyHandler = null; // 修復：cleanupGame 也需移除 document keydown 監聽器
+
+        // ==================== 統一遊戲清理函數 ====================
+        // 統一處理遊戲結束/重啟時的清理工作，避免重複代碼
+        function cleanupGame(resetState = true) {
+            // 取消動畫框架防止記憶體洩漏
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            
+            // 重置暫停狀態（無論 resetState 是否為 true 都需重置）
+            pausedByHelp = false;
+            pausedByVisibility = false;
+            
+            // 停止自動儲存（防止返回選單後繼續觸發儲存）
+            stopAutoSave();
+            
+            // 暫停 AudioContext 以節省資源
+            if (audioContext && audioContext.state === 'running') {
+                audioContext.suspend();
+            }
+            
+            // 清除所有道具計時器和追蹤變數（合併優化：避免重複清除 powerupTimers）
+            Object.values(powerupTimers).forEach(t => clearTimeout(t));
+            powerupTimers = {};
+            powerupStartTimes = {};
+            powerupRemainingTimes = {};
+            
+            // 清除連擊計時器和無敵計時器
+            comboTimeout = safeClearTimeout(comboTimeout);
+            comboStartTime = null;
+            comboRemainingTime = 0;
+            invincibleTimeout = safeClearTimeout(invincibleTimeout);
+            invincibleStartTime = null;
+            
+            // 清除倒數計時（防止記憶體洩漏）
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+            }
+            if (countdownOverlay) {
+                countdownOverlay.remove();
+                countdownOverlay = null;
+            }
+            // 修復：移除 document 等級的 keydown 監聽器，防止記憶體洩漏
+            if (countdownKeyHandler) {
+                document.removeEventListener('keydown', countdownKeyHandler);
+                countdownKeyHandler = null;
+            }
+            
+            // 清除觸控計時器並重置觸控狀態（防止記憶體洩漏和狀態殘留）
+            if (typeof touchTimeoutLeft !== 'undefined' && touchTimeoutLeft) {
+                clearTimeout(touchTimeoutLeft);
+                touchTimeoutLeft = null;
+            }
+            if (typeof touchTimeoutRight !== 'undefined' && touchTimeoutRight) {
+                clearTimeout(touchTimeoutRight);
+                touchTimeoutRight = null;
+            }
+            if (typeof isTouchingLeft !== 'undefined') {
+                isTouchingLeft = false;
+            }
+            if (typeof isTouchingRight !== 'undefined') {
+                isTouchingRight = false;
+            }
+            // 新增：重置按鈕視覺狀態（防止遊戲結束時按鈕仍顯示按下狀態）
+            btnLeft.classList.remove('pressed');
+            btnRight.classList.remove('pressed');
+            
+            // 重置鍵盤狀態（防止殘留按鍵導致後續操作異常）
+            keys.left = false;
+            keys.right = false;
+            
+            // 清理所有氣泡（從 DOM 移除並返回池中）
+            bubbles.forEach(b => {
+                b.element.remove(); // 從 DOM 中移除
+                returnBubbleToPool(b.element);
+                returnBubbleDataToPool(b); // 將氣泡資料返回池中（效能優化）
+            });
+            bubbles = [];
+            
+            // 清理所有彈出元素（先移除事件監聽器，防止回收後殘留回調觸發）
+            // 然後從 DOM 移除並返回乾淨的元素到池中
+            document.querySelectorAll('.score-popup, .powerup-popup').forEach(p => {
+                // 先移除 animationend 事件監聽器（使用儲存的 handler 參考）
+                if (p._animationEndHandler) {
+                    p.removeEventListener('animationend', p._animationEndHandler);
+                    p._animationEndHandler = null;
+                }
+                // 從 DOM 移除
+                p.remove();
+                // 返回池前，手動清除內容（returnPopupToPool 也會做，但先做確保乾淨）
+                p.textContent = '';
+                returnPopupToPool(p);
+            });
+            
+            // 清除道具指示器殘留（效能優化：使用 powerupIndicator 替代 document.querySelectorAll）
+            powerupIndicator.replaceChildren();
+            
+            // 重置生成計時器
+            spawnTimer = 0;
+            
+            if (resetState) {
+                // 重置遊戲狀態
+                isInvincible = false;
+                invincibleReason = null;
+                bestCombo = 0; // 重置最高連擊記錄
+                resetCombo();
+                
+                // 重置分數動畫
+                score = 0;
+                targetScore = 0;
+                // 重置難度等級緩存
+                cachedDifficultyLevel = 0;
+                lastScoreForDifficulty = 0;
+                
+                // 重置道具狀態
+                activePowerups = { shield: false, '2x': false };
+                updatePowerupIndicator();
+                player.classList.remove('player-invincible', 'player-catch');
+                
+                // 重置玩家位置
+                player.style.transform = 'translateX(-50%)';
+                
+                // 重置鍵盤狀態（防止殘留按鍵導致遊戲一開始就移動）
+                keys.left = false;
+                keys.right = false;
+                
+                // 重置 FPS 自適應難度
+                fpsAdaptiveLevel = 0;
+                lowFpsCount = 0;
+            }
+        }
+
+        // ==================== DOM 元素物件池 (效能優化) ====================
+        // 重用 DOM 元素，避免頻繁創建/刪除導致的效能損耗
+        // 增加池大小以支援更高難度遊戲（最高難度生成間隔僅 300ms）
+        const bubblePool = [];
+        const POOL_MAX_SIZE = 50; // 池的最大大小 (從 30 增加到 50)
+        
+        // 氣泡資料物件池（效能優化：避免每次生成氣泡都創建新的 JS 物件）
+        const bubbleDataPool = [];
+        const BUBBLE_DATA_POOL_MAX_SIZE = 50; // 從 30 增加到 50
+
+        // 從池中取得氣泡資料对象，或創建新的
+        function getBubbleDataFromPool() {
+            if (bubbleDataPool.length > 0) {
+                return bubbleDataPool.pop();
+            }
+            return {};
+        }
+
+        // 將氣泡資料对象返回池中
+        function returnBubbleDataToPool(bubbleData) {
+            // 清除所有屬性
+            bubbleData.element = null;
+            bubbleData.x = 0;
+            bubbleData.y = 0;
+            bubbleData.speed = 0;
+            bubbleData.isBad = false;
+            bubbleData.isPowerup = false;
+            bubbleData.powerupType = null;
+            
+            if (bubbleDataPool.length < BUBBLE_DATA_POOL_MAX_SIZE) {
+                bubbleDataPool.push(bubbleData);
+            }
+        }
+        
+        // 彈出動畫元素物件池（分數彈出、道具彈出）
+        const popupPool = [];
+        const POPUP_POOL_MAX_SIZE = 50; // 彈出池的最大大小 (從 30 增加到 50，高連擊時避免 DOM 重建)
+
+        // 預先填充物件池（效能優化：遊戲開始前預先創建 DOM 元素，避免遊戲中動態創建導致卡頓）
+        function prefillObjectPools() {
+            const targetPoolSize = 20; // 預先填充的數量
+            const targetPopupPoolSize = 10; // 彈出動畫池目標大小
+            
+            // 預先填充氣泡池
+            while (bubblePool.length < targetPoolSize) {
+                const element = document.createElement('div');
+                element.className = 'bubble';
+                bubblePool.push(element);
+            }
+            
+            // 預先填充氣泡資料池
+            while (bubbleDataPool.length < targetPoolSize) {
+                bubbleDataPool.push({});
+            }
+            
+            // 預先填充彈出動畫池
+            while (popupPool.length < targetPopupPoolSize) {
+                const element = document.createElement('div');
+                popupPool.push(element);
+            }
+        }
+
+        // 從池中取得氣泡元素，或創建新的
+        function getBubbleFromPool() {
+            if (bubblePool.length > 0) {
+                const element = bubblePool.pop();
+                return element;
+            }
+            const element = document.createElement('div');
+            element.className = 'bubble';
+            return element;
+        }
+
+        // 將氣泡元素返回池中
+        function returnBubbleToPool(element) {
+            // 先將元素從 DOM 中移除（防止 DOM 節點累積導致效能下降）
+            if (element.parentNode) {
+                element.parentNode.removeChild(element);
+            }
+            
+            // 清除元素內容和樣式 - 只清除實際使用的屬性（優化：避免不必要的樣式操作）
+            element.textContent = '';
+            element.style.transform = '';
+            element.style.display = '';
+            
+            if (bubblePool.length < POOL_MAX_SIZE) {
+                bubblePool.push(element);
+            } else {
+                // 池滿時直接移除
+                element.remove();
+            }
+        }
+        
+        // 從池中取得彈出動畫元素，或創建新的
+        function getPopupFromPool(className) {
+            if (popupPool.length > 0) {
+                const element = popupPool.pop();
+                element.className = className;
+                return element;
+            }
+            const element = document.createElement('div');
+            element.className = className;
+            return element;
+        }
+        
+        // 將彈出動畫元素返回池中
+        function returnPopupToPool(element) {
+            // 先將元素從 DOM 中移除（防止 DOM 節點累積導致效能下降）
+            if (element.parentNode) {
+                element.parentNode.removeChild(element);
+            }
+            
+            // 清除元素內容和樣式
+            element.textContent = '';
+            element.style.left = '';
+            element.style.top = '';
+            element.style.background = '';
+            element.style.display = '';
+            // 清除自定義屬性（確保回收的元素是乾淨的）
+            element._animationEndHandler = null;
+            
+            if (popupPool.length < POPUP_POOL_MAX_SIZE) {
+                popupPool.push(element);
+            } else {
+                // 池滿時直接移除
+                element.remove();
+            }
+        }
+        
+        // 音效開關（從本地存儲讀取設置，預設為開啟）
+        let soundEnabled = getStorageItem(GAME_CONFIG.SOUND_ENABLED_KEY, 'true') !== 'false';
+        soundBtn.textContent = soundEnabled ? '🔊' : '🔇';
+        
+        // 震動開關（從本地存儲讀取設置，預設為開啟）
+        const VIBRATION_ENABLED_KEY = 'lobsterGameVibrationEnabled';
+        let vibrationEnabled = getStorageItem(VIBRATION_ENABLED_KEY, 'true') !== 'false';
+        vibrationBtn.textContent = vibrationEnabled ? '📳' : '📴';
+        
+        // Debounced 保存音效開關狀態（效能優化：避免快速切換時頻繁寫入 localStorage）
+        const debouncedSaveSoundEnabled = debounce((value) => {
+            setStorageItem(GAME_CONFIG.SOUND_ENABLED_KEY, value);
+        }, 300);
+        
+        // Debounced 保存震動開關狀態
+        const debouncedSaveVibrationEnabled = debounce((value) => {
+            setStorageItem(VIBRATION_ENABLED_KEY, value);
+        }, 300);
+
+        // 初始化音效系統（添加錯誤處理，支援私人瀏覽模式）
+        function initAudio() {
+            if (!audioContext) {
+                try {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (e) {
+                    console.warn('無法初始化 AudioContext，音效將被禁用:', e);
+                    return null;
+                }
+            }
+            return audioContext;
+        }
+
+        // 播放單一頻率音調（通用輔助函數）
+        function playTone(startFreq, endFreq, duration, volume = 0.3) {
+            const ctx = initAudio();
+            if (!ctx) return; // AudioContext 不可用
+            if (ctx.state === 'suspended') ctx.resume();
+            
+            // 使用設定的音量比例（gameVolume 是 0-100，轉換為 0-1）
+            const effectiveVolume = volume * (gameVolume / 100);
+            
+            const oscillator = ctx.createOscillator();
+            const gainNode = ctx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(ctx.destination);
+            
+            oscillator.frequency.setValueAtTime(startFreq, ctx.currentTime);
+            if (endFreq !== startFreq) {
+                oscillator.frequency.exponentialRampToValueAtTime(endFreq, ctx.currentTime + duration);
+            }
+            gainNode.gain.setValueAtTime(effectiveVolume, ctx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
+            
+            // 播放完畢後顯式斷開連接，避免記憶體洩漏
+            oscillator.onended = () => {
+                oscillator.disconnect();
+                gainNode.disconnect();
+            };
+            
+            oscillator.start(ctx.currentTime);
+            oscillator.stop(ctx.currentTime + duration);
+        }
+
+        // 播放多音符音調（用於愛心等複雜音效）- 效能優化：收集所有 nodes 統一清理
+        function playMultiTone(notes, duration, volume = 0.3) {
+            const ctx = initAudio();
+            if (!ctx) return; // AudioContext 不可用
+            if (ctx.state === 'suspended') ctx.resume();
+            
+            // 使用設定的音量比例（gameVolume 是 0-100，轉換為 0-1）
+            const effectiveVolume = volume * (gameVolume / 100);
+            
+            // 收集所有創建的 nodes，用於統一清理（效能優化：減少記憶體碎片）
+            const allNodes = [];
+            const noteDuration = duration / notes.length;
+            const totalDuration = ctx.currentTime + duration;
+            
+            notes.forEach((freq, i) => {
+                const oscillator = ctx.createOscillator();
+                const gainNode = ctx.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(ctx.destination);
+                
+                const startTime = ctx.currentTime + (i * noteDuration);
+                oscillator.frequency.setValueAtTime(freq, startTime);
+                gainNode.gain.setValueAtTime(effectiveVolume, startTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + noteDuration);
+                
+                oscillator.start(startTime);
+                oscillator.stop(startTime + noteDuration);
+                
+                // 收集 nodes 以便後續統一清理
+                allNodes.push(oscillator, gainNode);
+                
+                // 為每個 oscillator 設置 onended 處理，確保音符結束後及時清理記憶體
+                //（修復：之前只對最後一個 oscillator 設置，導致較早結束的音符無法正確清理）
+                oscillator.onended = () => {
+                    try {
+                        oscillator.disconnect();
+                        gainNode.disconnect();
+                    } catch (e) { /* 忽略斷開錯誤 */ }
+                };
+            });
+        }
+
+        // 播放音效（使用 Web Audio API 生成簡單音效）
+        function playSound(type) {
+            // 音效關閉時跳過
+            if (!soundEnabled) return;
+            
+            try {
+                switch (type) {
+                    case 'coin':
+                        // 接金幣：高音嗶聲
+                        playTone(880, 1760, 0.15, 0.3);
+                        break;
+                    case 'combo':
+                        // 連擊音效：急促上升
+                        playTone(600, 1200, 0.1, 0.2);
+                        break;
+                    case 'bomb':
+                        // 碰到炸彈：低音轟聲
+                        playTone(200, 50, 0.3, 0.4);
+                        break;
+                    case 'start':
+                        // 遊戲開始：上升音調
+                        playTone(440, 880, 0.25, 0.3);
+                        break;
+                    case 'gameover':
+                        // 遊戲結束：下降音調
+                        playTone(440, 110, 0.5, 0.3);
+                        break;
+                    case 'powerup':
+                        // 取得道具：上升音調（快）
+                        playTone(523, 1047, 0.2, 0.25);
+                        break;
+                    case 'heart':
+                        // 取得愛心：兩個音符上揚
+                        playMultiTone([659, 880], 0.25, 0.3);
+                        break;
+                }
+            } catch (e) {
+                // 音效失敗時靜默忽略（避免 console.log 影響效能）
+            }
+        }
+
+        // 統一移動控制系統（使用遊戲循環 + deltaTime）
+        const keys = { left: false, right: false };
+        const MOVE_SPEED = GAME_CONFIG.PLAYER_MOVE_SPEED; // 像素/毫秒
+        
+        // 遊戲控制鍵集合（效能優化：使用 Set 避免每次按鍵都創建數組，且 Set.has() 比 Array.includes() 更快）
+        const GAME_CONTROL_KEYS = new Set(['Enter', 'ArrowLeft', 'ArrowRight', 'Escape', 'a', 'A', 'd', 'D', ' ', 'f', 'F', 'k', 'K']);
+
+        // ==================== 工具函數 ====================
+        // 防抖函數（效能優化：避免快速觸發的事件導致效能問題）
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // 遊戲邊界（動態計算，支援 RWD）
+        let PLAYER_LEFT_BOUND = 0;
+        let PLAYER_RIGHT_BOUND = GAME_CONFIG.CONTAINER_WIDTH - GAME_CONFIG.PLAYER_WIDTH;
+        let PLAYER_TOP_BOUND = GAME_CONFIG.CONTAINER_HEIGHT - GAME_CONFIG.PLAYER_BOTTOM - GAME_CONFIG.PLAYER_HEIGHT;
+        let PLAYER_BOTTOM_BOUND = GAME_CONFIG.CONTAINER_HEIGHT - GAME_CONFIG.PLAYER_BOTTOM;
+        let cachedGameHeight = GAME_CONFIG.CONTAINER_HEIGHT; // 緩存遊戲高度（效能優化）
+        let cachedGameWidth = GAME_CONFIG.CONTAINER_WIDTH; // 緩存遊戲寬度（效能優化：避免 spawnBubble 中重複調用 getGameDimensions）
+        let PLAYER_CENTER_OFFSET = PLAYER_RIGHT_BOUND / 2; // 預先計算的玩家中心偏移量（效能優化）
+
+        // 更新遊戲邊界（調用時機：遊戲開始、窗口大小變化）
+        function updateGameBounds() {
+            const dims = getGameDimensions();
+            PLAYER_LEFT_BOUND = 0;
+            PLAYER_RIGHT_BOUND = dims.width - GAME_CONFIG.PLAYER_WIDTH;
+            PLAYER_TOP_BOUND = dims.height - GAME_CONFIG.PLAYER_BOTTOM - GAME_CONFIG.PLAYER_HEIGHT;
+            PLAYER_BOTTOM_BOUND = dims.height - GAME_CONFIG.PLAYER_BOTTOM;
+            cachedGameHeight = dims.height; // 緩存高度，避免每幀調用 getBoundingClientRect
+            cachedGameWidth = dims.width; // 緩存寬度，避免 spawnBubble 中重複調用 getGameDimensions
+            PLAYER_CENTER_OFFSET = PLAYER_RIGHT_BOUND / 2; // 更新預先計算的中心偏移量
+        }
+
+        // 難度系統參數（使用 GAME_CONFIG 中的值）
+        const DIFFICULTY_INCREASE_PER = GAME_CONFIG.DIFFICULTY_INCREASE_PER;
+        const NEAR_RECORD_THRESHOLD = 0.8; // 接近紀錄門檻（80%）
+        
+        // 從 GAME_CONFIG 提取常用難度參數（避免重複查閱）
+        const MIN_SPAWN_INTERVAL = GAME_CONFIG.MIN_SPAWN_INTERVAL;
+        const MAX_BUBBLE_SPEED = GAME_CONFIG.MAX_BUBBLE_SPEED;
+        const INITIAL_SPAWN_INTERVAL = GAME_CONFIG.INITIAL_SPAWN_INTERVAL;
+        const INITIAL_BUBBLE_SPEED = GAME_CONFIG.INITIAL_BUBBLE_SPEED;
+
+        // 計算當前難度等級（效能優化：使用緩存避免重複計算）
+        let cachedDifficultyLevel = 0;
+        let lastScoreForDifficulty = 0;
+
+        function getDifficultyLevel() {
+            // 只在分數變化時重新計算難度等級
+            if (score !== lastScoreForDifficulty) {
+                lastScoreForDifficulty = score;
+                cachedDifficultyLevel = Math.floor(score / DIFFICULTY_INCREASE_PER);
+            }
+            return cachedDifficultyLevel;
+        }
+
+        // 計算當前生成間隔
+        function getCurrentSpawnInterval(difficultyLevelOverride) {
+            const level = difficultyLevelOverride !== undefined ? difficultyLevelOverride : getDifficultyLevel();
+            let interval = Math.max(MIN_SPAWN_INTERVAL, INITIAL_SPAWN_INTERVAL - (level * GAME_CONFIG.SPAWN_DECREASE_PER_LEVEL));
+            // FPS 自適應：低 FPS 時增加生成間隔（降低難度）
+            if (fpsAdaptiveLevel < 0) {
+                interval = Math.min(GAME_CONFIG.INITIAL_SPAWN_INTERVAL, interval * (1 + Math.abs(fpsAdaptiveLevel) * (FPS_ADAPTIVE_SPAWN_MULTIPLIER - 1)));
+            }
+            return interval;
+        }
+
+        // 計算當前氣泡速度
+        function getCurrentBubbleSpeed(difficultyLevelOverride) {
+            const level = difficultyLevelOverride !== undefined ? difficultyLevelOverride : getDifficultyLevel();
+            let speed = Math.min(MAX_BUBBLE_SPEED, INITIAL_BUBBLE_SPEED + (level * GAME_CONFIG.SPEED_INCREASE_PER_LEVEL) + (Math.random() * 2));
+            // FPS 自適應：低 FPS 時降低氣泡速度
+            if (fpsAdaptiveLevel < 0) {
+                speed = speed * (1 + fpsAdaptiveLevel * (1 - FPS_ADAPTIVE_SPEED_MULTIPLIER));
+                speed = Math.max(GAME_CONFIG.INITIAL_BUBBLE_SPEED * 0.5, speed);
+            }
+            return speed;
+        }
+        
+        // 道具狀態
+        let activePowerups = {
+            shield: false,
+            '2x': false
+        };
+        let powerupTimers = {};
+        let powerupStartTimes = {}; // 追蹤道具計時器開始時間
+        let powerupRemainingTimes = {}; // 追蹤暫停時的道具剩餘時間
+
+        // 格式化分數顯示（千分位）
+        function formatScore(num) {
+            return num.toLocaleString('zh-TW');
+        }
+        
+        // 分數滾動動畫函數（讓分數逐步增加，增加視覺效果）
+        function updateScoreAnimation() {
+            if (score !== targetScore) {
+                // 計算下一個分數值（逐步接近目標值）
+                const diff = targetScore - score;
+                if (Math.abs(diff) <= 1) {
+                    score = targetScore; // 差異很小時直接設定
+                } else {
+                    // 使用百分比增量，但限制最大增量防止動畫等待過久
+                    let increment = Math.ceil(diff * SCORE_ANIMATION_SPEED);
+                    increment = Math.max(-MAX_SCORE_INCREMENT, Math.min(MAX_SCORE_INCREMENT, increment));
+                    score += increment;
+                }
+                scoreDisplay.textContent = '分數: ' + formatScore(score);
+                scoreDisplay.setAttribute('aria-label', `目前分數 ${score}`);
+            }
+        }
+        
+        // 連擊系統函數
+        function handleCombo() {
+            // 清除之前的計時器
+            comboTimeout = safeClearTimeout(comboTimeout);
+            
+            comboCount++;
+            // 更新最高連擊記錄
+            if (comboCount > bestCombo) {
+                bestCombo = comboCount;
+            }
+            // 計算連擊倍數 (每3個連擊+1倍，上限5倍)
+            comboMultiplier = Math.min(MAX_COMBO_MULTIPLIER, 1 + Math.floor(comboCount / 3));
+            
+            // 更新連擊顯示
+            if (comboCount >= 2) {
+                comboIndicator.textContent = `🔥 ${comboCount} 連擊! x${comboMultiplier}`;
+                comboIndicator.setAttribute('aria-label', `連擊 ${comboCount} 倍`);
+                comboIndicator.classList.add('show');
+                // 播放連擊音效
+                playSound('combo');
+            }
+            
+            // 設置連擊超時
+            comboStartTime = Date.now(); // 記錄計時器開始時間
+            comboRemainingTime = COMBO_WINDOW; // 重置剩餘時間
+            comboTimeout = setTimeout(() => {
+                resetCombo();
+            }, COMBO_WINDOW);
+        }
+        
+        // 重置連擊
+        function resetCombo() {
+            comboCount = 0;
+            comboMultiplier = 1;
+            comboStartTime = null;
+            comboRemainingTime = 0;
+            comboIndicator.classList.remove('show');
+            comboTimeout = safeClearTimeout(comboTimeout);
+        }
+
+        // 暫停連擊計時器（分頁隱藏時呼叫）
+        function pauseComboTimer() {
+            if (comboTimeout && comboCount >= 2) {
+                // 計算剩餘時間，正確追蹤暫停時的倒數
+                const elapsed = Date.now() - comboStartTime;
+                comboRemainingTime = Math.max(0, COMBO_WINDOW - elapsed);
+                comboTimeout = safeClearTimeout(comboTimeout);
+            }
+        }
+
+        // 恢復連擊計時器（分頁恢復時呼叫）
+        function resumeComboTimer() {
+            if (comboCount >= 2 && !comboTimeout) {
+                // 使用剩餘時間而非完整時間，確保遊戲公平性
+                const remainingTime = Math.max(100, comboRemainingTime); // 最少給 100ms 避免立即觸發
+                comboStartTime = Date.now(); // 重置開始時間
+                comboRemainingTime = remainingTime;
+                comboTimeout = setTimeout(() => {
+                    resetCombo();
+                }, remainingTime);
+            }
+        }
+
+        // 暫停所有道具計時器
+        function pausePowerupTimers() {
+            // 計算並儲存每個道具的剩餘時間
+            if (powerupTimers.shield && activePowerups.shield) {
+                const elapsed = Date.now() - (powerupStartTimes.shield || 0);
+                powerupRemainingTimes.shield = Math.max(0, GAME_CONFIG.SHIELD_DURATION - elapsed);
+                powerupTimers.shield = safeClearTimeout(powerupTimers.shield);
+            }
+            if (powerupTimers['2x'] && activePowerups['2x']) {
+                const elapsed = Date.now() - (powerupStartTimes['2x'] || 0);
+                powerupRemainingTimes['2x'] = Math.max(0, GAME_CONFIG.DOUBLE_DURATION - elapsed);
+                powerupTimers['2x'] = safeClearTimeout(powerupTimers['2x']);
+            }
+        }
+
+        // 恢復所有道具計時器
+        function resumePowerupTimers() {
+            // 使用剩餘時間而非完整時間，確保遊戲公平性
+            if (activePowerups.shield) {
+                const remainingTime = Math.max(100, powerupRemainingTimes.shield || GAME_CONFIG.SHIELD_DURATION);
+                powerupStartTimes.shield = Date.now();
+                powerupTimers.shield = setTimeout(() => {
+                    activePowerups.shield = false;
+                    updatePowerupIndicator();
+                    player.classList.remove('player-shield');
+                    if (!activePowerups['2x']) {
+                        player.classList.remove('player-invincible');
+                    }
+                    isInvincible = false;
+                    powerupTimers.shield = null;
+                }, remainingTime);
+            }
+            if (activePowerups['2x']) {
+                const remainingTime = Math.max(100, powerupRemainingTimes['2x'] || GAME_CONFIG.DOUBLE_DURATION);
+                powerupStartTimes['2x'] = Date.now();
+                powerupTimers['2x'] = setTimeout(() => {
+                    activePowerups['2x'] = false;
+                    updatePowerupIndicator();
+                    powerupTimers['2x'] = null;
+                }, remainingTime);
+            }
+        }
+
+        // 暫停無敵計時器（分頁隱藏時呼叫）
+        function pauseInvincibilityTimer() {
+            if (invincibleTimeout && isInvincible && invincibleStartTime) {
+                // 計算剩餘時間，正確追蹤暫停時的倒數
+                const elapsed = Date.now() - invincibleStartTime;
+                invincibleRemainingTime = Math.max(0, GAME_CONFIG.INVINCIBLE_DURATION - elapsed);
+                clearTimeout(invincibleTimeout);
+                invincibleTimeout = null;
+            }
+        }
+
+        // 恢復無敵計時器（分頁恢復時呼叫）
+        function resumeInvincibilityTimer() {
+            if (isInvincible && !invincibleTimeout) {
+                // 使用剩餘時間而非完整時間，確保遊戲公平性
+                const remainingTime = Math.max(100, invincibleRemainingTime); // 最少給 100ms 避免立即觸發
+                invincibleStartTime = Date.now(); // 重置開始時間
+                invincibleRemainingTime = remainingTime;
+                invincibleTimeout = setTimeout(() => {
+                    isInvincible = false;
+                    player.classList.remove('player-invincible');
+                    // 如果護盾也過期了，移除護盾視覺效果
+                    if (!activePowerups.shield) {
+                        player.classList.remove('player-shield');
+                    }
+                    invincibleTimeout = null;
+                    invincibleStartTime = null;
+                }, remainingTime);
+            }
+        }
+
+        // 生成愛心字符串（共用函數，避免重複代碼）
+        function getHeartsString(count) {
+            return '❤️'.repeat(Math.max(0, count));
+        }
+        
+        // 格式化時間顯示（分:秒）
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return mins + ':' + secs.toString().padStart(2, '0');
+        }
+        
+        // 更新遊戲統計顯示
+        function updateStatsDisplay() {
+            statTime.textContent = formatTime(gameStats.elapsedTime);
+            statCoins.textContent = gameStats.coinsCollected;
+            statBombs.textContent = gameStats.bombsHit;
+        }
+
+        // 顯示分數彈出動畫
+        function showScorePopup(x, y, points, customText) {
+            const popup = getPopupFromPool('score-popup');
+            popup.textContent = customText || '+' + formatScore(points);
+            popup.style.left = x + 'px';
+            popup.style.top = y + 'px';
+            gameContainer.appendChild(popup);
+            
+            // 無障礙：如果使用者偏好減少動態效果，則不使用動畫，直接短暫顯示後回收
+            if (prefersReducedMotion()) {
+                // 1 秒後自動回收（無障礙替代方案）
+                const cleanupHandler = function() {
+                    popup.removeEventListener('animationend', cleanupHandler);
+                    popup.remove();
+                    returnPopupToPool(popup);
+                };
+                popup._animationEndHandler = cleanupHandler;
+                setTimeout(() => {
+                    cleanupHandler();
+                }, 1000);
+                return;
+            }
+            
+            // 使用 animationend 事件確保動畫結束後才回收，比 setTimeout 更精確且避免記憶體洩漏
+            // 儲存 handler 參考以便後續移除
+            const handler = function() {
+                popup.removeEventListener('animationend', handler);
+                popup.remove();
+                returnPopupToPool(popup);
+            };
+            popup._animationEndHandler = handler; // 儲存參考以便 cleanup 時移除
+            popup.addEventListener('animationend', handler);
+        }
+
+        // 更新生命值顯示
+        function updateLivesDisplay() {
+            livesDisplay.textContent = getHeartsString(lives);
+            livesDisplay.setAttribute('aria-label', `剩餘生命 ${lives} 點`);
+            
+            // 生命值減少時觸發動畫
+            if (lives < GAME_CONFIG.MAX_LIVES) {
+                livesDisplay.classList.add('life-lost');
+                setTimeout(() => livesDisplay.classList.remove('life-lost'), GAME_CONFIG.LIFE_LOST_DURATION);
+            }
+        }
+
+        // 更新難度等級顯示（使用緩存的 DOM 元素）
+        function updateDifficultyDisplay() {
+            const level = getDifficultyLevel();
+            const nextLevelScore = (level + 1) * DIFFICULTY_INCREASE_PER;
+            const pointsToNext = nextLevelScore - score;
+            
+            difficultyIndicator.innerHTML = `<span class="level">難度 ${level + 1}</span><span class="next-level">+${pointsToNext}分升級</span>`;
+            difficultyIndicator.setAttribute('aria-label', `目前難度等級 ${level + 1}，距離下一級還需 ${pointsToNext} 分`);
+            
+            // 難度提升時的視覺效果
+            if (level > 0) {
+                difficultyIndicator.style.color = level >= 5 ? '#ff6b6b' : level >= 3 ? '#ffd700' : '#00d4ff';
+            }
+        }
+
+        // 更新最高分差距顯示
+        function updateHighScoreGapDisplay() {
+            if (!gameRunning || highScore === 0) {
+                highScoreGapDisplay.textContent = '';
+                highScoreGapDisplay.className = '';
+                return;
+            }
+            
+            const diff = score - highScore;
+            if (diff > 0) {
+                // 創新紀錄
+                highScoreGapDisplay.textContent = '🏆 +' + formatScore(diff);
+                highScoreGapDisplay.className = 'record';
+            } else if (score >= highScore * NEAR_RECORD_THRESHOLD) {
+                // 接近紀錄（80%以上）
+                const needed = highScore - score;
+                highScoreGapDisplay.textContent = '🔥 差 ' + formatScore(needed);
+                highScoreGapDisplay.className = 'near';
+            } else if (diff < 0) {
+                // 落後
+                highScoreGapDisplay.textContent = '📍 差 ' + formatScore(-diff);
+                highScoreGapDisplay.className = 'behind';
+            } else {
+                // 平手
+                highScoreGapDisplay.textContent = '⭐ 並列';
+                highScoreGapDisplay.className = 'ahead';
+            }
+        }
+
+        // 玩家受傷時的動畫
+        function triggerDamageAnimation() {
+            // 無障礙：如果使用者偏好減少動態效果，則跳過動畫
+            if (prefersReducedMotion()) return;
+            gameContainer.style.animation = 'none';
+            void gameContainer.offsetWidth; // 強制重繪
+            gameContainer.style.animation = `damageShake ${GAME_CONFIG.DAMAGE_SHAKE_DURATION}ms ease-out`;
+        }
+
+        // 觸覺震動反饋（增強行動裝置遊戲體驗）
+        // 使用 navigator.vibrate() 提供震動感，支援大多數 Android 和部分 iOS 裝置
+        function triggerVibration(type) {
+            // 檢查震動開關是否開啟
+            if (!vibrationEnabled) return;
+            
+            // 檢查裝置是否支援震動 API
+            if (!navigator.vibrate) return;
+            
+            try {
+                switch (type) {
+                    case 'coin':
+                        // 接到金幣：輕微短震 (15ms)
+                        navigator.vibrate(15);
+                        break;
+                    case 'combo':
+                        // 連擊：雙次輕微震動
+                        navigator.vibrate([10, 50, 10]);
+                        break;
+                    case 'bomb':
+                        // 炸彈攻擊：強烈長震 (200ms)
+                        navigator.vibrate(200);
+                        break;
+                    case 'powerup':
+                        // 取得道具：中等震動 (50ms)
+                        navigator.vibrate(50);
+                        break;
+                    case 'heart':
+                        // 取得愛心：愉快的雙次震動
+                        navigator.vibrate([30, 30, 30]);
+                        break;
+                    case 'gameover':
+                        // 遊戲結束：結束震動模式
+                        navigator.vibrate([100, 50, 100]);
+                        break;
+                }
+            } catch (e) {
+                // 震動失敗時靜默忽略（某些裝置可能不支援）
+            }
+        }
+
+        // 碰到炸彈時的處理（扣血而非直接結束）
+        let isInvincible = false; // 無敵狀態標誌
+        let invincibleReason = null; // 無敵原因: 'damage' | 'shield' | null
+
+        function handleDamage() {
+            // 無敵時間內不再受傷
+            if (isInvincible) return;
+            
+            playSound('bomb');
+            triggerDamageAnimation(); // 受傷時觸發畫面震動動畫
+            triggerVibration('bomb');  // 受傷時觸發觸覺震動反饋
+            lives--;
+            updateAvailablePowerupsCache(); // 更新可用道具緩存
+            updateLivesDisplay();
+            
+            // 重置連擊（受到傷害時中斷連擊）
+            resetCombo();
+            
+            // 更新受到炸彈攻擊統計
+            gameStats.bombsHit++;
+            
+            // 無敵時間閃爍效果
+            player.classList.add('player-invincible');
+            isInvincible = true;
+            invincibleReason = 'damage';
+            
+            if (lives <= 0) {
+                player.classList.remove('player-invincible');
+                isInvincible = false;
+                invincibleReason = null;
+                endGame();
+            } else {
+                // 無敵時間 1 秒，遊戲繼續進行（修復：儲存計時器以便清除）
+                invincibleTimeout = safeClearTimeout(invincibleTimeout);
+                invincibleStartTime = Date.now(); // 記錄開始時間
+                invincibleTimeout = setTimeout(() => {
+                    if (lives > 0) {
+                        player.classList.remove('player-invincible');
+                        isInvincible = false;
+                        invincibleReason = null;
+                    }
+                }, GAME_CONFIG.INVINCIBLE_DURATION);
+            }
+        }
+
+        // 玩家接到物品時的動畫
+        function triggerPlayerCatchAnimation() {
+            // 無障礙：如果使用者偏好減少動態效果，則跳過動畫
+            if (prefersReducedMotion()) return;
+            player.classList.remove('player-catch');
+            void player.offsetWidth; // 強制重繪
+            player.classList.add('player-catch');
+        }
+
+        // 啟動道具效果
+        function activatePowerup(powerup, x, y) {
+            // 根據道具類型播放不同音效
+            if (powerup.type === 'heart') {
+                playSound('heart');
+                triggerVibration('heart');  // 取得愛心震動
+            } else {
+                playSound('powerup');
+                triggerVibration('powerup');  // 取得道具震動
+            }
+            
+            // 顯示道具彈出動畫（使用物件池）
+            const popup = getPopupFromPool('powerup-popup');
+            popup.textContent = powerup.name + '！';
+            popup.style.left = x + 'px';
+            popup.style.top = y + 'px';
+            popup.style.background = powerup.type === 'shield' ? 'rgba(0,191,255,0.8)' : 
+                                      powerup.type === '2x' ? 'rgba(255,215,0,0.8)' : 'rgba(255,0,0,0.8)';
+            gameContainer.appendChild(popup);
+            // 使用 animationend 事件確保動畫結束後才回收
+            // 儲存 handler 參考以便後續移除
+            const handler = function() {
+                popup.removeEventListener('animationend', handler);
+                popup.remove();
+                returnPopupToPool(popup);
+            };
+            popup._animationEndHandler = handler; // 儲存參考以便 cleanup 時移除
+            popup.addEventListener('animationend', handler);
+            
+            // 處理不同道具效果
+            if (powerup.type === 'shield') {
+                activePowerups.shield = true;
+                isInvincible = true;
+                invincibleReason = 'shield'; // 設置無敵原因為護盾
+                player.classList.add('player-invincible', 'player-shield');
+                updatePowerupIndicator();
+                
+                // 清除之前的計時器
+                if (powerupTimers.shield) clearTimeout(powerupTimers.shield);
+                powerupStartTimes.shield = Date.now(); // 記錄開始時間
+                powerupTimers.shield = setTimeout(() => {
+                    activePowerups.shield = false;
+                    // 只移除護盾造成的無敵，不影響受傷無敵狀態
+                    if (invincibleReason === 'shield') {
+                        isInvincible = false;
+                        invincibleReason = null;
+                        player.classList.remove('player-invincible', 'player-shield');
+                    }
+                    // 如果同時處於受傷無敵狀態，保留無敵效果
+                    else if (invincibleReason === 'damage') {
+                        // 保持受傷無敵狀態，什麼都不做
+                    }
+                    updatePowerupIndicator();
+                }, powerup.duration);
+            } 
+            else if (powerup.type === '2x') {
+                activePowerups['2x'] = true;
+                updatePowerupIndicator();
+                
+                // 清除之前的計時器
+                if (powerupTimers['2x']) clearTimeout(powerupTimers['2x']);
+                powerupStartTimes['2x'] = Date.now(); // 記錄開始時間
+                powerupTimers['2x'] = setTimeout(() => {
+                    activePowerups['2x'] = false;
+                    updatePowerupIndicator();
+                }, powerup.duration);
+            }
+            else if (powerup.type === 'heart') {
+                if (lives < GAME_CONFIG.MAX_LIVES_CAP) {
+                    lives++;
+                    updateAvailablePowerupsCache(); // 更新可用道具緩存
+                    updateLivesDisplay();
+                }
+            }
+        }
+
+        // 更新道具指示器顯示（使用緩存的 DOM 元素）
+        function updatePowerupIndicator() {
+            // 使用 replaceChildren() 替代 innerHTML = ''，效能更好
+            powerupIndicator.replaceChildren();
+            
+            if (activePowerups.shield) {
+                const badge = document.createElement('div');
+                badge.className = 'powerup-badge powerup-shield';
+                badge.textContent = '🛡️ 護盾';
+                powerupIndicator.appendChild(badge);
+            }
+            if (activePowerups['2x']) {
+                const badge = document.createElement('div');
+                badge.className = 'powerup-badge powerup-2x';
+                badge.textContent = '🌟 雙倍';
+                powerupIndicator.appendChild(badge);
+            }
+        }
+
+        // 使用 requestAnimationFrame 替代 setInterval
+        function gameLoop(timestamp) {
+            if (!gameRunning) {
+                return; // 遊戲結束，停止動畫循環
+            }
+            
+            if (isPaused) {
+                // 暫停時不請求新框架，節省 CPU
+                return;
+            }
+
+            // FPS 計算：每秒更新一次
+            frameCount++;
+            if (timestamp - fpsLastTime >= 1000) {
+                fps = frameCount;
+                frameCount = 0;
+                fpsLastTime = timestamp;
+                fpsDisplay.textContent = 'FPS: ' + fps;
+                
+                // FPS 自適應難度調整邏輯
+                if (fps < LOW_FPS_THRESHOLD) {
+                    lowFpsCount++;
+                    if (lowFpsCount >= LOW_FPS_COUNTS_TO_ADJUST && fpsAdaptiveLevel > -2) {
+                        fpsAdaptiveLevel--; // 降低難度
+                        lowFpsCount = 0; // 重置計數
+                    }
+                } else {
+                    // FPS 恢復正常時，逐漸恢復難度
+                    if (fpsAdaptiveLevel < 0) {
+                        lowFpsCount++;
+                        if (lowFpsCount >= FPS_ADAPTIVE_RECOVERY_COUNT) {
+                            fpsAdaptiveLevel++; // 提高難度
+                            lowFpsCount = 0;
+                        }
+                    } else {
+                        lowFpsCount = 0;
+                    }
+                }
+            }
+
+            const deltaTime = timestamp - lastTime;
+            lastTime = timestamp;
+            
+            // 限制 deltaTime 上限，防止分頁切換後回來時遊戲元素瞬間移動過遠
+            const MAX_DELTA_TIME = 100;
+            const cappedDeltaTime = Math.min(deltaTime, MAX_DELTA_TIME);
+            
+            // 更新遊戲時間統計（排除暫停時間，確保計時準確）
+            gameStats.elapsedTime = (Date.now() - gameStats.startTime - gameStats.totalPausedTime) / 1000;
+
+            // 更新實時統計顯示
+            liveTimeDisplay.textContent = formatTime(gameStats.elapsedTime);
+            liveCoinsDisplay.textContent = gameStats.coinsCollected;
+
+            // 統一移動邏輯（鍵盤 + 觸控），使用動態邊界
+            if (keys.left) {
+                playerX = Math.max(PLAYER_LEFT_BOUND, playerX - MOVE_SPEED * cappedDeltaTime);
+            }
+            if (keys.right) {
+                playerX = Math.min(PLAYER_RIGHT_BOUND, playerX + MOVE_SPEED * cappedDeltaTime);
+            }
+            // 使用 transform 代替 left，利用 GPU 加速避免重排
+            const playerOffsetX = playerX - PLAYER_CENTER_OFFSET;
+            player.style.transform = `translate3d(calc(-50% + ${playerOffsetX}px), 0, 0)`;
+
+            // 更新氣泡位置
+            updateBubbles(cappedDeltaTime);
+
+            // 更新分數滾動動畫
+            updateScoreAnimation();
+
+            // 生成新氣泡（使用動態難度間隔）
+            // 效能優化：一次計算 difficultyLevel 並傳給 spawn 相關函式，避免重複呼叫 getDifficultyLevel()
+            const difficultyLevelForSpawn = getDifficultyLevel();
+            spawnTimer += cappedDeltaTime;
+            const currentSpawnInterval = getCurrentSpawnInterval(difficultyLevelForSpawn);
+            if (spawnTimer >= currentSpawnInterval) {
+                spawnBubble(difficultyLevelForSpawn);
+                spawnTimer = 0;
+            }
+
+            animationFrameId = requestAnimationFrame(gameLoop);
+        }
+
+        // 更新氣泡位置與碰撞檢測
+        function updateBubbles(deltaTime) {
+            // 遊戲結束時停止處理氣泡，防止遊戲結束後還能得分
+            if (!gameRunning) return;
+            
+            // 效能優化：玩家中心點只計算 X 座標（Y 座標固定），並使用預先計算的碰撞半徑常數
+            const playerCenterX = playerX + GAME_CONFIG.PLAYER_WIDTH / 2;
+            const playerCenterY = PLAYER_TOP_BOUND + GAME_CONFIG.PLAYER_HEIGHT / 2;
+            const collisionDistance = GAME_CONFIG.COLLISION_DISTANCE; // 使用預先計算的碰撞半徑
+            // 效能優化：預先計算時間因子，避免每個氣泡重複除法運算
+            const timeFactor = deltaTime / 16;
+            // 效能優化：使用標記-清除模式收集要移除的氣泡，減少 splice 調用次數
+            const bubblesToRemove = [];
+
+            for (let i = 0; i < bubbles.length; i++) {
+                const bubble = bubbles[i];
+                
+                // 使用 deltaTime 保持速度一致
+                bubble.y += bubble.speed * timeFactor;
+                // 統一使用 transform 定位（完全避免 Layout 迴流，使用 GPU 加速）
+                bubble.element.style.transform = `translate3d(${bubble.x}px, ${bubble.y}px, 0)`;
+
+                // 圓形碰撞檢測（比矩形檢測更精確，更適合圓形物體），使用預先計算的 BUBBLE_RADIUS
+                const bubbleCenterX = bubble.x + GAME_CONFIG.BUBBLE_RADIUS;
+                const bubbleCenterY = bubble.y + GAME_CONFIG.BUBBLE_RADIUS;
+                // 計算兩圓心之間的距離平方（避免開方運算以提升效能）
+                const dx = bubbleCenterX - playerCenterX;
+                const dy = bubbleCenterY - playerCenterY;
+                const distanceSquared = dx * dx + dy * dy;
+
+                if (distanceSquared < collisionDistance * collisionDistance) {
+                    
+                    if (bubble.isBad) {
+                        handleDamage(); // 改為扣血而非直接結束
+                        // 標記氣泡為待移除
+                        bubblesToRemove.push(bubble);
+                        continue; // 繼續檢查其他氣泡的碰撞
+                    } else {
+                        // 處理道具
+                        if (bubble.isPowerup) {
+                            activatePowerup(bubble.powerupType, bubble.x, bubble.y);
+                            // 修復：接到道具也要計入收集統計，这样命中率计算才准确
+                            gameStats.coinsCollected++;
+                            // 標記氣泡為待移除
+                            bubblesToRemove.push(bubble);
+                            continue;
+                        }
+                        
+                        // 普通金幣
+                        const basePoints = activePowerups['2x'] ? GAME_CONFIG.COIN_2X_POINTS : GAME_CONFIG.COIN_BASE_POINTS;
+                        // 觸發連擊系統
+                        handleCombo();
+                        const points = basePoints * comboMultiplier;
+                        score += points;
+                        targetScore = score; // 設定動畫目標值
+                        playSound('coin');
+                        // 觸覺震動反饋（連擊時更強烈）
+                        if (comboCount >= 3) {
+                            triggerVibration('combo');
+                        } else {
+                            triggerVibration('coin');
+                        }
+                        scoreDisplay.textContent = '分數: ' + formatScore(score);
+                        // 更新難度顯示
+                        updateDifficultyDisplay();
+                        // 更新最高分差距顯示
+                        updateHighScoreGapDisplay();
+                        // 更新收集金幣統計
+                        gameStats.coinsCollected++;
+                        // 顯示分數彈出動畫（顯示連擊加成）
+                        const popupText = comboCount >= 2 ? `+${formatScore(points)} (x${comboMultiplier})` : '+' + formatScore(points);
+                        showScorePopup(bubble.x, bubble.y, points, popupText);
+                        // 玩家動畫
+                        triggerPlayerCatchAnimation();
+                        // 標記氣泡為待移除
+                        bubblesToRemove.push(bubble);
+                    }
+                }
+
+                // 超出範圍（使用緩存的游戏高度）
+                if (bubble.y > cachedGameHeight + GAME_CONFIG.BUBBLE_SIZE) {
+                    // 標記氣泡為待移除
+                    bubblesToRemove.push(bubble);
+                }
+            }
+
+            // 效能優化：一次性處理所有要移除的氣泡，使用 filter 代替多次 splice
+            if (bubblesToRemove.length > 0) {
+                const bubblesToRemoveSet = new Set(bubblesToRemove);
+                // 回收所有標記的氣泡並從陣列中移除
+                for (let i = bubbles.length - 1; i >= 0; i--) {
+                    if (bubblesToRemoveSet.has(bubbles[i])) {
+                        returnBubbleToPool(bubbles[i].element);
+                        returnBubbleDataToPool(bubbles[i]);
+                        bubbles.splice(i, 1);
+                    }
+                }
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            // 忽略按鍵重複事件，防止按住按鍵時重複觸發
+            if (e.repeat) return;
+            
+            // 遊戲控制鍵需要阻止預設行為，防止網頁滾動（效能優化：使用 Set.has() 代替 Array.includes()）
+            if (GAME_CONTROL_KEYS.has(e.key)) {
+                e.preventDefault();
+            }
+            
+            // Enter 鍵開始/重新開始/繼續遊戲
+            if (e.key === 'Enter') {
+                handleStartOrResume();
+                return;
+            }
+            
+            // 空白鍵開始/重新開始/繼續遊戲（僅在遊戲未開始、遊戲結束或暫停時有效）
+            // 遊戲進行中時，空白鍵會由下方的暫停處理代碼接管
+            if (e.key === ' ') {
+                if (!gameRunning || isStarting || isGameOver || (isPaused && pauseOverlay.style.display === 'flex')) {
+                    handleStartOrResume();
+                    return;
+                }
+            }
+            
+            // 新增：統一的開始/繼續遊戲處理函數
+            function handleStartOrResume() {
+                if (!gameRunning || isStarting) {
+                    // 遊戲未開始或正在開始中，開始新遊戲
+                    startGame();
+                } else if (isGameOver) {
+                    // 遊戲結束，重新開始
+                    startGame();
+                } else if (isPaused && pauseOverlay.style.display === 'flex') {
+                    // 暫停時恢復遊戲
+                    togglePause();
+                }
+            }
+            
+            // M 鍵切換靜音 - 在遊戲控制之前處理，確保暫停時也能使用
+            if (e.key === 'm' || e.key === 'M') {
+                soundEnabled = !soundEnabled;
+                soundBtn.textContent = soundEnabled ? '🔊' : '🔇';
+                debouncedSaveSoundEnabled(soundEnabled);
+                return;
+            }
+            
+            // H 鍵顯示說明 - 應該隨時可用
+            if (e.key === 'h' || e.key === 'H') {
+                toggleHelp();
+                return;
+            }
+            
+            // F 鍵切換全螢幕 - 應該隨時可用
+            if (e.key === 'f' || e.key === 'F') {
+                toggleFullscreen();
+                return;
+            }
+
+            // K 鍵切換震動 - 應該隨時可用
+            if (e.key === 'k' || e.key === 'K') {
+                vibrationEnabled = !vibrationEnabled;
+                vibrationBtn.textContent = vibrationEnabled ? '📳' : '📴';
+                debouncedSaveVibrationEnabled(vibrationEnabled);
+                return;
+            }
+
+            if (!gameRunning || isPaused) return;
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                keys.left = true;
+            } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                keys.right = true;
+            } else if (e.key === 'Escape' || e.key === 'p' || e.key === 'P') {
+                // 改進：當說明彈窗打開時，ESC 先關閉說明彈窗
+                const isHelpVisible = helpOverlay.style.display === 'flex';
+                if (isHelpVisible) {
+                    helpOverlay.style.display = 'none';
+                    // 如果之前是因為顯示說明而暫停，恢復遊戲
+                    if (gameRunning && isPaused && pausedByHelp) {
+                        isPaused = false;
+                        pausedByHelp = false;
+                        pauseOverlay.style.display = 'none';
+                        lastTime = performance.now();
+                        animationFrameId = requestAnimationFrame(gameLoop);
+                        // 關閉說明時恢復 AudioContext（與 toggleHelp 函數一致）
+                        if (audioContext && audioContext.state === 'suspended') {
+                            audioContext.resume();
+                        }
+                        // 關閉說明時重新請求 wakeLock（確保螢幕保持亮著）
+                        requestWakeLock().catch(() => {});
+                    }
+                } else {
+                    togglePause();
+                }
+            } else if (e.key === ' ') {
+                // 空白鍵也可用於暫停
+                togglePause();
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            // 忽略按鍵重複事件，保持一致性
+            if (e.repeat) return;
+            
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                keys.left = false;
+            } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                keys.right = false;
+            }
+        });
+
+        // 切換暫停狀態
+        function togglePause() {
+            // 遊戲未開始、正在開始中、或遊戲已結束時不能暫停
+            if (!gameRunning || isStarting) return;
+            isPaused = !isPaused;
+            pauseOverlay.style.display = isPaused ? 'flex' : 'none';
+            
+            // 更新暫停按鈕圖標（暫停時顯示 ▶️，恢復時顯示 ⏸️）
+            const pauseIcon = isPaused ? '▶️' : '⏸️';
+            btnPause.textContent = pauseIcon;
+            pauseBtn.textContent = pauseIcon;
+            
+            // 暫停時更新顯示的分數和生命值
+            if (isPaused) {
+                // 記錄暫停開始時間（用於準確計算遊戲時間）
+                pauseStartTime = Date.now();
+                
+                pauseScore.textContent = '分數: ' + formatScore(score);
+                pauseLives.textContent = getHeartsString(lives);
+                // 顯示當前連擊數（如果有連擊的話）
+                pauseCombo.textContent = comboCount >= 2 ? `🔥 ${comboCount} 連擊! x${comboMultiplier}` : '🔥 無連擊';
+                
+                // 顯示道具剩餘時間
+                let powerupTexts = [];
+                if (activePowerups.shield) {
+                    const remaining = powerupRemainingTimes.shield || 0;
+                    powerupTexts.push(`🛡️ 護盾: ${Math.ceil(remaining / 1000)}秒`);
+                }
+                if (activePowerups['2x']) {
+                    const remaining = powerupRemainingTimes['2x'] || 0;
+                    powerupTexts.push(`🌟 雙倍: ${Math.ceil(remaining / 1000)}秒`);
+                }
+                if (isInvincible) {
+                    const remaining = invincibleRemainingTime || 0;
+                    powerupTexts.push(`⭐ 無敵: ${Math.ceil(remaining / 1000)}秒`);
+                }
+                pausePowerups.innerHTML = powerupTexts.length > 0 ? powerupTexts.join('<br>') : '';
+                pausePowerups.style.display = powerupTexts.length > 0 ? 'block' : 'none';
+                
+                updateStatsDisplay(); // 更新遊戲統計顯示
+                // 暫停時釋放螢幕喚醒鎖
+                releaseWakeLock();
+                // 暫停時清除按鍵狀態，防止恢復後玩家自動移動
+                keys.left = false;
+                keys.right = false;
+                // 暫停時立即儲存遊戲狀態
+                saveGameState();
+                // 暫停時停止自動儲存
+                stopAutoSave();
+                // 暫停時暫停 AudioContext 以節省資源
+                if (audioContext && audioContext.state === 'running') {
+                    audioContext.suspend();
+                }
+                // 暫停時暫停連擊、道具和無敵計時器
+                pauseComboTimer();
+                pausePowerupTimers();
+                pauseInvincibilityTimer();
+            } else {
+                // 計算暫停時長並累加到總暫停時間
+                if (pauseStartTime > 0) {
+                    gameStats.totalPausedTime += Date.now() - pauseStartTime;
+                    pauseStartTime = 0;
+                }
+                
+                lastTime = performance.now(); // 重置 deltaTime
+                // 恢復時重新啟動動畫循環
+                animationFrameId = requestAnimationFrame(gameLoop);
+                // 恢復時請求螢幕喚醒鎖
+                requestWakeLock();
+                // 恢復時重新啟動自動儲存
+                startAutoSave();
+                // 恢復時恢復 AudioContext
+                if (audioContext && audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+                // 恢復時恢復連擊、道具和無敵計時器
+                resumeComboTimer();
+                resumePowerupTimers();
+                resumeInvincibilityTimer();
+            }
+            // 暫停時取消當前的動畫框架，防止暫停期間堆疊調用
+            if (isPaused && animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+        }
+
+        // 切換說明顯示
+        function toggleHelp() {
+            const isHelpVisible = helpOverlay.style.display === 'flex';
+            helpOverlay.style.display = isHelpVisible ? 'none' : 'flex';
+            
+            // 顯示說明時暫停遊戲（如果遊戲正在運行）
+            if (!isHelpVisible && gameRunning && !isPaused) {
+                isPaused = true;
+                pausedByHelp = true; // 標記為因說明而暫停
+                pauseOverlay.style.display = 'flex';
+                pauseScore.textContent = '分數: ' + formatScore(score);
+                pauseLives.textContent = getHeartsString(lives);
+                // 顯示當前連擊數（如果有連擊的話）
+                pauseCombo.textContent = comboCount >= 2 ? `🔥 ${comboCount} 連擊! x${comboMultiplier}` : '🔥 無連擊';
+                updateStatsDisplay();
+                if (animationFrameId) {
+                    cancelAnimationFrame(animationFrameId);
+                    animationFrameId = null;
+                }
+                // 顯示說明時暫停 AudioContext 以節省資源
+                if (audioContext && audioContext.state === 'running') {
+                    audioContext.suspend();
+                }
+            } else if (isHelpVisible && pausedByHelp) {
+                // 關閉說明時，如果之前是因說明而暫停，恢復遊戲
+                isPaused = false;
+                pausedByHelp = false;
+                pauseOverlay.style.display = 'none';
+                lastTime = performance.now();
+                animationFrameId = requestAnimationFrame(gameLoop);
+                // 關閉說明時恢復 AudioContext
+                if (audioContext && audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+                // 關閉說明時重新請求 wakeLock（確保螢幕保持亮著）
+                requestWakeLock().catch(() => {});
+            }
+        }
+
+        // 切換全螢幕模式
+        function toggleFullscreen() {
+            const elem = document.documentElement;
+            
+            if (!document.fullscreenElement) {
+                elem.requestFullscreen().catch(err => {
+                    console.warn('無法進入全螢幕:', err);
+                });
+            } else {
+                document.exitFullscreen().catch(err => {
+                    console.warn('無法退出全螢幕:', err);
+                });
+            }
+        }
+
+        // 關閉說明按鈕事件
+        if (helpCloseBtn) {
+            helpCloseBtn.addEventListener('click', () => {
+                helpOverlay.style.display = 'none';
+                // 恢復遊戲（如果之前是因為顯示說明而暫停）
+                if (gameRunning && isPaused && pausedByHelp) {
+                    isPaused = false;
+                    pausedByHelp = false;
+                    pauseOverlay.style.display = 'none';
+                    lastTime = performance.now();
+                    animationFrameId = requestAnimationFrame(gameLoop);
+                    // 關閉說明時恢復 AudioContext
+                    if (audioContext && audioContext.state === 'suspended') {
+                        audioContext.resume();
+                    }
+                    // 關閉說明時重新請求 wakeLock（確保螢幕保持亮著）
+                    requestWakeLock().catch(() => {});
+                }
+            });
+        }
+
+        // 觸控控制（統一使用 keys 系統，與鍵盤一致）
+        // 防呆機制：防止同時觸發觸控和滑鼠事件（改進：分開追蹤左右按鍵的觸控狀態）
+        let isTouchingLeft = false;
+        let isTouchingRight = false;
+        let touchTimeoutLeft = null;
+        let touchTimeoutRight = null;
+        
+        function handleTouchStart(direction, e) {
+            e.preventDefault();
+            // 防止觸控和滑鼠事件同時觸發
+            if (e.type === 'touchstart') {
+                if (direction === 'left') {
+                    isTouchingLeft = true;
+                    if (touchTimeoutLeft) clearTimeout(touchTimeoutLeft);
+                    btnLeft.classList.add('pressed'); // 新增：視覺回饋
+                } else {
+                    isTouchingRight = true;
+                    if (touchTimeoutRight) clearTimeout(touchTimeoutRight);
+                    btnRight.classList.add('pressed'); // 新增：視覺回饋
+                }
+            } else if (e.type === 'mousedown') {
+                // 如果該方向正在觸控中，忽略滑鼠事件
+                if (direction === 'left' && isTouchingLeft) return;
+                if (direction === 'right' && isTouchingRight) return;
+                e.preventDefault(); // 防止文字選取
+                // 滑鼠按下時也提供視覺回饋
+                if (direction === 'left') {
+                    btnLeft.classList.add('pressed');
+                } else {
+                    btnRight.classList.add('pressed');
+                }
+            }
+            // 遊戲未運行或暫停時不處理觸控移動
+            if (!gameRunning || isPaused) return;
+            if (direction === 'left') {
+                keys.left = true;
+            } else {
+                keys.right = true;
+            }
+        }
+
+        function handleTouchEnd(direction) {
+            // 重置觸控標誌，允許後續的滑鼠事件
+            if (direction === 'left') {
+                if (touchTimeoutLeft) clearTimeout(touchTimeoutLeft);
+                touchTimeoutLeft = setTimeout(() => { isTouchingLeft = false; }, 100);
+                keys.left = false;
+                btnLeft.classList.remove('pressed'); // 新增：移除視覺回饋
+            } else if (direction === 'right') {
+                if (touchTimeoutRight) clearTimeout(touchTimeoutRight);
+                touchTimeoutRight = setTimeout(() => { isTouchingRight = false; }, 100);
+                keys.right = false;
+                btnRight.classList.remove('pressed'); // 新增：移除視覺回饋
+            }
+        }
+
+        // 左按鈕 - 觸控事件
+        btnLeft.addEventListener('touchstart', (e) => handleTouchStart('left', e), { passive: false });
+        btnLeft.addEventListener('touchend', () => handleTouchEnd('left'));
+        btnLeft.addEventListener('touchcancel', () => handleTouchEnd('left')); // 觸控中斷時重置
+        // 新增：滑鼠事件處理（提供視覺回饋）
+        btnLeft.addEventListener('mousedown', (e) => handleTouchStart('left', e));
+        btnLeft.addEventListener('mouseup', () => handleTouchEnd('left'));
+        btnLeft.addEventListener('mouseleave', () => handleTouchEnd('left'));
+
+        // 右按鈕 - 觸控事件
+        btnRight.addEventListener('touchstart', (e) => handleTouchStart('right', e), { passive: false });
+        btnRight.addEventListener('touchend', () => handleTouchEnd('right'));
+        btnRight.addEventListener('touchcancel', () => handleTouchEnd('right')); // 觸控中斷時重置
+        // 新增：滑鼠事件處理（提供視覺回饋）
+        btnRight.addEventListener('mousedown', (e) => handleTouchStart('right', e));
+        btnRight.addEventListener('mouseup', () => handleTouchEnd('right'));
+        btnRight.addEventListener('mouseleave', () => handleTouchEnd('right'));
+
+        // 暫停按鈕（使用標誌位防止 touchstart 和 click 重複觸發）
+        let pauseHandlerTimeout = null;
+        btnPause.addEventListener('click', () => {
+            if (pauseHandlerTimeout) return;
+            pauseHandlerTimeout = setTimeout(() => { pauseHandlerTimeout = null; }, 100);
+            togglePause();
+        });
+        btnPause.addEventListener('touchstart', (e) => {
+            e.preventDefault(); // 防止觸發 click 事件
+            if (pauseHandlerTimeout) return;
+            pauseHandlerTimeout = setTimeout(() => { pauseHandlerTimeout = null; }, 100);
+            togglePause();
+        });
+        
+        // ==================== 觸控滑動手勢支援（改進：更直觀的觸控操作）====================
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchStartTime = 0; // 記錄觸摸開始時間，用於區分點擊和滑動
+        const SWIPE_THRESHOLD = 30; // 最小滑動距離
+        const TAP_THRESHOLD_TIME = 200; // 觸摸超過此時間視為滑動，非點擊
+
+        // 遊戲區域觸摸開始 - 記錄起始位置
+        gameContainer.addEventListener('touchstart', (e) => {
+            // 忽略只有一個手指且目標是按鈕的觸控
+            if (e.target.closest('.touch-btn')) return;
+            
+            if (e.touches.length === 1) {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+                touchStartTime = Date.now();
+            }
+        }, { passive: true });
+
+        // 統一處理 touchend：同時處理滑動和雙擊檢測（修復：合併兩個獨立的 touchend 監聽器，避免衝突）
+        let lastTapTime = 0;
+        gameContainer.addEventListener('touchend', (e) => {
+            // 忽略目標是按鈕的觸控
+            if (e.target.closest('.touch-btn')) return;
+            
+            // 如果遊戲未運行，不處理
+            if (!gameRunning || isStarting) return;
+            
+            const touch = e.changedTouches[0];
+            const deltaX = touch.clientX - touchStartX;
+            const deltaY = touch.clientY - touchStartY;
+            const touchDuration = Date.now() - touchStartTime;
+            
+            // 判斷是否為滑動操作（水平移動大於垂直移動，且超過閾值，且觸摸時間不超過閾值）
+            const isSwipe = Math.abs(deltaX) > SWIPE_THRESHOLD && 
+                           Math.abs(deltaX) > Math.abs(deltaY) && 
+                           touchDuration < TAP_THRESHOLD_TIME;
+            
+            if (isSwipe) {
+                // 滑動操作
+                if (!isPaused) {
+                    if (deltaX > 0) {
+                        // 向右滑動
+                        keys.right = true;
+                        setTimeout(() => { keys.right = false; }, 150);
+                    } else {
+                        // 向左滑動
+                        keys.left = true;
+                        setTimeout(() => { keys.left = false; }, 150);
+                    }
+                }
+            } else if (!isPaused && touchDuration < TAP_THRESHOLD_TIME) {
+                // 點擊操作（非滑動且觸摸時間短）- 檢測雙擊
+                const currentTime = Date.now();
+                const tapLength = currentTime - lastTapTime;
+                if (tapLength < 300 && tapLength > 0) {
+                    // 雙擊檢測成功，暫停/恢復遊戲
+                    e.preventDefault();
+                    togglePause();
+                }
+                lastTapTime = currentTime;
+            }
+        }, { passive: true });
+        
+        // PC 上雙擊滑鼠暫停/恢復
+        gameContainer.addEventListener('dblclick', (e) => {
+            if (gameRunning && !isStarting) {
+                e.preventDefault();
+                togglePause();
+            }
+        });
+        
+        // 說明按鈕點擊事件（使用標誌位防止 touchstart 和 click 重複觸發）
+        const helpBtnElement = document.getElementById('helpBtn');
+        let helpHandlerTimeout = null;
+        if (helpBtnElement) {
+            helpBtnElement.addEventListener('click', () => {
+                if (helpHandlerTimeout) return;
+                helpHandlerTimeout = setTimeout(() => { helpHandlerTimeout = null; }, 100);
+                toggleHelp();
+            });
+            helpBtnElement.addEventListener('touchstart', (e) => {
+                e.preventDefault(); // 防止觸發 click 事件
+                if (helpHandlerTimeout) return;
+                helpHandlerTimeout = setTimeout(() => { helpHandlerTimeout = null; }, 100);
+                toggleHelp();
+            });
+        }
+
+        // ==================== 頁面可見性處理 (節省資源) ====================
+        document.addEventListener('visibilitychange', () => {
+            if (!gameRunning) return;
+            
+            const isHidden = document.visibilityState === 'hidden';
+            
+            if (isHidden) {
+                // 分頁隱藏時暫停遊戲（如果尚未暫停）
+                // 優化：不顯示 pause overlay，因為用戶看不見，且恢復時會直接繼續遊戲
+                if (!isPaused) {
+                    isPaused = true;
+                    pausedByVisibility = true;
+                    
+                    // 記錄暫停開始時間（用於準確計算遊戲時間）
+                    pauseStartTime = Date.now();
+                    
+                    // 取消動畫框架
+                    if (animationFrameId) {
+                        cancelAnimationFrame(animationFrameId);
+                        animationFrameId = null;
+                    }
+                    
+                    // 暫停 AudioContext 以節省資源
+                    if (audioContext && audioContext.state === 'running') {
+                        audioContext.suspend();
+                    }
+                    
+                    // 釋放螢幕喚醒鎖
+                    releaseWakeLock();
+
+                    // 暫停連擊、道具和無敵計時器，避免使用者離開時損失時間
+                    pauseComboTimer();
+                    pausePowerupTimers();
+                    pauseInvincibilityTimer();
+                }
+            } else {
+                // 分頁恢復顯示時，只有因為分頁隱藏而暫停時才恢復
+                // 如果是用戶手動暫停的，保持暫停狀態
+                if (pausedByVisibility && gameRunning) {
+                    // 計算暫停時長並累加到總暫停時間
+                    if (pauseStartTime > 0) {
+                        gameStats.totalPausedTime += Date.now() - pauseStartTime;
+                        pauseStartTime = 0;
+                    }
+                    
+                    isPaused = false;
+                    pausedByVisibility = false;
+                    lastTime = performance.now();
+                    animationFrameId = requestAnimationFrame(gameLoop);
+                    
+                    // 恢復 AudioContext
+                    if (audioContext && audioContext.state === 'suspended') {
+                        audioContext.resume();
+                    }
+                    
+                    // 恢復時請求螢幕喚醒鎖
+                    requestWakeLock();
+
+                    // 恢復連擊、道具和無敵計時器
+                    resumeComboTimer();
+                    resumePowerupTimers();
+                    resumeInvincibilityTimer();
+                }
+            }
+        });
+
+        // 窗口大小變化時更新遊戲邊界（支援 RWD）- 使用防抖優化效能
+        const debouncedResizeHandler = debounce(() => {
+            if (gameRunning) {
+                updateGameBounds();
+                // 確保玩家不會跑出邊界
+                playerX = Math.max(PLAYER_LEFT_BOUND, Math.min(PLAYER_RIGHT_BOUND, playerX));
+            }
+        }, 150); // 150ms 防抖延遲
+        window.addEventListener('resize', debouncedResizeHandler);
+
+        // ==================== 視窗焦點處理 ====================
+        // 當視窗失去焦點時重置按鍵狀態，防止鍵盤卡住
+        window.addEventListener('blur', () => {
+            keys.left = false;
+            keys.right = false;
+        });
+
+        // ==================== 頁面卸載處理 ====================
+        // 當用戶關閉/刷新頁面時，確保遊戲狀態已保存
+        window.addEventListener('beforeunload', () => {
+            if (gameRunning && !isPaused) {
+                saveGameState();
+            }
+        });
+
+        // 處理瀏覽器返回按鈕（提升行動裝置體驗）
+        window.addEventListener('popstate', () => {
+            // 確保遊戲正在進行中才處理
+            if (!gameRunning || isStarting || isGameOver) return;
+            
+            // 切換暫停/繼續狀態
+            togglePause();
+        });
+
+        // 檢查使用者是否偏好減少動畫（無障礙支援）
+        function prefersReducedMotion() {
+            return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        }
+
+        // 顯示倒數計時（遊戲開始前）
+        function showCountdown(callback, duration = 1000, customMessage = null) {
+            // 防止重複創建倒計時 overlay（如果已有先清理）
+            if (countdownOverlay && countdownOverlay.parentNode) {
+                countdownOverlay.remove();
+            }
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+            }
+            
+            // 使用全域變數儲存倒數計時相關元素，以便正確清理
+            countdownOverlay = document.createElement('div');
+            countdownOverlay.id = 'countdownOverlay';
+            
+            // 無障礙支援：根據使用者偏好選擇動畫效果
+            const reducedMotion = prefersReducedMotion();
+            let overlayStyle = `
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.7);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 100;
+                font-size: 5rem;
+                font-weight: bold;
+                color: #00d4ff;
+                cursor: pointer;
+            `;
+            
+            if (!reducedMotion) {
+                overlayStyle += `
+                text-shadow: 0 0 30px #00d4ff;
+                animation: fadeInOut 1s infinite;
+                `;
+            }
+            countdownOverlay.style.cssText = overlayStyle;
+            gameContainer.appendChild(countdownOverlay);
+            
+            // 新增：點擊倒數畫面可跳過（提升使用者體驗）
+            const skipCountdown = () => {
+                // 移除鍵盤事件監聽器，避免記憶體洩漏
+                document.removeEventListener('keydown', countdownKeyHandler);
+                if (countdownInterval) {
+                    clearInterval(countdownInterval);
+                    countdownInterval = null;
+                }
+                if (countdownOverlay && countdownOverlay.parentNode) {
+                    countdownOverlay.remove();
+                    countdownOverlay = null;
+                }
+                playTone(880, 1760, 0.25, 0.3); // 開始音效
+                callback(); // 立即啟動遊戲
+            };
+            countdownOverlay.addEventListener('click', skipCountdown);
+            countdownOverlay.addEventListener('touchend', (e) => {
+                e.preventDefault(); // 防止觸發遊戲內的觸控移動
+                skipCountdown();
+            });
+            
+            // 新增：鍵盤 Enter/Space 可跳過倒數計時（改善鍵盤使用者體驗）
+            // 修復：改為賦值而非 const，確保 cleanupGame 能移除此監聽器（避免記憶體洩漏）
+            countdownKeyHandler = (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    document.removeEventListener('keydown', countdownKeyHandler);
+                    countdownKeyHandler = null;
+                    skipCountdown();
+                }
+            };
+            document.addEventListener('keydown', countdownKeyHandler);
+            
+            // 添加「點擊或按 Enter 跳過」提示文字
+            const skipHint = document.createElement('div');
+            skipHint.textContent = '點擊或按 Enter 跳過';
+            skipHint.style.cssText = `
+                position: absolute;
+                bottom: 20px;
+                font-size: 0.9rem;
+                color: rgba(255,255,255,0.6);
+                font-weight: normal;
+                animation: pulse 1.5s infinite;
+            `;
+            countdownOverlay.appendChild(skipHint);
+            
+            let count = 3;
+            // 如果有自訂訊息，顯示訊息而非倒數
+            if (customMessage) {
+                countdownOverlay.textContent = customMessage;
+                count = 1; // 設定為 1 以便快速結束
+            } else {
+                countdownOverlay.textContent = count;
+            }
+            
+            // 無障礙：偏好減少動畫時，直接顯示數字不播放動畫
+            if (!reducedMotion) {
+                // 使用靜態 CSS 中定義的動畫類別（效能優化：避免動態創建 style 標籤）
+                countdownOverlay.classList.add('countdown-animate');
+            }
+            
+            countdownInterval = setInterval(() => {
+                count--;
+                if (count > 0) {
+                    countdownOverlay.textContent = count;
+                    if (!reducedMotion) {
+                        // 重置動畫：使用 class 切換而非直接操作 style（效能優化）
+                        countdownOverlay.classList.remove('countdown-animate');
+                        void countdownOverlay.offsetWidth;
+                        countdownOverlay.classList.add('countdown-animate');
+                    }
+                    playTone(440, 440, 0.15, 0.2); // 倒數音效
+                } else {
+                    clearInterval(countdownInterval);
+                    countdownInterval = null;
+                    countdownOverlay.remove();
+                    countdownOverlay = null;
+                    if (!reducedMotion) {
+                        playTone(880, 1760, 0.25, 0.3); // 開始音效
+                    }
+                    callback(); // 啟動遊戲
+                }
+            }, duration); // 使用傳入的倒數時間參數
+        }
+
+        async function startGame(forceNewGame = false) {
+            // 防止快速重複點擊
+            if (isStarting) return;
+            
+            // 檢查是否有保存的遊戲狀態，詢問使用者是否要繼續
+            if (!forceNewGame && hasSavedGameState()) {
+                const savedState = loadGameState();
+                if (savedState && savedState.score > 0) {
+                    // 顯示自定義詢問對話框 (無障礙和 UX 改善)
+                    const statsHtml = `分數: ${savedState.score}<br>時間: ${formatTime(savedState.elapsedTime)}<br>難度: ${savedState.difficultyLevel + 1}`;
+                    const continueGame = await showConfirm('發現保存的遊戲進度！', '是否繼續遊戲？（選擇「取消」將開始新遊戲）', statsHtml);
+                    
+                    if (continueGame) {
+                        // 繼續保存的遊戲
+                        restoreGame(savedState);
+                        return;
+                    } else {
+                        // 清除保存的遊戲，開始新遊戲
+                        clearSavedGameState();
+                    }
+                }
+            }
+            
+            // 初始化 FPS 計算
+            frameCount = 0;
+            fpsLastTime = performance.now();
+            fpsDisplay.textContent = 'FPS: --';
+            
+            // 初始化最高分差距顯示
+            updateHighScoreGapDisplay();
+            
+            // 使用統一清理函數（重置遊戲狀態）
+            cleanupGame(true);
+            
+            // 預先填充物件池（效能優化：避免遊戲一開始頻繁創建 DOM 元素）
+            prefillObjectPools();
+            
+            isStarting = true;
+            
+            gameRunning = true;
+            isPaused = false;
+            score = 0;
+            // 重置難度等級緩存
+            cachedDifficultyLevel = 0;
+            lastScoreForDifficulty = 0;
+            lives = GAME_CONFIG.MAX_LIVES; // 重置生命值
+            updateAvailablePowerupsCache(); // 初始化可用道具緩存
+            updateLivesDisplay(); // 更新生命值顯示
+            
+            // 重置遊戲統計
+            gameStats = {
+                coinsCollected: 0,
+                coinsSpawned: 0,
+                bombsHit: 0,
+                startTime: Date.now(),
+                elapsedTime: 0,
+                totalPausedTime: 0 // 重置總暫停時間
+            };
+            
+            // 重置暫停追蹤變數
+            pauseStartTime = 0;
+            
+            // 重置道具狀態
+            activePowerups = { shield: false, '2x': false };
+            Object.values(powerupTimers).forEach(t => clearTimeout(t));
+            powerupTimers = {};
+            updatePowerupIndicator();
+            player.classList.remove('player-invincible');
+            isInvincible = false; // 重置無敵狀態
+            invincibleReason = null; // 重置無敵原因
+            pausedByVisibility = false; // 重置可見性暫停狀態
+            
+            // 預先初始化 AudioContext（避免首次播放音效時的延遲）
+            initAudio();
+            
+            // 確保 AudioContext 處於運行狀態（用戶交互後才能播放聲音）
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            
+            // 重置連擊系統
+            resetCombo();
+            
+            // 更新遊戲邊界（支援 RWD）
+            updateGameBounds();
+            // 使用緩存的寬度初始化玩家位置（置中）
+            playerX = (cachedGameWidth - GAME_CONFIG.PLAYER_WIDTH) / 2;
+            keys.left = false;
+            keys.right = false;
+            spawnTimer = 0;
+            lastTime = performance.now();
+            // 使用 transform 初始化玩家位置
+            player.style.transform = 'translateX(-50%)';
+            player.classList.remove('player-catch');
+            // score 已在上面初始化 (line 2146)
+            targetScore = 0; // 初始化分數動畫目標值
+            scoreDisplay.textContent = '分數: 0';
+            updateDifficultyDisplay(); // 初始化難度顯示
+            startBtn.style.display = 'none';
+            resetHighScoreBtn.style.display = 'none';
+            gameOver.style.display = 'none';
+            isGameOver = false; // 效能優化：同步更新狀態變數
+            pauseOverlay.style.display = 'none';
+            
+            // 顯示倒數計時，然後啟動遊戲
+            showCountdown(async () => {
+                isStarting = false;
+                animationFrameId = requestAnimationFrame(gameLoop);
+                // 請求螢幕喚醒鎖（遊戲實際開始後）
+                await requestWakeLock();
+            });
+            
+            // 短暫鎖定後解鎖（但倒數期間不解鎖）
+        }
+
+        function spawnBubble(difficultyLevelOverride) {
+            if (!gameRunning) return;
+            
+            // 使用物件池取得 DOM 元素（效能優化），使用緩存的寬度避免重複 DOM 佈局計算
+            const bubble = getBubbleFromPool();
+            // 效能優化：產生一個隨機值用於位置，另一個用於類型判斷，減少 Math.random() 調用次數
+            const randomForPosition = Math.random();
+            const randomForType = Math.random();
+            const x = randomForPosition * (cachedGameWidth - GAME_CONFIG.BUBBLE_SIZE);
+            // 統一使用 transform 定位（效能更好，完全避免 Layout 迴流，使用 GPU 加速）
+            bubble.style.transform = `translate3d(${x}px, ${GAME_CONFIG.BUBBLE_START_Y}px, 0)`;
+            // 確保元素可見
+            bubble.style.display = '';
+            
+            // 效能優化：避免重複呼叫 getDifficultyLevel()，使用傳入的難度等級或即時計算
+            const difficultyLevel = difficultyLevelOverride !== undefined ? difficultyLevelOverride : getDifficultyLevel();
+            // 根據難度增加壞東西機率
+            const badChance = Math.min(GAME_CONFIG.BAD_CHANCE_MAX, GAME_CONFIG.BAD_CHANCE_BASE + (difficultyLevel * GAME_CONFIG.BAD_CHANCE_INCREASE));
+            const isBad = randomForType < badChance;
+            
+            // 道具機率生成（不在壞東西中）：檢查 randomForType 是否在 [badChance, badChance + POWERUP_CHANCE) 範圍內
+            // 修復：當 availablePowerupsCache 為空時跳過道具生成，避免 undefined 錯誤
+            let isPowerup = false;
+            let powerupType = null;
+            if (!isBad && availablePowerupsCache.length > 0 && randomForType >= badChance && randomForType < badChance + GAME_CONFIG.POWERUP_CHANCE) {
+                isPowerup = true;
+                // 效能優化：使用 randomForPosition（已經調用過的隨機值）來選擇道具，避免額外調用 Math.random()
+                powerupType = availablePowerupsCache[Math.floor(randomForPosition * availablePowerupsCache.length)];
+                bubble.textContent = powerupType.emoji;
+                // 道具也計入可收集的物品（用於命中率計算）
+                gameStats.coinsSpawned++;
+            } else if (!isBad) {
+                // 非壞東西即為好東西（金幣/寶石），計入命中率統計
+                gameStats.coinsSpawned++;
+                bubble.textContent = ITEM_EMOJIS.GOOD[Math.floor(randomForPosition * ITEM_EMOJIS.GOOD.length)];
+            } else {
+                bubble.textContent = ITEM_EMOJIS.BAD[Math.floor(randomForPosition * ITEM_EMOJIS.BAD.length)];
+            }
+            
+            gameContainer.appendChild(bubble);
+            
+            // 使用氣泡資料物件池（效能優化：避免每次創建新的 JS 物件）
+            const bubbleData = getBubbleDataFromPool();
+            bubbleData.element = bubble;
+            bubbleData.x = x;
+            bubbleData.y = GAME_CONFIG.BUBBLE_START_Y;
+            bubbleData.speed = getCurrentBubbleSpeed(difficultyLevel);
+            bubbleData.isBad = isBad;
+            bubbleData.isPowerup = isPowerup;
+            bubbleData.powerupType = powerupType;
+            bubbles.push(bubbleData);
+        }
+
+        function endGame() {
+            gameRunning = false;
+            isPaused = false;
+            playSound('gameover'); // 播放結束音效
+            triggerVibration('gameover'); // 遊戲結束觸覺震動
+            
+            // 釋放螢幕喚醒鎖
+            releaseWakeLock();
+            
+            // 取消動畫框架，防止遊戲結束後繼續消耗資源
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            
+            // 使用統一清理函數（不重置遊戲狀態，只清理資源）
+            cleanupGame(false);
+            
+            // 清除保存的遊戲狀態（遊戲結束後不再繼續）
+            clearSavedGameState();
+            
+            // 隱藏暫停畫面
+            pauseOverlay.style.display = 'none';
+            
+            // 更新最高分
+            if (score > highScore) {
+                highScore = score;
+                setStorageItem(GAME_CONFIG.HIGH_SCORE_KEY, highScore);
+                highScoreDisplay.textContent = '🎉 新紀錄!: ' + formatScore(highScore);
+                highScoreDisplay.setAttribute('aria-label', `新紀錄！最高分 ${highScore} 分`);
+                // 添加慶祝動畫
+                highScoreDisplay.classList.add('new-record');
+                setTimeout(() => highScoreDisplay.classList.remove('new-record'), 500);
+            } else {
+                highScoreDisplay.textContent = '最高分: ' + formatScore(highScore);
+                highScoreDisplay.setAttribute('aria-label', `最高分 ${highScore} 分`);
+            }
+            
+            finalScore.textContent = '分數: ' + formatScore(score);
+            finalScore.setAttribute('aria-label', `遊戲結束，本次得分 ${score} 分`);
+            
+            // 更新遊戲結束畫面的統計數據
+            statTimeEnd.textContent = formatTime(gameStats.elapsedTime);
+            statCoinsEnd.textContent = gameStats.coinsCollected;
+            statBombsEnd.textContent = gameStats.bombsHit;
+            
+            // 計算並顯示命中率（接到的好東西/看到的好東西總數）
+            const accuracy = gameStats.coinsSpawned > 0 
+                ? Math.round((gameStats.coinsCollected / gameStats.coinsSpawned) * 100) 
+                : 0;
+            statAccuracy.textContent = accuracy + '%';
+            statAccuracy.setAttribute('aria-label', `命中率 ${accuracy}%，接到 ${gameStats.coinsCollected} / 看到 ${gameStats.coinsSpawned} 個金幣/道具`);
+            
+            // 顯示最高連擊記錄
+            statBestComboEnd.textContent = bestCombo > 0 ? `${bestCombo} (x${Math.min(MAX_COMBO_MULTIPLIER, 1 + Math.floor(bestCombo / 3))})` : '0';
+            
+            // 檢查並更新最佳記錄
+            let hasNewBest = false;
+            if (gameStats.elapsedTime > bestTime) {
+                bestTime = gameStats.elapsedTime;
+                setStorageItem(GAME_CONFIG.BEST_TIME_KEY, bestTime);
+                hasNewBest = true;
+            }
+            if (gameStats.coinsCollected > bestCoins) {
+                bestCoins = gameStats.coinsCollected;
+                setStorageItem(GAME_CONFIG.BEST_COINS_KEY, bestCoins);
+                hasNewBest = true;
+            }
+            // 儲存最佳連擊記錄（永久儲存）
+            if (bestCombo > bestComboPersistent) {
+                bestComboPersistent = bestCombo;
+                setStorageItem(GAME_CONFIG.BEST_COMBO_KEY, bestComboPersistent);
+                hasNewBest = true;
+            }
+            
+            // 顯示最佳記錄
+            if (bestTime > 0 || bestCoins > 0 || bestComboPersistent > 0) {
+                bestRecordsDiv.classList.add('visible');
+                bestTimeEnd.textContent = formatTime(bestTime);
+                bestCoinsEnd.textContent = bestCoins;
+                bestComboEnd.textContent = bestComboPersistent > 0 ? `${bestComboPersistent} (x${Math.min(MAX_COMBO_MULTIPLIER, 1 + Math.floor(bestComboPersistent / 3))})` : '0';
+                if (hasNewBest) {
+                    bestRecordsDiv.classList.add('highlight');
+                }
+            } else {
+                bestRecordsDiv.classList.remove('visible');
+                bestRecordsDiv.classList.remove('highlight');
+            }
+            
+            // 顯示遊戲表現評價
+            showPerformanceRating();
+            
+            gameOver.style.display = 'flex';
+            isGameOver = true; // 效能優化：同步更新狀態變數
+            
+            // 解鎖開始按鈕
+            isStarting = false;
+        }
+        
+        // 計算遊戲表現評價
+        function showPerformanceRating() {
+            const ratingElement = document.getElementById('performanceRating');
+            
+            // 根據分數、存活時間和收集金幣數計算評價
+            const time = gameStats.elapsedTime;
+            const coins = gameStats.coinsCollected;
+            const bombsHit = gameStats.bombsHit;
+            
+            // 評分邏輯：考慮分數、存活時間、金幣收集效率
+            let rating = 'd';
+            let text = '💀 再接再厲！';
+            
+            // 計算綜合評分 (0-100)
+            let totalScore = 0;
+            
+            // 分數貢獻 (最高 50 分)
+            if (score >= 5000) totalScore += 50;
+            else if (score >= 3000) totalScore += 40;
+            else if (score >= 2000) totalScore += 30;
+            else if (score >= 1000) totalScore += 20;
+            else if (score >= 500) totalScore += 10;
+            else totalScore += score / 50;
+            
+            // 存活時間貢獻 (最高 30 分)
+            if (time >= 180) totalScore += 30;
+            else if (time >= 120) totalScore += 25;
+            else if (time >= 60) totalScore += 20;
+            else if (time >= 30) totalScore += 15;
+            else if (time >= 10) totalScore += 10;
+            else totalScore += time / 3;
+            
+            // 金幣效率獎勵 (最高 20 分)
+            if (time > 0) {
+                const coinsPerSecond = coins / time;
+                if (coinsPerSecond >= 3) totalScore += 20;
+                else if (coinsPerSecond >= 2) totalScore += 15;
+                else if (coinsPerSecond >= 1) totalScore += 10;
+                else totalScore += coinsPerSecond * 10;
+            }
+            
+            // 扣分：被炸彈擊中（最低為 0，避免負分）
+            totalScore = Math.max(0, totalScore - bombsHit * 5);
+            
+            // 根據總分評定等級
+            if (totalScore >= 80 || (score > highScore && score > 0)) {
+                rating = 's';
+                text = '🏆 神一般的表現！';
+            } else if (totalScore >= 60) {
+                rating = 'a';
+                text = '✨ 厲害厲害！';
+            } else if (totalScore >= 40) {
+                rating = 'b';
+                text = '👍 很不錯！';
+            } else if (totalScore >= 20) {
+                rating = 'c';
+                text = '😅 還可以~';
+            } else {
+                rating = 'd';
+                text = '💀 再接再厲！';
+            }
+            
+            // 新紀錄時特殊評價
+            if (score > highScore && score > 0) {
+                text = '🎉 新紀錄！' + text;
+            }
+            
+            ratingElement.textContent = text;
+            ratingElement.className = 'rating-' + rating;
+        }
+
+        startBtn.addEventListener('click', startGame);
+        restartBtn.addEventListener('click', startGame);
+
+        // 處理 PWA Shortcuts 快速啟動參數
+        (function handleShortcutParams() {
+            const params = new URLSearchParams(window.location.search);
+            const action = params.get('action');
+            
+            if (action === 'play') {
+                // 移除參數並開始遊戲
+                window.history.replaceState({}, '', window.location.pathname);
+                // 延遲確保其他初始化完成
+                setTimeout(() => startGame(), 100);
+            } else if (action === 'help') {
+                // 移除參數並顯示說明
+                window.history.replaceState({}, '', window.location.pathname);
+                setTimeout(() => {
+                    helpOverlay.style.display = 'flex';
+                    isPaused = true;
+                    pausedByHelp = true;
+                }, 100);
+            }
+        })();
+
+        // 重置最高分按鈕 (使用自定義對話框改善 UX 和無障礙)
+        resetHighScoreBtn.addEventListener('click', () => {
+            showConfirm('重置最高分', '確定要重置最高分嗎？這個動作無法復原。').then((confirmed) => {
+                if (confirmed) {
+                    highScore = 0;
+                    setStorageItem(GAME_CONFIG.HIGH_SCORE_KEY, 0);
+                    highScoreDisplay.textContent = '最高分: 0';
+                    updateHighScoreGapDisplay();
+                }
+            });
+        });
+
+        // 分享成績按鈕（使用 Web Share API）
+        shareBtn.addEventListener('click', async () => {
+            const shareData = {
+                title: '🦞 龍蝦大戰',
+                text: `我在「龍蝦大戰」獲得 ${score} 分！🏆 最高分: ${highScore} | 時間: ${formatTime(gameStats.elapsedTime)} | 金幣: ${gameStats.coinsCollected} 💰`,
+                url: window.location.href
+            };
+            
+            // 檢查是否支持 Web Share API
+            if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+                try {
+                    await navigator.share(shareData);
+                } catch (err) {
+                    if (err.name !== 'AbortError') {
+                        console.warn('分享失敗:', err);
+                        // 提供使用者回饋（分享被拒或失敗時）
+                        const originalText = shareBtn.textContent;
+                        shareBtn.textContent = '❌ 分享失敗';
+                        setTimeout(() => {
+                            shareBtn.textContent = originalText;
+                        }, 2000);
+                    }
+                }
+            } else if (navigator.share) {
+                // 支援 Web Share 但不完全支援 canShare 的舊版瀏覽器
+                try {
+                    await navigator.share(shareData);
+                } catch (err) {
+                    if (err.name !== 'AbortError') {
+                        // 回退到剪貼簿
+                        copyToClipboard(shareData.text + ' ' + shareData.url);
+                    }
+                }
+            } else {
+                // 不支援 Web Share API，回退到剪貼簿
+                copyToClipboard(shareData.text + ' ' + shareData.url);
+            }
+        });
+
+        // 複製到剪貼簿輔助函數
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                // 顯示複製成功提示
+                const originalText = shareBtn.textContent;
+                shareBtn.textContent = '✅ 已複製！';
+                setTimeout(() => {
+                    shareBtn.textContent = originalText;
+                }, 2000);
+            }).catch(err => {
+                console.warn('複製失敗:', err);
+                // 提供使用者回饋（當剪貼簿權限被拒時）
+                const originalText = shareBtn.textContent;
+                shareBtn.textContent = '❌ 複製失敗';
+                setTimeout(() => {
+                    shareBtn.textContent = originalText;
+                }, 2000);
+            });
+        }
+
+        // 暫停/繼續按鈕
+        resumeBtn.addEventListener('click', togglePause);
+        
+        // 返回選單按鈕
+        menuBtn.addEventListener('click', () => {
+            // 停止遊戲並返回選單
+            gameRunning = false;
+            isPaused = false;
+            
+            // 使用統一清理函數（重置遊戲狀態）
+            cleanupGame(true);
+            
+            // 隱藏所有遊戲 UI
+            pauseOverlay.style.display = 'none';
+            gameOver.style.display = 'none';
+            isGameOver = false; // 效能優化：同步更新狀態變數
+            helpOverlay.style.display = 'none'; // 確保說明視窗也關閉
+            
+            // 顯示開始按鈕
+            startBtn.style.display = '';
+            resetHighScoreBtn.style.display = '';
+            
+            // 更新分數顯示
+            scoreDisplay.textContent = '分數: 0';
+            updateLivesDisplay();
+        });
+        
+        // 音效開關
+        const volumeSlider = document.getElementById('volumeSlider');
+        const volumeContainer = document.getElementById('volumeContainer');
+        const volumeIcon = volumeContainer.querySelector('span:first-child'); // 效能優化：緩存音量圖示元素引用
+        let gameVolume = parseInt(getStorageItem(GAME_CONFIG.VOLUME_KEY, '30'));
+        volumeSlider.value = gameVolume;
+        
+        // 更新音量圖示和滑桿狀態
+        function updateVolumeIcon() {
+            // 如果聲音被關閉，統一顯示靜音圖標並禁用滑桿
+            if (!soundEnabled || gameVolume === 0) {
+                volumeIcon.textContent = '🔇';
+                volumeSlider.disabled = true;
+            } else {
+                // 啟用音量滑桿
+                volumeSlider.disabled = false;
+                if (gameVolume < 50) {
+                    volumeIcon.textContent = '🔈';
+                } else {
+                    volumeIcon.textContent = '🔊';
+                }
+            }
+        }
+        updateVolumeIcon();
+        
+        // 點擊音效按鈕切換聲音開關
+        soundBtn.addEventListener('click', () => {
+            soundEnabled = !soundEnabled;
+            soundBtn.textContent = soundEnabled ? '🔊' : '🔇';
+            debouncedSaveSoundEnabled(soundEnabled);
+            // 同步更新音量圖標和滑桿狀態
+            updateVolumeIcon();
+        });
+        
+        // 點擊震動按鈕切換震動開關
+        vibrationBtn.addEventListener('click', () => {
+            vibrationEnabled = !vibrationEnabled;
+            vibrationBtn.textContent = vibrationEnabled ? '📳' : '📴';
+            debouncedSaveVibrationEnabled(vibrationEnabled);
+        });
+        
+        // 音量滑桿控制
+        soundBtn.addEventListener('mouseenter', () => {
+            volumeContainer.classList.add('show');
+        });
+        volumeContainer.addEventListener('mouseleave', () => {
+            volumeContainer.classList.remove('show');
+        });
+        
+        // 音量滑桿控制（使用 debounce 減少 localStorage 寫入頻率）
+        const debouncedVolumeSave = debounce((value) => {
+            setStorageItem(GAME_CONFIG.VOLUME_KEY, value);
+        }, 500);
+        
+        volumeSlider.addEventListener('input', (e) => {
+            gameVolume = parseInt(e.target.value);
+            updateVolumeIcon();
+            // 使用 debounced 儲存，避免每次滑動都寫入 localStorage
+            debouncedVolumeSave(gameVolume);
+        });
+        
+        // 暫停按鈕
+        pauseBtn.addEventListener('click', togglePause);
+        
+        // ==================== Screen Wake Lock (防止遊戲時螢幕休眠) ====================
+        let wakeLock = null;
+        
+        // 請求螢幕喚醒鎖
+        async function requestWakeLock() {
+            if ('wakeLock' in navigator && wakeLock === null) {
+                try {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    // 當 wake lock 被自動釋放時（例如系統資源不足、用戶按下電源鍵等），
+                    // 嘗試重新取得（遊戲仍在執行時）
+                    wakeLock.addEventListener('release', () => {
+                        wakeLock = null;
+                        // 只有遊戲仍在執行時才重新請求 wake lock
+                        if (gameRunning && !isPaused) {
+                            // 使用 setTimeout 延遲重試，避免立即重試失敗
+                            // 注意：setTimeout 不應直接傳入 async 函數，改為在內部調用並捕獲錯誤
+                            setTimeout(() => {
+                                if (gameRunning && !isPaused) {
+                                    requestWakeLock().catch(() => {});
+                                }
+                            }, 1000);
+                        }
+                    });
+                } catch (err) {
+                    // 不支援或無法取得 wake lock 時靜默失敗
+                    wakeLock = null;
+                }
+            }
+        }
+        
+        // 釋放螢幕喚醒鎖
+        async function releaseWakeLock() {
+            if (wakeLock !== null) {
+                try {
+                    await wakeLock.release();
+                } catch (err) {
+                    // 忽略釋放錯誤
+                }
+                wakeLock = null;
+            }
+        }
+        
+        // 當用戶切換分頁時釋放 wake lock（系統會自動釋放，但手動處理更穩健）
+        // 注意：此邏輯已整合到上方的 visibilitychange 監聽器中 (line ~1919)
+        // 這裡保留函數備用，但不再新增重複的事件監聽
+
+        // ==================== PWA 支援（離線遊戲）====================
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then((registration) => {
+                        // 監聽 Service Worker 更新
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            if (newWorker) {
+                                newWorker.addEventListener('statechange', () => {
+                                    // 當新 SW 安裝完成且準備好時，通知用戶更新
+                                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                        showUpdateNotification();
+                                    }
+                                });
+                            }
+                        });
+                    })
+                    .catch(() => {
+                        // Service Worker 註冊失敗時靜默忽略
+                    });
+            });
+            
+            // 處理來自 Service Worker 的更新提示
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                // 當 controller 變化時，重新載入頁面以套用新版本
+                window.location.reload();
+            });
+            
+            // ==================== PWA 安裝提示 ====================
+            // 監聽 PWA 安裝可用事件，主動提示用戶安裝
+            let deferredPrompt;
+            window.addEventListener('beforeinstallprompt', (e) => {
+                // 防止默認的迷你安裝條顯示
+                e.preventDefault();
+                // 儲存事件以便後續觸發
+                deferredPrompt = e;
+                // 顯示自定義的安裝提示（遊戲啟動後 3 秒顯示）
+                setTimeout(() => {
+                    showInstallPrompt();
+                }, 3000);
+            });
+            
+            // 顯示自定義安裝提示
+            function showInstallPrompt() {
+                // 如果已經安裝過或提示已顯示，則跳過
+                if (localStorage.getItem('pwaInstallPromptDismissed')) return;
+                if (document.getElementById('installPrompt')) return;
+                
+                const prompt = document.createElement('div');
+                prompt.id = 'installPrompt';
+                prompt.style.cssText = `
+                    position: fixed;
+                    bottom: 20px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: linear-gradient(135deg, #00d4ff, #0099cc);
+                    color: white;
+                    padding: 15px 25px;
+                    border-radius: 25px;
+                    font-size: 16px;
+                    font-weight: bold;
+                    box-shadow: 0 4px 15px rgba(0, 212, 255, 0.4);
+                    z-index: 10000;
+                    cursor: pointer;
+                    animation: slideUp 0.3s ease-out;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                `;
+                prompt.innerHTML = '📱 將遊戲安裝到主螢幕 🦞';
+                
+                // 點擊安裝
+                prompt.addEventListener('click', async () => {
+                    if (!deferredPrompt) return;
+                    // 顯示系統安裝提示
+                    deferredPrompt.prompt();
+                    // 等待用戶回應
+                    const { outcome } = await deferredPrompt.userChoice;
+                    // 清理
+                    deferredPrompt = null;
+                    prompt.remove();
+                    // 記住用戶的選擇
+                    if (outcome === 'dismissed') {
+                        localStorage.setItem('pwaInstallPromptDismissed', 'true');
+                    }
+                });
+                
+                document.body.appendChild(prompt);
+                
+                // 8 秒後自動隱藏
+                setTimeout(() => {
+                    if (prompt.parentNode) {
+                        prompt.style.animation = 'slideDown 0.3s ease-out';
+                        setTimeout(() => {
+                            if (prompt.parentNode) prompt.remove();
+                        }, 300);
+                    }
+                }, 8000);
+            }
+        }
+        
+        // 顯示更新通知
+        function showUpdateNotification() {
+            const notification = document.createElement('div');
+            notification.id = 'updateNotification';
+            notification.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: linear-gradient(135deg, #00d4ff, #0099cc);
+                color: white;
+                padding: 15px 25px;
+                border-radius: 25px;
+                font-size: 16px;
+                font-weight: bold;
+                box-shadow: 0 4px 15px rgba(0, 212, 255, 0.4);
+                z-index: 10000;
+                cursor: pointer;
+                animation: slideUp 0.3s ease-out;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            `;
+            notification.innerHTML = '🎮 有新版本可用！點擊更新 🦞';
+            
+            // 點擊更新
+            notification.addEventListener('click', () => {
+                window.location.reload();
+            });
+            
+            document.body.appendChild(notification);
+            
+            // 5 秒後自動隱藏（如果用戶沒興趣）
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.style.animation = 'slideDown 0.3s ease-out';
+                    setTimeout(() => notification.remove(), 300);
+                }
+            }, 5000);
+        }
+        
+        // 新增動畫 keyframes
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideUp {
+                from { transform: translateX(-50%) translateY(100px); opacity: 0; }
+                to { transform: translateX(-50%) translateY(0); opacity: 1; }
+            }
+            @keyframes slideDown {
+                from { transform: translateX(-50%) translateY(0); opacity: 1; }
+                to { transform: translateX(-50%) translateY(100px); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
