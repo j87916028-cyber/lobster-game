@@ -81,7 +81,8 @@
             height: 80px;
             font-size: 65px;
             bottom: 85px;
-            left: 360px;
+            left: 50%;
+            transform: translateX(-50%);
             transition: left 0.05s linear;
             z-index: 10;
             filter: drop-shadow(0 8px 8px rgba(0,0,0,0.4));
@@ -332,7 +333,7 @@
             { id: 'x2score', name: '🎯 2倍分', price: 800, maxLevel: 5, desc: '雙倍分數' }
         ];
         
-        let playerX = 360;
+        let playerX = window.innerWidth / 2 - 40;
         let score = 0;
         let gameRunning = false;
         let items = [];
@@ -358,7 +359,7 @@
             if (!gameRunning) return;
             const speed = 8 + (gameState.inventory.speed || 1) * 2;
             if (keys['ArrowLeft'] || keys['a']) playerX = Math.max(0, playerX - speed);
-            if (keys['ArrowRight'] || keys['d']) playerX = Math.min(720, playerX + speed);
+            if (keys['ArrowRight'] || keys['d']) playerX = Math.min(window.innerWidth - 80, playerX + speed);
             player.style.left = playerX + 'px';
             requestAnimationFrame(updatePlayerPosition);
         }
@@ -372,7 +373,7 @@
             if (!gameRunning || !mobileMoving) return;
             const speed = 8 + (gameState.inventory.speed || 1) * 2;
             if (mobileMoving === 'left') playerX = Math.max(0, playerX - speed);
-            if (mobileMoving === 'right') playerX = Math.min(720, playerX + speed);
+            if (mobileMoving === 'right') playerX = Math.min(window.innerWidth - 80, playerX + speed);
             player.style.left = playerX + 'px';
             requestAnimationFrame(updateMobilePosition);
         }
@@ -410,7 +411,7 @@ function startGame() {
             items = [];
             lives = 3 + (gameState.inventory.life || 0);
             combo = 0;
-            playerX = 360;
+            playerX = window.innerWidth / 2 - 40;
             player.style.left = playerX + 'px';
             player.classList.add('bouncing');
             updateLives();
@@ -426,7 +427,7 @@ function startGame() {
             if (!gameRunning) return;
             const item = document.createElement('div');
             item.className = 'item';
-            item.style.left = Math.random() * 750 + 'px';
+            item.style.left = Math.random() * (window.innerWidth - 60) + 'px';
             item.style.top = '-50px';
             
             const rand = Math.random();
@@ -764,7 +765,7 @@ function startLuckyRain() {
         
         const item = document.createElement('div');
         item.className = 'item';
-        item.style.left = Math.random() * 750 + 'px';
+        item.style.left = Math.random() * (window.innerWidth - 60) + 'px';
         item.style.top = '-50px';
         item.style.animationDuration = '1.5s';
         
@@ -791,6 +792,7 @@ function showEventText(text) {
         position: absolute;
         top: 50%;
         left: 50%;
+            transform: translateX(-50%);
         transform: translate(-50%, -50%);
         font-size: 3rem;
         font-weight: bold;
