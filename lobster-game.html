@@ -269,6 +269,17 @@
             color: #ff6b6b;
         }
         
+        #highScoreGap.near {
+            color: #ffd700;
+            animation: nearGlow 1s infinite alternate;
+            will-change: opacity, transform;
+        }
+        
+        @keyframes nearGlow {
+            0% { text-shadow: 0 0 5px rgba(255,215,0,0.5); transform: scale(1); }
+            100% { text-shadow: 0 0 15px rgba(255,215,0,0.8); transform: scale(1.05); }
+        }
+        
         #highScoreGap.ahead {
             color: #00ff88;
         }
@@ -2317,6 +2328,7 @@
 
         // 難度系統參數（使用 GAME_CONFIG 中的值）
         const DIFFICULTY_INCREASE_PER = GAME_CONFIG.DIFFICULTY_INCREASE_PER;
+        const NEAR_RECORD_THRESHOLD = 0.8; // 接近紀錄門檻（80%）
         
         // 從 GAME_CONFIG 提取常用難度參數（避免重複查閱）
         const MIN_SPAWN_INTERVAL = GAME_CONFIG.MIN_SPAWN_INTERVAL;
@@ -2622,9 +2634,14 @@
                 // 創新紀錄
                 highScoreGapDisplay.textContent = '🏆 +' + formatScore(diff);
                 highScoreGapDisplay.className = 'record';
+            } else if (score >= highScore * NEAR_RECORD_THRESHOLD) {
+                // 接近紀錄（80%以上）
+                const needed = highScore - score;
+                highScoreGapDisplay.textContent = '🔥 差 ' + formatScore(needed);
+                highScoreGapDisplay.className = 'near';
             } else if (diff < 0) {
                 // 落後
-                highScoreGapDisplay.textContent = '📍 ' + formatScore(diff);
+                highScoreGapDisplay.textContent = '📍 差 ' + formatScore(-diff);
                 highScoreGapDisplay.className = 'behind';
             } else {
                 // 平手
