@@ -468,7 +468,7 @@ function startGame() {
                 const itemRect = item.element.getBoundingClientRect();
                 
                 if (itemRect.bottom > playerRect.top + 20 && itemRect.top < playerRect.bottom &&
-                    itemRect.right > playerRect.left + 10 && itemRect.left < playerRect.right - 10) {
+                    itemRect.right > playerRect.left + 10 && itemRect.left < itemRect.right - 10) {
                     handleCollision(item, i);
                 }
                 
@@ -518,14 +518,15 @@ function startGame() {
                 if(item.type === 'coin') createParticles(playerX + 30, 380, '#ffd700');
                 else if(item.type === 'gem') createParticles(playerX + 30, 380, '#00ffff');
             
-            // 確保道具被正確移除
+            // 立即從陣列移除（防止 updateGame 同一 frame 重複觸發碰撞），DOM 延後移除
+            const arrIdx = items.indexOf(item);
+            if (arrIdx > -1) items.splice(arrIdx, 1);
+            
             setTimeout(() => {
                 try {
                     if (item.element && item.element.parentNode) {
                         item.element.remove();
                     }
-                    const idx = items.indexOf(item);
-                    if (idx > -1) items.splice(idx, 1);
                 } catch(e) {}
             }, 300);
         }
