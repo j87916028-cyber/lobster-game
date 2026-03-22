@@ -74,15 +74,15 @@ const urlsToCache = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => {
-        return cache.addAll(urlsToCache);
+      .then((cache) => cache.addAll(urlsToCache))
+      .then(() => {
+        // 快取完成後才啟用，確保所有資源都正確緩存後才接管客戶端
+        self.skipWaiting();
       })
       .catch(() => {
-        // 緩存安裝失敗時靜默忽略
+        // 快取安裝失敗時靜默忽略，SW 保持等待狀態，瀏覽器稍後會重試
       })
   );
-  // 立即啟用 service worker
-  self.skipWaiting();
 });
 
 // 定期更新緩存（後台更新）- Periodic Background Sync 並非所有瀏覽器都支援
