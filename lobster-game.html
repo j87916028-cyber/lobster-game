@@ -553,7 +553,10 @@
             color: #00d4ff;
         }
         #statAccuracy {
-            color: #ffd700; /* 命中率用金色突出顯示 */
+            color: #ffd700; /* 收集率用金色突出顯示 */
+        }
+        #statDodgeRate {
+            color: #ff6b6b; /* 躲避率用紅色突出顯示（危對應炸彈）*/
         }
         #restartBtn {
             padding: 15px 30px;
@@ -1244,6 +1247,7 @@
                 <span>💰 <span id="statCoinsEnd">0</span></span>
                 <span>💣 <span id="statBombsEnd">0</span></span>
                 <span>🎯 <span id="statAccuracy">0%</span></span>
+                <span>💣 <span id="statDodgeRate">0%</span></span>
                 <span>🔥 <span id="statBestComboEnd">0</span></span>
             </div>
             <div id="bestRecords" aria-label="最佳記錄">
@@ -1424,7 +1428,8 @@
         const statCoinsEnd = document.getElementById('statCoinsEnd');
         const statBombsEnd = document.getElementById('statBombsEnd');
         const statBestComboEnd = document.getElementById('statBestComboEnd');
-        const statAccuracy = document.getElementById('statAccuracy'); // 新增：命中率顯示
+        const statAccuracy = document.getElementById('statAccuracy'); // 收集率顯示
+        const statDodgeRate = document.getElementById('statDodgeRate'); // 躲避率顯示
         // 最佳記錄元素
         const bestRecordsDiv = document.getElementById('bestRecords');
         const bestTimeEnd = document.getElementById('bestTimeEnd');
@@ -1583,6 +1588,7 @@
                 totalPausedTime: gameStats.totalPausedTime || 0, // 保存總暫停時間
                 coinsCollected: gameStats.coinsCollected,
                 coinsSpawned: gameStats.coinsSpawned,
+                bombsSpawned: gameStats.bombsSpawned,
                 bombsHit: gameStats.bombsHit,
                 activePowerups: activePowerups,
                 isInvincible: isInvincible,
@@ -1666,6 +1672,7 @@
             gameStats = {
                 coinsCollected: savedState.coinsCollected || 0,
                 coinsSpawned: savedState.coinsSpawned || 0,
+                bombsSpawned: savedState.bombsSpawned || 0,
                 bombsHit: savedState.bombsHit || 0,
                 startTime: Date.now() - (savedState.elapsedTime * 1000) - (savedState.totalPausedTime || 0), // 調整開始時間以繼續計時（扣除暫停時間）
                 elapsedTime: savedState.elapsedTime || 0,
@@ -1852,7 +1859,8 @@
         // 遊戲統計數據
         let gameStats = {
             coinsCollected: 0,
-            coinsSpawned: 0, // 新增：追蹤生成的金幣總數（用於計算命中率）
+            coinsSpawned: 0, // 追蹤生成的金幣/道具總數（用於計算收集率）
+            bombsSpawned: 0, // 追蹤生成的炸彈總數（用於計算閃避率）
             bombsHit: 0,
             startTime: 0,
             elapsedTime: 0,
@@ -3822,6 +3830,7 @@
             gameStats = {
                 coinsCollected: 0,
                 coinsSpawned: 0,
+                bombsSpawned: 0,
                 bombsHit: 0,
                 startTime: Date.now(),
                 elapsedTime: 0,
@@ -3921,6 +3930,8 @@
                 bubble.textContent = ITEM_EMOJIS.GOOD[Math.floor(randomForPosition * ITEM_EMOJIS.GOOD.length)];
             } else {
                 bubble.textContent = ITEM_EMOJIS.BAD[Math.floor(randomForPosition * ITEM_EMOJIS.BAD.length)];
+                // 炸彈計入閃避率統計
+                gameStats.bombsSpawned++;
             }
             
             gameContainer.appendChild(bubble);
@@ -3983,12 +3994,19 @@
             statCoinsEnd.textContent = gameStats.coinsCollected;
             statBombsEnd.textContent = gameStats.bombsHit;
             
-            // 計算並顯示命中率（接到的好東西/看到的好東西總數）
+            // 計算並顯示收集率（接到的好東西/看到的好東西總數）
             const accuracy = gameStats.coinsSpawned > 0 
                 ? Math.round((gameStats.coinsCollected / gameStats.coinsSpawned) * 100) 
                 : 0;
             statAccuracy.textContent = accuracy + '%';
-            statAccuracy.setAttribute('aria-label', `命中率 ${accuracy}%，接到 ${gameStats.coinsCollected} / 看到 ${gameStats.coinsSpawned} 個金幣/道具`);
+            statAccuracy.setAttribute('aria-label', `收集率 ${accuracy}%，接到 ${gameStats.coinsCollected} / 看到 ${gameStats.coinsSpawned} 個金幣/道具`);
+            
+            // 計算並顯示躲避率（躲過的炸彈/看到的炸彈總數）
+            const dodgeRate = gameStats.bombsSpawned > 0
+                ? Math.round(((gameStats.bombsSpawned - gameStats.bombsHit) / gameStats.bombsSpawned) * 100)
+                : 100;
+            statDodgeRate.textContent = dodgeRate + '%';
+            statDodgeRate.setAttribute('aria-label', `躲避率 ${dodgeRate}%，躲過 ${gameStats.bombsSpawned - gameStats.bombsHit} / 看到 ${gameStats.bombsSpawned} 個炸彈`);
             
             // 顯示最高連擊記錄
             statBestComboEnd.textContent = bestCombo > 0 ? `${bestCombo} (x${Math.min(MAX_COMBO_MULTIPLIER, 1 + Math.floor(bestCombo / 3))})` : '0';
