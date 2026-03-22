@@ -470,7 +470,7 @@ function startGame() {
                 const itemRect = item.element.getBoundingClientRect();
                 
                 if (itemRect.bottom > playerRect.top + 20 && itemRect.top < playerRect.bottom &&
-                    itemRect.right > playerRect.left + 10 && itemRect.left < itemRect.right - 10) {
+                    itemRect.right > playerRect.left + 10 && itemRect.left < playerRect.right - 10) {
                     handleCollision(item, i);
                 }
                 
