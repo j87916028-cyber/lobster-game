@@ -2148,6 +2148,7 @@
             element.style.top = '';
             element.style.background = '';
             element.style.display = '';
+            element.style.transform = '';
             // 清除自定義屬性（確保回收的元素是乾淨的）
             element._animationEndHandler = null;
             
@@ -2588,8 +2589,7 @@
         function showScorePopup(x, y, points, customText) {
             const popup = getPopupFromPool('score-popup');
             popup.textContent = customText || '+' + formatScore(points);
-            popup.style.left = x + 'px';
-            popup.style.top = y + 'px';
+            popup.style.transform = 'translate3d(' + x + 'px,' + y + 'px,0)';
             gameContainer.appendChild(popup);
             
             // 無障礙：如果使用者偏好減少動態效果，則不使用動畫，直接短暫顯示後回收
@@ -2808,8 +2808,7 @@
             // 顯示道具彈出動畫（使用物件池）
             const popup = getPopupFromPool('powerup-popup');
             popup.textContent = powerup.name + '！';
-            popup.style.left = x + 'px';
-            popup.style.top = y + 'px';
+            popup.style.transform = 'translate3d(' + x + 'px,' + y + 'px,0)';
             popup.style.background = powerup.type === 'shield' ? 'rgba(0,191,255,0.8)' : 
                                       powerup.type === '2x' ? 'rgba(255,215,0,0.8)' : 'rgba(255,0,0,0.8)';
             gameContainer.appendChild(popup);
