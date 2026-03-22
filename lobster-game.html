@@ -4288,12 +4288,23 @@
             debouncedSaveVibrationEnabled(vibrationEnabled);
         });
         
-        // 音量滑桿控制
+        // 音量滑桿控制（支援 mouseenter + touchstart，確保觸控裝置也能用）
         soundBtn.addEventListener('mouseenter', () => {
             volumeContainer.classList.add('show');
         });
+        soundBtn.addEventListener('touchstart', (e) => {
+            // 觸控裝置：點擊音效按鈕時直接顯示音量滑桿
+            e.preventDefault(); // 防止觸發 click 導致音效切換
+            volumeContainer.classList.add('show');
+        }, { passive: false });
         volumeContainer.addEventListener('mouseleave', () => {
             volumeContainer.classList.remove('show');
+        });
+        // 點擊音量滑桿區域外時自動隱藏（支援觸控）
+        document.addEventListener('touchstart', (e) => {
+            if (!soundBtn.contains(e.target) && !volumeContainer.contains(e.target)) {
+                volumeContainer.classList.remove('show');
+            }
         });
         
         // 音量滑桿控制（使用 debounce 減少 localStorage 寫入頻率）
