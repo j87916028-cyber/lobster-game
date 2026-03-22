@@ -386,6 +386,7 @@
                 updateMobilePosition();
             });
             btn.addEventListener('touchend', stopMove);
+            btn.addEventListener('touchcancel', stopMove);
         });
         
         let paused = false;
@@ -565,6 +566,11 @@ function startGame() {
             gameRunning = false;
             clearInterval(gameLoop);
             clearInterval(spawnLoop);
+            if (luckyRainTimer !== null) {
+                clearTimeout(luckyRainTimer);
+                luckyRainTimer = null;
+            }
+            luckyRainActive = false;
             player.classList.remove('bouncing');
             
             if (score > gameState.highScore) {
@@ -781,8 +787,10 @@ function startLuckyRain() {
         rainCount++;
     }, 200);
     
-    // 30秒後再次觸發
-    luckyRainTimer = setTimeout(startLuckyRain, 30000);
+    // 30秒後再次觸發（遊戲結束後不再排程，避免計時器無限累積）
+    if (gameRunning) {
+        luckyRainTimer = setTimeout(startLuckyRain, 30000);
+    }
 }
 
 // 事件文字顯示
@@ -922,7 +930,10 @@ function initSpecialFeatures() {
     updateLobsterEvolution();
     updateDayNightTheme();
     
-    // 啟動幸運雨定時器
+    // 啟動幸運雨定時器（先清除舊計時器，避免重複呼叫導致計時器累積）
+    if (luckyRainTimer !== null) {
+        clearTimeout(luckyRainTimer);
+    }
     luckyRainTimer = setTimeout(startLuckyRain, 30000);
 }
 
