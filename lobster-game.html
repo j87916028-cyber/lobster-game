@@ -2010,6 +2010,7 @@
                 // 重置難度等級緩存
                 cachedDifficultyLevel = 0;
                 lastScoreForDifficulty = 0;
+                lastDisplayedDifficultyLevel = -1;
                 
                 // 重置道具狀態
                 activePowerups = { shield: false, '2x': false };
@@ -2361,6 +2362,7 @@
         // 計算當前難度等級（效能優化：使用緩存避免重複計算）
         let cachedDifficultyLevel = 0;
         let lastScoreForDifficulty = 0;
+        let lastDisplayedDifficultyLevel = -1; // 快取最後顯示的難度等級，避免無謂的 DOM 更新
 
         function getDifficultyLevel() {
             // 只在分數變化時重新計算難度等級
@@ -2631,12 +2633,16 @@
         // 更新難度等級顯示（使用緩存的 DOM 元素）
         function updateDifficultyDisplay() {
             const level = getDifficultyLevel();
+            // 效能優化：難度等級未變化時跳過 DOM 更新（僅 pointsToNext 變化不足以重建整個 innerHTML）
+            if (level === lastDisplayedDifficultyLevel) return;
+            lastDisplayedDifficultyLevel = level;
+
             const nextLevelScore = (level + 1) * DIFFICULTY_INCREASE_PER;
             const pointsToNext = nextLevelScore - score;
-            
+
             difficultyIndicator.innerHTML = `<span class="level">難度 ${level + 1}</span><span class="next-level">+${pointsToNext}分升級</span>`;
             difficultyIndicator.setAttribute('aria-label', `目前難度等級 ${level + 1}，距離下一級還需 ${pointsToNext} 分`);
-            
+
             // 難度提升時的視覺效果
             if (level > 0) {
                 difficultyIndicator.style.color = level >= 5 ? '#ff6b6b' : level >= 3 ? '#ffd700' : '#00d4ff';
@@ -3808,6 +3814,7 @@
             // 重置難度等級緩存
             cachedDifficultyLevel = 0;
             lastScoreForDifficulty = 0;
+            lastDisplayedDifficultyLevel = -1;
             lives = GAME_CONFIG.MAX_LIVES; // 重置生命值
             updateAvailablePowerupsCache(); // 初始化可用道具緩存
             updateLivesDisplay(); // 更新生命值顯示
