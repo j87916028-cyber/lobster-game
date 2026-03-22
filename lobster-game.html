@@ -3920,17 +3920,19 @@
             let powerupType = null;
             if (!isBad && availablePowerupsCache.length > 0 && randomForType >= badChance && randomForType < badChance + GAME_CONFIG.POWERUP_CHANCE) {
                 isPowerup = true;
-                // 效能優化：使用 randomForPosition（已經調用過的隨機值）來選擇道具，避免額外調用 Math.random()
-                powerupType = availablePowerupsCache[Math.floor(randomForPosition * availablePowerupsCache.length)];
+                // 使用 randomForType（獨立的隨機值）來選擇道具，確保隨機性
+                powerupType = availablePowerupsCache[Math.floor(randomForType * availablePowerupsCache.length)];
                 bubble.textContent = powerupType.emoji;
                 // 道具也計入可收集的物品（用於命中率計算）
                 gameStats.coinsSpawned++;
             } else if (!isBad) {
                 // 非壞東西即為好東西（金幣/寶石），計入命中率統計
                 gameStats.coinsSpawned++;
-                bubble.textContent = ITEM_EMOJIS.GOOD[Math.floor(randomForPosition * ITEM_EMOJIS.GOOD.length)];
+                // 使用 randomForType（獨立的隨機值）來選擇金幣/寶石類型
+                bubble.textContent = ITEM_EMOJIS.GOOD[Math.floor(randomForType * ITEM_EMOJIS.GOOD.length)];
             } else {
-                bubble.textContent = ITEM_EMOJIS.BAD[Math.floor(randomForPosition * ITEM_EMOJIS.BAD.length)];
+                // 使用 randomForType（獨立的隨機值）來選擇炸彈類型
+                bubble.textContent = ITEM_EMOJIS.BAD[Math.floor(randomForType * ITEM_EMOJIS.BAD.length)];
                 // 炸彈計入閃避率統計
                 gameStats.bombsSpawned++;
             }
