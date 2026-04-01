@@ -2151,6 +2151,12 @@
                 element.parentNode.removeChild(element);
             }
             
+            // 移除 animationend 事件監聽器（防止記憶體泄漏和回收後殘留回調觸發）
+            if (element._animationEndHandler) {
+                element.removeEventListener('animationend', element._animationEndHandler);
+                element._animationEndHandler = null;
+            }
+            
             // 清除元素內容和樣式
             element.textContent = '';
             element.style.left = '';
@@ -2158,8 +2164,6 @@
             element.style.background = '';
             element.style.display = '';
             element.style.transform = '';
-            // 清除自定義屬性（確保回收的元素是乾淨的）
-            element._animationEndHandler = null;
             
             if (popupPool.length < POPUP_POOL_MAX_SIZE) {
                 popupPool.push(element);

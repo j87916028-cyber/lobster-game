@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "description": "🦞 龍蝦大冒險 - 躲避氣泡，收集金幣，挑戰最高分",
   "scripts": {
-    "test": "node test-lobster.js"
+    "test": "node test-lobster.js && node test-functional.js",
+    "test:basic": "node test-lobster.js",
+    "test:functional": "node test-functional.js"
   },
   "dependencies": {
     "jsdom": "^29.0.1"
