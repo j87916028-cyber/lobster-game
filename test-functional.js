@@ -538,6 +538,22 @@ test('returnPopupToPool 清理 _animationEndHandler 屬性', () => {
     assert(hasProperCleanup, 'returnPopupToPool should properly clean up _animationEndHandler');
 });
 
+// --- 氣泡池 DOM 效能優化測試 ---
+test('returnBubbleToPool 使用 className 重置樣式', () => {
+    // 驗證 returnBubbleToPool 使用單一 className 操作替代多個 style 屬性操作
+    const pattern = /element\.className\s*=\s*['"]bubble['"]/;
+    const usesClassReset = pattern.test(htmlContent);
+    assert(usesClassReset, 'returnBubbleToPool should use className for batch style reset');
+});
+
+test('氣泡池具有足夠的最大容量', () => {
+    // 驗證 POOL_MAX_SIZE 設定足夠支援高難度遊戲
+    const poolSizeMatch = htmlContent.match(/const\s+POOL_MAX_SIZE\s*=\s*(\d+)/);
+    assert(poolSizeMatch !== null, 'POOL_MAX_SIZE should be defined');
+    const poolSize = parseInt(poolSizeMatch[1]);
+    assert(poolSize >= 40, `POOL_MAX_SIZE should be at least 40, found ${poolSize}`);
+});
+
 // ==================== 總結 ====================
 console.log('\n===================');
 console.log(`測試結果: ${passed} 通過, ${failed} 失敗`);

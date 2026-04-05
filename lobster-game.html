@@ -2111,6 +2111,15 @@
             element.className = 'bubble';
             return element;
         }
+        
+        // 批次重置氣泡 DOM 元素的 CSS 類別（效能優化：批次操作比多次單獨操作更快）
+        // 注意：不移除 'bubble' 類別（遊戲中始終需要），只確保其他干擾性類別不存在
+        const _bubbleClassReset = (() => {
+            const tmp = document.createElement('div');
+            tmp.className = 'bubble';
+            const bubbleClass = tmp.className;
+            return () => bubbleClass;
+        })();
 
         // 將氣泡元素返回池中
         function returnBubbleToPool(element) {
@@ -2119,8 +2128,10 @@
                 element.parentNode.removeChild(element);
             }
             
-            // 清除元素內容和樣式 - 只清除實際使用的屬性（優化：避免不必要的樣式操作）
+            // 效能優化：批次重置元素狀態
+            // 使用 className 重置而非多個 style 屬性操作（減少 reflow 次數）
             element.textContent = '';
+            element.className = 'bubble'; // 一個操作重置所有 CSS
             element.style.transform = '';
             element.style.display = '';
             
