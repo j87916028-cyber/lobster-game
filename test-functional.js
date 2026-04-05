@@ -95,9 +95,21 @@ console.log('開始執行功能測試...\n');
 // ==================== 格式化函數測試 ====================
 console.log('--- 格式化函數測試 ---\n');
 
-// 模擬 formatScore 函數（基於程式碼分析）
+// 格式化分數函數（與 lob-game.html 中的 formatScore 保持一致）
 function formatScore(num) {
-    return num.toLocaleString('zh-TW');
+    if (typeof num !== 'number' || !isFinite(num)) return '0';
+    const isNegative = num < 0;
+    const absNum = Math.abs(num);
+    const str = Math.floor(absNum).toString();
+    if (str === 'NaN') return '0';
+    let result = '';
+    for (let i = str.length - 1, count = 0; i >= 0; i--, count++) {
+        if (count > 0 && count % 3 === 0) {
+            result = ',' + result;
+        }
+        result = str[i] + result;
+    }
+    return (isNegative ? '-' : '') + result;
 }
 
 test('formatScore: 正常數字格式化', () => {
@@ -109,6 +121,17 @@ test('formatScore: 個位數', () => {
     assertEqual(formatScore(0), '0');
     assertEqual(formatScore(5), '5');
     assertEqual(formatScore(999), '999');
+});
+
+// 新增邊界測試
+test('formatScore: 邊界條件（負數、NaN、無效輸入）', () => {
+    assertEqual(formatScore(-1000), '-1,000');
+    assertEqual(formatScore(-1), '-1');
+    assertEqual(formatScore(NaN), '0');
+    assertEqual(formatScore(1000000000), '1,000,000,000');
+    assertEqual(formatScore(undefined), '0');
+    assertEqual(formatScore(null), '0');
+    assertEqual(formatScore('text'), '0');
 });
 
 // 模擬 formatTime 函數
