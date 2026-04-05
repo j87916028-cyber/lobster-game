@@ -2043,7 +2043,7 @@
         // 重用 DOM 元素，避免頻繁創建/刪除導致的效能損耗
         // 增加池大小以支援更高難度遊戲（最高難度生成間隔僅 300ms）
         const bubblePool = [];
-        const POOL_MAX_SIZE = 50; // 池的最大大小 (從 30 增加到 50)
+        const MAX_POOL_SIZE = 60; // 氣泡池最大容量（效能優化）
         
         // 氣泡資料物件池（效能優化：避免每次生成氣泡都創建新的 JS 物件）
         const bubbleDataPool = [];
@@ -2075,7 +2075,7 @@
         
         // 彈出動畫元素物件池（分數彈出、道具彈出）
         const popupPool = [];
-        const POPUP_POOL_MAX_SIZE = 50; // 彈出池的最大大小 (從 30 增加到 50，高連擊時避免 DOM 重建)
+        const MAX_POPUP_POOL_SIZE = 60; // 彈出動畫池最大容量（效能優化）
 
         // 預先填充物件池（效能優化：遊戲開始前預先創建 DOM 元素，避免遊戲中動態創建導致卡頓）
         function prefillObjectPools() {
@@ -2135,7 +2135,7 @@
             element.style.transform = '';
             element.style.display = '';
             
-            if (bubblePool.length < POOL_MAX_SIZE) {
+            if (bubblePool.length < MAX_POOL_SIZE) {
                 bubblePool.push(element);
             } else {
                 // 池滿時直接移除
@@ -2176,7 +2176,7 @@
             element.style.display = '';
             element.style.transform = '';
             
-            if (popupPool.length < POPUP_POOL_MAX_SIZE) {
+            if (popupPool.length < MAX_POPUP_POOL_SIZE) {
                 popupPool.push(element);
             } else {
                 // 池滿時直接移除

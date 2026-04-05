@@ -570,11 +570,11 @@ test('returnBubbleToPool 使用 className 重置樣式', () => {
 });
 
 test('氣泡池具有足夠的最大容量', () => {
-    // 驗證 POOL_MAX_SIZE 設定足夠支援高難度遊戲
-    const poolSizeMatch = htmlContent.match(/const\s+POOL_MAX_SIZE\s*=\s*(\d+)/);
-    assert(poolSizeMatch !== null, 'POOL_MAX_SIZE should be defined');
+    // 驗證 MAX_POOL_SIZE 設定足夠支援高難度遊戲
+    const poolSizeMatch = htmlContent.match(/const MAX_POOL_SIZE = (\d+)/);
+    assert(poolSizeMatch !== null, 'MAX_POOL_SIZE should be defined');
     const poolSize = parseInt(poolSizeMatch[1]);
-    assert(poolSize >= 40, `POOL_MAX_SIZE should be at least 40, found ${poolSize}`);
+    assert(poolSize >= 40, `MAX_POOL_SIZE should be at least 40, found ${poolSize}`);
 });
 
 // ==================== 總結 ====================
