@@ -2431,22 +2431,12 @@
         let powerupStartTimes = {}; // 追蹤道具計時器開始時間
         let powerupRemainingTimes = {}; // 追蹤暫停時的道具剩餘時間
 
-        // 格式化分數顯示（千分位）- 使用自定義實現確保跨環境一致性
+        // 格式化分數顯示（千分位）- 使用 Intl.NumberFormat 確保跨環境一致性且效能更好
         function formatScore(num) {
             if (typeof num !== 'number' || !isFinite(num)) return '0';
             const isNegative = num < 0;
             const absNum = Math.abs(num);
-            const str = Math.floor(absNum).toString();
-            // 檢查 NaN（當 num 為 undefined、null、字串等時可能發生）
-            if (str === 'NaN') return '0';
-            let result = '';
-            for (let i = str.length - 1, count = 0; i >= 0; i--, count++) {
-                if (count > 0 && count % 3 === 0) {
-                    result = ',' + result;
-                }
-                result = str[i] + result;
-            }
-            return (isNegative ? '-' : '') + result;
+            return (isNegative ? '-' : '') + absNum.toLocaleString('zh-TW');
         }
         
         // 分數滾動動畫函數（讓分數逐步增加，增加視覺效果）
