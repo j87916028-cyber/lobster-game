@@ -1384,7 +1384,8 @@
         
         const ITEM_EMOJIS = {
             GOOD: ['💰', '💎', '⭐', '🎵', '🎮'],
-            BAD: ['💣', '🔥', '👾']
+            BAD: ['💣', '🔥', '👾'],
+            POWERUP: ['🛡️', '🌟', '❤️'] // 道具用專屬 emoji（與 POWERUPS 中的名稱對應）
         };
         
         const POWERUPS = [
@@ -3949,8 +3950,10 @@
             if (!isBad && availablePowerupsCache.length > 0 && randomForType >= badChance && randomForType < badChance + GAME_CONFIG.POWERUP_CHANCE) {
                 isPowerup = true;
                 // 使用 randomForType（獨立的隨機值）來選擇道具，確保隨機性
-                powerupType = availablePowerupsCache[Math.floor(randomForType * availablePowerupsCache.length)];
-                bubble.textContent = powerupType.emoji;
+                const powerupIndex = Math.floor(randomForType * availablePowerupsCache.length);
+                powerupType = availablePowerupsCache[powerupIndex];
+                // 使用道具專屬的 emoji 陣列（與 POWERUPS 名稱對應：shield->🛡️, 2x->🌟, heart->❤️）
+                bubble.textContent = ITEM_EMOJIS.POWERUP[powerupIndex] || powerupType.emoji;
                 // 道具也計入可收集的物品（用於命中率計算）
                 gameStats.coinsSpawned++;
             } else if (!isBad) {

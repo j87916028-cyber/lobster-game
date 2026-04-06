@@ -364,6 +364,14 @@ test('壞東西道具包含炸彈', () => {
     assert(ITEM_EMOJIS.BAD.includes('💣'), 'Should include bomb emoji');
 });
 
+test('道具使用專屬 emoji 陣列', () => {
+    assert(ITEM_EMOJIS.POWERUP !== undefined, 'POWERUP emoji array should exist');
+    assert(ITEM_EMOJIS.POWERUP.length === 3, 'Should have 3 powerup emoji types');
+    assert(ITEM_EMOJIS.POWERUP.includes('🛡️'), 'Should include shield emoji');
+    assert(ITEM_EMOJIS.POWERUP.includes('🌟'), 'Should include 2x emoji');
+    assert(ITEM_EMOJIS.POWERUP.includes('❤️'), 'Should include heart emoji');
+});
+
 // ==================== 分數計算測試 ====================
 console.log('\n--- 分數計算測試 ---\n');
 
