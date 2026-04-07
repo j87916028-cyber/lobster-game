@@ -2081,7 +2081,7 @@
         // 預先填充物件池（效能優化：遊戲開始前預先創建 DOM 元素，避免遊戲中動態創建導致卡頓）
         function prefillObjectPools() {
             const targetPoolSize = 20; // 預先填充的數量
-            const targetPopupPoolSize = 10; // 彈出動畫池目標大小
+            const targetPopupPoolSize = MAX_POPUP_POOL_SIZE; // 彈出動畫池預先填充到最大容量
             
             // 預先填充氣泡池
             while (bubblePool.length < targetPoolSize) {
@@ -2095,7 +2095,7 @@
                 bubbleDataPool.push({});
             }
             
-            // 預先填充彈出動畫池
+            // 預先填充彈出動畫池（增強預先填充：減少遊戲中動態創建次數）
             while (popupPool.length < targetPopupPoolSize) {
                 const element = document.createElement('div');
                 popupPool.push(element);
