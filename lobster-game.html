@@ -3933,14 +3933,17 @@
             const badChance = Math.min(GAME_CONFIG.BAD_CHANCE_MAX, GAME_CONFIG.BAD_CHANCE_BASE + (difficultyLevel * GAME_CONFIG.BAD_CHANCE_INCREASE));
             const isBad = randomForType < badChance;
             
-            // 道具機率生成（不在壞東西中）：檢查 randomForType 是否在 [badChance, badChance + POWERUP_CHANCE) 範圍內
+            // 道具機率生成（不在壞東西中）：使用獨立的隨機值判斷是否生成道具
             // 修復：當 availablePowerupsCache 為空時跳過道具生成，避免 undefined 錯誤
+            // 效能優化：避免重複呼叫 Math.random()
+            const shouldSpawnPowerup = availablePowerupsCache.length > 0 && randomForType >= badChance && randomForType < badChance + GAME_CONFIG.POWERUP_CHANCE;
             let isPowerup = false;
             let powerupType = null;
-            if (!isBad && availablePowerupsCache.length > 0 && randomForType >= badChance && randomForType < badChance + GAME_CONFIG.POWERUP_CHANCE) {
+            if (shouldSpawnPowerup) {
                 isPowerup = true;
-                // 使用 randomForType（獨立的隨機值）來選擇道具，確保隨機性
-                const powerupIndex = Math.floor(randomForType * availablePowerupsCache.length);
+                // 使用新的隨機值選擇道具，確保隨機性
+                const powerupRandom = Math.random();
+                const powerupIndex = Math.floor(powerupRandom * availablePowerupsCache.length);
                 powerupType = availablePowerupsCache[powerupIndex];
                 // 使用道具專屬的 emoji 陣列（與 POWERUPS 名稱對應：shield->🛡️, 2x->🌟, heart->❤️）
                 bubble.textContent = ITEM_EMOJIS.POWERUP[powerupIndex] || powerupType.emoji;
