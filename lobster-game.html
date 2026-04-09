@@ -1759,6 +1759,7 @@
             
             keys.left = false;
             keys.right = false;
+            pauseStartTime = 0; // Bug 修復：恢復遊戲時重置暫停計時器，確保計時準確性
             spawnTimer = 0;
             lastTime = performance.now();
             player.style.transform = 'translateX(-50%)';

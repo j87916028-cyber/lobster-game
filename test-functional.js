@@ -585,6 +585,20 @@ test('氣泡池具有足夠的最大容量', () => {
     assert(poolSize >= 40, `MAX_POOL_SIZE should be at least 40, found ${poolSize}`);
 });
 
+// --- Bug 修復驗證：pauseStartTime 重置 ---
+test('restoreGame 重置 pauseStartTime', () => {
+    // 驗證 restoreGame 函數中包含 pauseStartTime = 0 重置
+    const restoreGameMatch = htmlContent.match(/function restoreGame\([\s\S]*?\}/);
+    assert(restoreGameMatch !== null, 'restoreGame function not found');
+    const hasPauseStartTimeReset = htmlContent.includes('pauseStartTime = 0');
+    // 驗證 restoreGame 區域內有 pauseStartTime 重置
+    const restoreGameSection = htmlContent.substring(htmlContent.indexOf('function restoreGame'));
+    const restoreGameEndIndex = restoreGameSection.indexOf('function ') > 0 ? restoreGameSection.indexOf('function ', 10) : restoreGameSection.length;
+    const restoreGameBody = restoreGameSection.substring(0, restoreGameEndIndex);
+    const hasResetInRestore = restoreGameBody.includes('pauseStartTime = 0');
+    assert(hasResetInRestore, 'restoreGame should reset pauseStartTime to 0 for accurate timing');
+});
+
 // ==================== 總結 ====================
 console.log('\n===================');
 console.log(`測試結果: ${passed} 通過, ${failed} 失敗`);
